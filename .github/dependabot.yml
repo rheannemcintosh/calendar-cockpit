@@ -1,0 +1,42 @@
+version: 2
+updates:
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    groups:
+      composer:
+        patterns:
+          - "*"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    # TypeScript 7 no longer has the JavaScript API that Vue's compiler uses to read
+    # files, so the front end build fails with it. Remove this once Vue supports it.
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # vite-plus needs the vite alias in package.json on exactly the same version, and
+      # Dependabot can only change one of the two, which fails the build. Update both
+      # by hand instead (see "Updating Vite+" in the README).
+      - dependency-name: "vite-plus"
+      - dependency-name: "vite"
+    groups:
+      npm:
+        patterns:
+          - "*"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"

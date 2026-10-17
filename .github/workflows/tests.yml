@@ -1,0 +1,86 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    env:
+      DB_CONNECTION: sqlsrv
+      DB_HOST: 127.0.0.1
+      DB_PORT: 1433
+      DB_DATABASE: laravel
+      DB_USERNAME: sa
+      DB_PASSWORD: Your_strong_password123
+      DB_ENCRYPT: 'yes'
+      DB_TRUST_SERVER_CERTIFICATE: 'true'
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: Your_strong_password123
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P Your_strong_password123 -Q 'SELECT 1' -b"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+          --health-start-period 30s
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Microsoft ODBC driver
+        run: |
+          . /etc/os-release
+          curl -fsSL -o /tmp/packages-microsoft-prod.deb "https://packages.microsoft.com/config/ubuntu/${VERSION_ID}/packages-microsoft-prod.deb"
+          sudo dpkg -i /tmp/packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 unixodbc-dev
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.4'
+          extensions: sqlsrv, pdo_sqlsrv
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Create databases
+        run: |
+          php -r '
+            $pdo = new PDO(
+              "sqlsrv:Server=127.0.0.1,1433;Database=master;Encrypt=1;TrustServerCertificate=1;LoginTimeout=30",
+              "sa",
+              getenv("DB_PASSWORD")
+            );
+            foreach (["laravel", "laravel_testing"] as $db) {
+              $pdo->exec("IF DB_ID(N\x27$db\x27) IS NULL CREATE DATABASE [$db]");
+              echo "ensured database: $db\n";
+            }
+          '
+
+      - name: Setup Application
+        run: composer setup
+
+      - name: Run CI Checks
+        run: composer ci:check
