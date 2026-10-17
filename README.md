@@ -1,4 +1,4 @@
-# Laravel Launchpad 🚀
+# Calendar Cockpit
 
 A GitHub template for new Laravel apps: Vue (Inertia), Pest, Pint and Larastan, Docker, CI, and one-command Azure provisioning with OIDC deploys.
 
@@ -122,8 +122,8 @@ Starting a new app from the template needs more tools on your machine. See [What
 1. Clone the repository:
 
     ```bash
-    git clone git@github.com:rheannemcintosh/laravel-launchpad.git
-    cd laravel-launchpad
+    git clone git@github.com:rheannemcintosh/calendar-cockpit.git
+    cd calendar-cockpit
     ```
 
 2. Copy the environment file. `DB_PASSWORD` becomes the SQL Server `sa` password, so change it from the placeholder if the machine is shared:
@@ -211,19 +211,19 @@ The `Dockerfile` in the repo root builds the image that gets deployed, separate 
 1. Build the image:
 
     ```bash
-    docker build -t laravel-launchpad .
+    docker build -t calendar-cockpit .
     ```
 
 2. Run it. The image has no `.env` and reads its settings from environment variables, so pass the app key and the database settings. This example uses the Sail SQL Server container, so the Sail environment must be running, and the network name is the folder name followed by `_sail`:
 
     ```bash
-    docker run --rm -p 8090:8080 --network laravel-launchpad_sail \
+    docker run --rm -p 8090:8080 --network calendar-cockpit_sail \
       -e APP_KEY="$(./vendor/bin/sail artisan key:generate --show)" \
       -e APP_URL=http://localhost:8090 \
       -e DB_CONNECTION=sqlsrv -e DB_HOST=mssql -e DB_PORT=1433 \
       -e DB_DATABASE=laravel -e DB_USERNAME=sa -e DB_PASSWORD=Your_strong_password123 \
       -e DB_ENCRYPT=yes -e DB_TRUST_SERVER_CERTIFICATE=true \
-      laravel-launchpad
+      calendar-cockpit
     ```
 
 The app is then available at `http://localhost:8090`. Stop it with Ctrl+C. Use a real `DB_PASSWORD` and set `DB_TRUST_SERVER_CERTIFICATE` to `false` for anything other than local testing.
