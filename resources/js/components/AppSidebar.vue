@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { CalendarDays, LayoutGrid } from '@lucide/vue';
+import { CalendarDays, CalendarPlus, LayoutGrid } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -27,6 +27,11 @@ const mainNavItems: NavItem[] = [
         title: 'Calendar items',
         href: calendarItems.index(),
         icon: CalendarDays,
+    },
+    {
+        title: 'New event',
+        href: calendarItems.create(),
+        icon: CalendarPlus,
     },
 ];
 </script>

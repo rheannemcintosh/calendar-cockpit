@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCalendarItemRequest;
 use App\Support\CalendarItemTimeline;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -43,5 +45,19 @@ class CalendarItemController extends Controller
             'years' => CalendarItemTimeline::group($calendarItems),
             'previousFrom' => $earliestPrevious?->toDateString(),
         ]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('calendar-items/Create');
+    }
+
+    public function store(StoreCalendarItemRequest $request): RedirectResponse
+    {
+        $request->user()->calendarItems()->create($request->validated());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Event created.')]);
+
+        return to_route('calendar-items.index');
     }
 }
