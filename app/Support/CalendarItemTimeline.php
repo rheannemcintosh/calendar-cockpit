@@ -8,7 +8,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * Groups calendar items into years, weeks and days for the events list.
+ * Groups calendar items into years, weeks and days for the calendar items list.
  *
  * Weeks run Sunday to Saturday. Week 1 is the week that contains 1 January,
  * so a week that crosses New Year belongs to the new year. Each calendar item

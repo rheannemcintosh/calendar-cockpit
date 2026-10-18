@@ -14,7 +14,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import events from '@/routes/events';
+import calendarItems from '@/routes/calendar-items';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -24,8 +24,8 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Events',
-        href: events.index(),
+        title: 'Calendar items',
+        href: calendarItems.index(),
         icon: CalendarDays,
     },
 ];

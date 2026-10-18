@@ -4,16 +4,16 @@ use App\Models\CalendarItem;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
-test('guests are sent to the login page from the events list', function () {
-    $this->get(route('events.index'))->assertRedirect(route('login'));
+test('guests are sent to the login page from the calendar items list', function () {
+    $this->get(route('calendar-items.index'))->assertRedirect(route('login'));
 });
 
 test('a user with no calendar items gets an empty list', function () {
     $this->actingAs(User::factory()->create())
-        ->get(route('events.index'))
+        ->get(route('calendar-items.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('events/Index')
+            ->component('calendar-items/Index')
             ->where('years', []));
 });
 
@@ -22,9 +22,9 @@ test('calendar items are grouped by year, week and day', function () {
     CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-20 10:30')->create(['title' => 'Dentist']);
 
     $this->actingAs($user)
-        ->get(route('events.index'))
+        ->get(route('calendar-items.index'))
         ->assertInertia(fn (Assert $page) => $page
-            ->component('events/Index')
+            ->component('calendar-items/Index')
             ->has('years', 1)
             ->where('years.0.year', 2026)
             ->has('years.0.weeks', 1)
@@ -48,7 +48,7 @@ test('years, weeks, days and calendar items are in date order, earliest first', 
     CalendarItem::factory()->for($user)->between('2026-11-02 09:00', '2026-11-02 10:00')->create(['title' => 'Later week']);
 
     $this->actingAs($user)
-        ->get(route('events.index'))
+        ->get(route('calendar-items.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('years.0.year', 2026)
             ->where('years.1.year', 2027)
@@ -67,7 +67,7 @@ test('a calendar item that spans several days is listed once, under the day it s
     CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-22 17:00')->create(['title' => 'Conference']);
 
     $this->actingAs($user)
-        ->get(route('events.index'))
+        ->get(route('calendar-items.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->has('years.0.weeks.0.days', 1)
             ->where('years.0.weeks.0.days.0.date', '2026-10-20')
@@ -80,7 +80,7 @@ test('a week that crosses New Year appears once, as week 1 of the new year', fun
     CalendarItem::factory()->for($user)->between('2027-01-01 09:00', '2027-01-01 10:00')->create(['title' => 'New Year’s Day']);
 
     $this->actingAs($user)
-        ->get(route('events.index'))
+        ->get(route('calendar-items.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->has('years', 1)
             ->where('years.0.year', 2027)
@@ -97,7 +97,7 @@ test('users only see their own calendar items', function () {
     CalendarItem::factory()->between('2026-10-20 11:00', '2026-10-20 12:00')->create(['title' => 'Someone else’s']);
 
     $this->actingAs($user)
-        ->get(route('events.index'))
+        ->get(route('calendar-items.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->has('years.0.weeks.0.days.0.items', 1)
             ->where('years.0.weeks.0.days.0.items.0.title', 'Mine'));

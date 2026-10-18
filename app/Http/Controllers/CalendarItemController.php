@@ -19,7 +19,7 @@ class CalendarItemController extends Controller
             ->orderBy('id')
             ->get();
 
-        return Inertia::render('events/Index', [
+        return Inertia::render('calendar-items/Index', [
             'years' => CalendarItemTimeline::group($calendarItems),
         ]);
     }

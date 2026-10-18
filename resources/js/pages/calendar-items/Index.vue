@@ -2,14 +2,14 @@
 import { Head } from '@inertiajs/vue3';
 import { CalendarPlus } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
-import { index } from '@/routes/events';
+import { index } from '@/routes/calendar-items';
 import type { TimelineYear } from '@/types';
 
 defineOptions({
     layout: {
         breadcrumbs: [
             {
-                title: 'Events',
+                title: 'Calendar items',
                 href: index(),
             },
         ],
@@ -22,11 +22,11 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Events" />
+    <Head title="Calendar items" />
 
-    <div class="flex max-w-3xl flex-col gap-6 p-4">
+    <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
         <Heading
-            title="Events"
+            title="Calendar items"
             description="Everything you have planned, by year, week and day"
         />
 
@@ -36,9 +36,9 @@ defineProps<{
         >
             <CalendarPlus class="text-muted-foreground size-10" />
             <div class="space-y-1">
-                <p class="font-medium">You have no events yet</p>
+                <p class="font-medium">You have no calendar items yet</p>
                 <p class="text-muted-foreground text-sm">
-                    Add your first event to start filling your calendar.
+                    Add your first calendar item to start filling your calendar.
                 </p>
             </div>
         </div>

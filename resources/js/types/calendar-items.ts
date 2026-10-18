@@ -1,4 +1,4 @@
-// The shape of App\Support\CalendarItemTimeline::group(), passed to the events list.
+// The shape of App\Support\CalendarItemTimeline::group(), passed to the calendar items list.
 
 export type TimelineItem = {
     id: number;
