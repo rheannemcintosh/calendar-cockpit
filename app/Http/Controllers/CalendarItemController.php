@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\CalendarItemTimeline;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -10,17 +11,37 @@ use Inertia\Response;
 class CalendarItemController extends Controller
 {
     /**
-     * Show the user's calendar items, grouped by year, week and day.
+     * Roughly how many earlier calendar items each "Load previous" adds.
+     * It is rounded out to whole days, so a day is never half shown.
+     */
+    private const PREVIOUS_STEP = 20;
+
+    /**
+     * Show the user's calendar items from today onwards, or from an earlier
+     * day once they have loaded previous ones, grouped by year, week and day.
      */
     public function index(Request $request): Response
     {
+        $request->validate(['from' => ['nullable', 'date_format:Y-m-d']]);
+
+        $from = $request->filled('from')
+            ? CarbonImmutable::createFromFormat('!Y-m-d', $request->string('from')->toString())
+            : CarbonImmutable::today();
+
         $calendarItems = $request->user()->calendarItems()
+            ->where('starts_at', '>=', $from)
             ->orderBy('starts_at')
             ->orderBy('id')
             ->get();
 
+        $previous = fn () => $request->user()->calendarItems()->where('starts_at', '<', $from);
+
+        $earliestPrevious = $previous()->orderByDesc('starts_at')->skip(self::PREVIOUS_STEP - 1)->first()->starts_at
+            ?? $previous()->orderBy('starts_at')->first()?->starts_at;
+
         return Inertia::render('calendar-items/Index', [
             'years' => CalendarItemTimeline::group($calendarItems),
+            'previousFrom' => $earliestPrevious?->toDateString(),
         ]);
     }
 }

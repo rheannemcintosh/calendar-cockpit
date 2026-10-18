@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { CalendarPlus } from '@lucide/vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { CalendarPlus, History } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
+import { Button } from '@/components/ui/button';
 import { index } from '@/routes/calendar-items';
 import type { TimelineYear } from '@/types';
 
@@ -18,6 +19,8 @@ defineOptions({
 
 defineProps<{
     years: TimelineYear[];
+    // The day to load from to show earlier calendar items, or null when there are none.
+    previousFrom: string | null;
 }>();
 </script>
 
@@ -27,15 +30,37 @@ defineProps<{
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
         <Heading
             title="Calendar items"
-            description="Everything you have planned, by year, week and day"
+            description="What you have planned, by year, week and day"
         />
+
+        <Button
+            v-if="previousFrom"
+            variant="outline"
+            class="self-center"
+            as-child
+        >
+            <Link
+                :href="index({ query: { from: previousFrom } })"
+                preserve-scroll
+                data-test="load-previous-button"
+            >
+                <History />
+                Load previous calendar items
+            </Link>
+        </Button>
 
         <div
             v-if="!years.length"
             class="flex flex-col items-center gap-4 rounded-xl border border-dashed p-10 text-center"
         >
             <CalendarPlus class="text-muted-foreground size-10" />
-            <div class="space-y-1">
+            <div v-if="previousFrom" class="space-y-1">
+                <p class="font-medium">Nothing coming up</p>
+                <p class="text-muted-foreground text-sm">
+                    You have no calendar items from today onwards.
+                </p>
+            </div>
+            <div v-else class="space-y-1">
                 <p class="font-medium">You have no calendar items yet</p>
                 <p class="text-muted-foreground text-sm">
                     Add your first calendar item to start filling your calendar.
