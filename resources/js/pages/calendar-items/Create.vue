@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
 import CalendarItemController from '@/actions/App/Http/Controllers/CalendarItemController';
-import DateTimePicker from '@/components/DateTimePicker.vue';
+import DatePicker from '@/components/DatePicker.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import TimePicker from '@/components/TimePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,11 +14,11 @@ defineOptions({
     layout: {
         breadcrumbs: [
             {
-                title: 'Events',
+                title: 'Calendar items',
                 href: index(),
             },
             {
-                title: 'New event',
+                title: 'New calendar item',
                 href: create(),
             },
         ],
@@ -26,12 +27,12 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="New event" />
+    <Head title="New calendar item" />
 
-    <div class="max-w-xl p-4">
+    <div class="mx-auto w-full max-w-xl p-4">
         <Heading
-            title="New event"
-            description="Give your event a title and choose when it starts and ends"
+            title="New calendar item"
+            description="Give it a title, then choose the day and when it starts and ends"
         />
 
         <Form
@@ -51,30 +52,39 @@ defineOptions({
                 <InputError :message="errors.title" />
             </div>
 
+            <div class="grid gap-2">
+                <Label for="date">Date</Label>
+                <DatePicker id="date" name="date" :invalid="!!errors.date" />
+                <InputError :message="errors.date" />
+            </div>
+
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="grid gap-2">
-                    <Label for="starts_at">Start</Label>
-                    <DateTimePicker
-                        id="starts_at"
-                        name="starts_at"
-                        :invalid="!!errors.starts_at"
+                    <Label for="start_time">Start time</Label>
+                    <TimePicker
+                        id="start_time"
+                        name="start_time"
+                        :invalid="!!errors.start_time"
                     />
-                    <InputError :message="errors.starts_at" />
+                    <InputError :message="errors.start_time" />
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="ends_at">End</Label>
-                    <DateTimePicker
-                        id="ends_at"
-                        name="ends_at"
-                        :invalid="!!errors.ends_at"
+                    <Label for="end_time">End time</Label>
+                    <TimePicker
+                        id="end_time"
+                        name="end_time"
+                        :invalid="!!errors.end_time"
                     />
-                    <InputError :message="errors.ends_at" />
+                    <InputError :message="errors.end_time" />
                 </div>
             </div>
 
-            <Button :disabled="processing" data-test="create-event-button">
-                Create event
+            <Button
+                :disabled="processing"
+                data-test="create-calendar-item-button"
+            >
+                Create calendar item
             </Button>
         </Form>
     </div>

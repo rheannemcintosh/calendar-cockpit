@@ -54,9 +54,9 @@ class CalendarItemController extends Controller
 
     public function store(StoreCalendarItemRequest $request): RedirectResponse
     {
-        $request->user()->calendarItems()->create($request->validated());
+        $request->user()->calendarItems()->create($request->calendarItemAttributes());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Event created.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Calendar item created.')]);
 
         return to_route('calendar-items.index');
     }

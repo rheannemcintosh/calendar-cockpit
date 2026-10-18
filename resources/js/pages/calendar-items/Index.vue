@@ -118,7 +118,7 @@ const appear =
             <Button v-if="years.length" as-child>
                 <Link :href="create()">
                     <Plus />
-                    New event
+                    New calendar item
                 </Link>
             </Button>
         </div>
@@ -156,7 +156,7 @@ const appear =
             <Button as-child>
                 <Link :href="create()">
                     <Plus />
-                    Create an event
+                    Create a calendar item
                 </Link>
             </Button>
         </div>

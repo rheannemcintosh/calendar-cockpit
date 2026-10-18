@@ -21,9 +21,9 @@ import {
 } from 'reka-ui';
 import { cn } from '@/lib/utils';
 
-// A date and time field, to the minute, with a calendar whose weeks run
-// Sunday to Saturday to match the events list. The value is submitted
-// through a hidden input named `name`, as YYYY-MM-DDTHH:mm.
+// A date field with a calendar whose weeks run Sunday to Saturday, to
+// match the calendar items list. The value is submitted through a hidden
+// input named `name`, as YYYY-MM-DD.
 defineProps<{
     id: string;
     name: string;
@@ -35,11 +35,9 @@ defineProps<{
     <DatePickerRoot
         :id="id"
         :name="name"
-        granularity="minute"
-        :hour-cycle="24"
+        granularity="day"
         :week-starts-on="0"
         locale="en-GB"
-        hide-time-zone
     >
         <DatePickerField
             v-slot="{ segments }"
