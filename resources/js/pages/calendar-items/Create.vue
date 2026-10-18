@@ -29,7 +29,7 @@ defineOptions({
 <template>
     <Head title="New calendar item" />
 
-    <div class="mx-auto w-full max-w-xl p-4">
+    <div class="mx-auto w-full max-w-3xl p-4">
         <Heading
             title="New calendar item"
             description="Give it a title, then choose the day and when it starts and ends"
