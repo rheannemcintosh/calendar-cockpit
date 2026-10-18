@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Models;
+
+use Carbon\CarbonImmutable;
+use Database\Factories\EventFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $title
+ * @property CarbonImmutable $starts_at
+ * @property CarbonImmutable $ends_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ */
+#[Fillable(['title', 'starts_at', 'ends_at'])]
+class Event extends Model
+{
+    /** @use HasFactory<EventFactory> */
+    use HasFactory;
+
+    /**
+     * Get the user that owns the event.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'user_id' => 'integer',
+            'starts_at' => 'datetime',
+            'ends_at' => 'datetime',
+        ];
+    }
+}
