@@ -11,8 +11,7 @@ use Illuminate\Support\Collection;
  * Groups calendar items into years, weeks and days for the calendar items list.
  *
  * Weeks run Sunday to Saturday. Week 1 is the week that contains 1 January,
- * so a week that crosses New Year belongs to the new year. Each calendar item
- * is listed once, under the day it starts.
+ * so a week that crosses New Year belongs to the new year.
  *
  * @phpstan-type TimelineItem array{id: int, title: string, time: string}
  * @phpstan-type TimelineDay array{date: string, label: string, items: list<TimelineItem>}
@@ -115,16 +114,10 @@ class CalendarItemTimeline
     }
 
     /**
-     * The calendar item's times in 24-hour format, with the end date added when it ends on a later day.
+     * The calendar item's times in 24-hour format, e.g. "09:00–10:30".
      */
     public static function timeRange(CarbonInterface $startsAt, CarbonInterface $endsAt): string
     {
-        if ($startsAt->isSameDay($endsAt)) {
-            return $startsAt->format('H:i').'–'.$endsAt->format('H:i');
-        }
-
-        $endFormat = $startsAt->year === $endsAt->year ? 'D j M, H:i' : 'D j M Y, H:i';
-
-        return $startsAt->format('H:i').' – '.$endsAt->format($endFormat);
+        return $startsAt->format('H:i').'–'.$endsAt->format('H:i');
     }
 }

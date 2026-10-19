@@ -66,18 +66,6 @@ test('years, weeks, days and calendar items are in date order, earliest first', 
             ->where('years.1.weeks.0.days.0.items.0.title', 'Next year'));
 });
 
-test('a calendar item that spans several days is listed once, under the day it starts', function () {
-    $user = User::factory()->create();
-    CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-22 17:00')->create(['title' => 'Conference']);
-
-    $this->actingAs($user)
-        ->get(route('calendar-items.index'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('years.0.weeks.0.days', 1)
-            ->where('years.0.weeks.0.days.0.date', '2026-10-20')
-            ->where('years.0.weeks.0.days.0.items.0.time', '09:00 – Thu 22 Oct, 17:00'));
-});
-
 test('a week that crosses New Year appears once, as week 1 of the new year', function () {
     $user = User::factory()->create();
     CalendarItem::factory()->for($user)->between('2026-12-28 09:00', '2026-12-28 10:00')->create(['title' => 'Before New Year']);

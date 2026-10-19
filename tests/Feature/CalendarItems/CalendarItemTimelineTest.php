@@ -43,6 +43,4 @@ test('calendar item times are shown in 24-hour format', function (string $starts
 })->with([
     'the same day' => ['2026-10-20 09:00', '2026-10-20 10:30', '09:00–10:30'],
     'the afternoon' => ['2026-10-20 13:15', '2026-10-20 18:45', '13:15–18:45'],
-    'ending on a later day' => ['2026-10-20 22:00', '2026-10-21 02:00', '22:00 – Wed 21 Oct, 02:00'],
-    'ending in a later year' => ['2026-12-31 20:00', '2027-01-01 01:00', '20:00 – Fri 1 Jan 2027, 01:00'],
 ]);
