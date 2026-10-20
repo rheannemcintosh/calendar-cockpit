@@ -6,6 +6,9 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import type { NavItem } from '@/types';
@@ -32,6 +35,21 @@ const { isCurrentUrl } = useCurrentUrl();
                         <span>{{ item.title }}</span>
                     </Link>
                 </SidebarMenuButton>
+                <SidebarMenuSub v-if="item.items?.length">
+                    <SidebarMenuSubItem
+                        v-for="subItem in item.items"
+                        :key="subItem.title"
+                    >
+                        <SidebarMenuSubButton
+                            as-child
+                            :is-active="isCurrentUrl(subItem.href)"
+                        >
+                            <Link :href="subItem.href">
+                                <span>{{ subItem.title }}</span>
+                            </Link>
+                        </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                </SidebarMenuSub>
             </SidebarMenuItem>
         </SidebarMenu>
     </SidebarGroup>

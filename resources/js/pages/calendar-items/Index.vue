@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import { CalendarPlus, History } from '@lucide/vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { CalendarPlus, History, Plus } from '@lucide/vue';
 import { nextTick, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { index } from '@/routes/calendar-items';
+import { create, index } from '@/routes/calendar-items';
 import type { TimelineYear } from '@/types';
 
 defineOptions({
@@ -110,10 +110,18 @@ const appear =
     <Head title="Calendar items" />
 
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
-        <Heading
-            title="Calendar items"
-            description="What you have planned, by year, week and day"
-        />
+        <div class="flex items-start justify-between gap-4">
+            <Heading
+                title="Calendar items"
+                description="What you have planned, by year, week and day"
+            />
+            <Button v-if="years.length" as-child>
+                <Link :href="create()">
+                    <Plus />
+                    New calendar item
+                </Link>
+            </Button>
+        </div>
 
         <Button
             v-if="previousFrom"
@@ -145,6 +153,12 @@ const appear =
                     Add your first calendar item to start filling your calendar.
                 </p>
             </div>
+            <Button as-child>
+                <Link :href="create()">
+                    <Plus />
+                    Create a calendar item
+                </Link>
+            </Button>
         </div>
 
         <section
