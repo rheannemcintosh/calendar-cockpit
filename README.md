@@ -202,7 +202,7 @@ The scripts in `deploy/` are tested without Azure or GitHub. The tests in `tests
 
 These tests start many small processes, so they take about a minute of the full run.
 
-The PHP requirement in `composer.json` is the oldest PHP version the locked packages accept, which is `^8.4.1` and not just `^8.4`. Dependabot resolves updates against the lowest PHP version that requirement allows, so a requirement lower than what the locked packages need makes every Dependabot run for the PHP packages fail and no update is ever proposed. A test fails if the requirement falls behind. If it does, raise the requirement in `composer.json` to the version it names, refresh the lock file with `composer update --lock`, and commit both.
+The PHP requirement in `composer.json` is `^8.4.27`, the first 8.4 release with the fixes for CVE-2026-109618 and CVE-2026-109619, so Composer refuses to install on an unpatched PHP. The production image and CI pin the same version. It must also never be lower than the oldest PHP version the locked packages accept. Dependabot resolves updates against the lowest PHP version that requirement allows, so a requirement lower than what the locked packages need makes every Dependabot run for the PHP packages fail and no update is ever proposed. A test fails if the requirement falls behind. If it does, raise the requirement in `composer.json` to the version it names, refresh the lock file with `composer update --lock`, and commit both.
 
 ### Production Image
 
