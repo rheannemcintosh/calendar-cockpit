@@ -111,6 +111,8 @@ The starter kit's default routes:
 
 The app runs in Docker through Laravel Sail. Sail starts the app with PHP 8.4, Node and Composer, and a SQL Server 2022 container, so nothing beyond Docker needs installing.
 
+The Sail image in `docker/8.4` installs PHP from Ondřej Surý's Launchpad PPA (`ppa.launchpadcontent.net/ondrej/php`), not from `packages.sury.org` as the upstream Sail Dockerfile does. Both come from the same maintainer, but sury.org was slower to publish PHP 8.4.27 for Apple Silicon, and the app needs at least that version, so on a Mac the image could not install the app's dependencies. The image picks up whatever 8.4 release the PPA has when it is built, so run `./vendor/bin/sail build --no-cache` after a PHP security release. Re-publishing the Sail files with `sail:publish` brings back the upstream Dockerfile and undoes this change.
+
 ### Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/).
