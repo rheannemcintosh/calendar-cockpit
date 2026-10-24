@@ -16,6 +16,7 @@ import {
 import { dashboard } from '@/routes';
 import calendarItems from '@/routes/calendar-items';
 import categories from '@/routes/categories';
+import subCategories from '@/routes/sub-categories';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -43,6 +44,10 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'New category',
                 href: categories.create(),
+            },
+            {
+                title: 'New sub-category',
+                href: subCategories.create(),
             },
         ],
     },

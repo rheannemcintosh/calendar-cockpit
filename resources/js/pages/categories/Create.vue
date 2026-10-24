@@ -33,12 +33,6 @@ const previewColour = computed(() =>
         ? `#${colour.value.trim().replace('#', '')}`
         : undefined,
 );
-
-// Start again with an empty form once the category is saved.
-function reset(): void {
-    name.value = '';
-    colour.value = '';
-}
 </script>
 
 <template>
@@ -54,7 +48,6 @@ function reset(): void {
             v-bind="CategoryController.store.form()"
             class="space-y-6"
             v-slot="{ errors, processing }"
-            @success="reset"
         >
             <div class="grid gap-2">
                 <Label for="name">Name</Label>

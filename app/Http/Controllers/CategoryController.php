@@ -16,10 +16,11 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
-        $request->user()->categories()->create($request->categoryAttributes());
+        $category = $request->user()->categories()->create($request->categoryAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category created.')]);
 
-        return to_route('categories.create');
+        // A category needs a sub-category before calendar items can use it.
+        return to_route('sub-categories.create', ['category' => $category->id]);
     }
 }
