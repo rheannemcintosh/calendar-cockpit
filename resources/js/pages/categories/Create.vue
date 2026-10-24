@@ -8,14 +8,14 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { create } from '@/routes/categories';
+import { create, index } from '@/routes/categories';
 
 defineOptions({
     layout: {
         breadcrumbs: [
             {
                 title: 'Categories',
-                href: create(),
+                href: index(),
             },
             {
                 title: 'New category',

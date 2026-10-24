@@ -29,12 +29,10 @@ class SubCategoryController extends Controller
 
     public function store(StoreSubCategoryRequest $request): RedirectResponse
     {
-        $category = $request->category();
-
-        $category->subCategories()->create($request->subCategoryAttributes());
+        $request->category()->subCategories()->create($request->subCategoryAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Sub-category created.')]);
 
-        return to_route('sub-categories.create', ['category' => $category->id]);
+        return to_route('categories.index');
     }
 }

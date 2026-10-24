@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
+import { ArrowLeft } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import SubCategoryController from '@/actions/App/Http/Controllers/SubCategoryController';
 import EmojiPicker from '@/components/EmojiPicker.vue';
@@ -24,7 +25,7 @@ defineOptions({
         breadcrumbs: [
             {
                 title: 'Categories',
-                href: categories.create(),
+                href: categories.index(),
             },
             {
                 title: 'New sub-category',
@@ -50,18 +51,21 @@ const chosenCategory = computed(() =>
         (category) => category.id.toString() === categoryId.value,
     ),
 );
-
-// Stay on the same category, ready to add another sub-category to it.
-function reset(): void {
-    emoji.value = '';
-    name.value = '';
-}
 </script>
 
 <template>
     <Head title="New sub-category" />
 
     <div class="mx-auto w-full max-w-3xl p-4">
+        <Link
+            :href="categories.index()"
+            class="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm"
+            data-test="back-to-categories-link"
+        >
+            <ArrowLeft class="size-4" />
+            Back to categories
+        </Link>
+
         <Heading
             title="New sub-category"
             description="Split a category into finer pieces, each with its own emoji"
@@ -85,7 +89,6 @@ function reset(): void {
             v-bind="SubCategoryController.store.form()"
             class="space-y-6"
             v-slot="{ errors, processing }"
-            @success="reset"
         >
             <div class="grid gap-2">
                 <Label for="category_id">Category</Label>

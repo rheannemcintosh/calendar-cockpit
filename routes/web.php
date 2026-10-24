@@ -12,7 +12,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('calendar-items', CalendarItemController::class)->only(['index', 'create', 'store']);
 
-    Route::resource('categories', CategoryController::class)->only(['create', 'store']);
+    Route::resource('categories', CategoryController::class)->only(['index', 'create', 'store']);
 
     Route::resource('sub-categories', SubCategoryController::class)->only(['create', 'store']);
 });
