@@ -86,14 +86,14 @@ test('a category in the address that is not the user\'s is not chosen', function
     'not a number' => 'work',
 ]);
 
-test('a user can create a sub-category and stays on the form with the same category chosen', function () {
+test('a user can create a sub-category and goes back to the categories list', function () {
     $user = User::factory()->create();
     $category = Category::factory()->for($user)->create();
 
     $this->actingAs($user)
         ->post(route('sub-categories.store'), validSubCategory($category))
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('sub-categories.create', ['category' => $category->id]))
+        ->assertRedirect(route('categories.index'))
         ->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Sub-category created.']);
 
     $subCategory = SubCategory::sole();

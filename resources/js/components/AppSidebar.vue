@@ -38,7 +38,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Categories',
-        href: categories.create(),
+        href: categories.index(),
         icon: Tags,
         items: [
             {

@@ -27,7 +27,7 @@ test('signed-in users see the create category form', function () {
         ->assertInertia(fn (Assert $page) => $page->component('categories/Create'));
 });
 
-test('a user can create a category with a name and colour and goes on to add a sub-category to it', function () {
+test('a user can create a category with a name and colour and goes back to the categories list', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)
@@ -37,7 +37,7 @@ test('a user can create a category with a name and colour and goes on to add a s
 
     $category = Category::sole();
 
-    $response->assertRedirect(route('sub-categories.create', ['category' => $category->id]));
+    $response->assertRedirect(route('categories.index'));
 
     expect($category->user_id)->toBe($user->id)
         ->and($category->name)->toBe('Work')
