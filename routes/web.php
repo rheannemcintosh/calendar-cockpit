@@ -12,9 +12,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('calendar-items', CalendarItemController::class)->only(['index', 'create', 'store']);
 
-    Route::resource('categories', CategoryController::class)->only(['index', 'create', 'store']);
+    Route::resource('categories', CategoryController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update'])
+        ->middlewareFor(['edit', 'update'], 'can:update,category');
 
-    Route::resource('sub-categories', SubCategoryController::class)->only(['create', 'store']);
+    Route::resource('sub-categories', SubCategoryController::class)
+        ->only(['create', 'store', 'edit', 'update'])
+        ->middlewareFor(['edit', 'update'], 'can:update,sub_category');
 });
 
 require __DIR__.'/settings.php';
