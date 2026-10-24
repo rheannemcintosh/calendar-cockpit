@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['title', 'starts_at', 'ends_at'])]
+#[Fillable(['title', 'starts_at', 'ends_at', 'sub_category_id'])]
 class CalendarItem extends Model
 {
     /** @use HasFactory<CalendarItemFactory> */
