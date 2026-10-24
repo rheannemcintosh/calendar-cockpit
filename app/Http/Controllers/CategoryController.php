@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCategoryRequest;
+use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
 use App\Models\SubCategory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -49,6 +50,22 @@ class CategoryController extends Controller
         $request->user()->categories()->create($request->categoryAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category created.')]);
+
+        return to_route('categories.index');
+    }
+
+    public function edit(Category $category): Response
+    {
+        return Inertia::render('categories/Edit', [
+            'category' => $category->only(['id', 'name', 'colour']),
+        ]);
+    }
+
+    public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
+    {
+        $category->update($request->categoryAttributes());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Category updated.')]);
 
         return to_route('categories.index');
     }

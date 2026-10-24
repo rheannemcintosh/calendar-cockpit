@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { ChevronRight, Plus, Tags } from '@lucide/vue';
+import { ChevronRight, Pencil, Plus, Tags } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,7 +8,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { create, index } from '@/routes/categories';
+import { create, edit, index } from '@/routes/categories';
 import subCategories from '@/routes/sub-categories';
 import type { CategoryListItem } from '@/types';
 
@@ -112,6 +112,21 @@ function subCategoryCount(category: CategoryListItem): string {
                             class="shrink-0"
                         >
                             <Link
+                                :href="edit(category.id)"
+                                :aria-label="`Edit ${category.name}`"
+                                data-test="edit-category-link"
+                            >
+                                <Pencil />
+                                <span class="hidden sm:inline">Edit</span>
+                            </Link>
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            as-child
+                            class="shrink-0"
+                        >
+                            <Link
                                 :href="
                                     subCategories.create({
                                         query: { category: category.id },
@@ -153,6 +168,9 @@ function subCategoryCount(category: CategoryListItem): string {
                                     >
                                         Name
                                     </th>
+                                    <th scope="col" class="w-px px-2 py-2">
+                                        <span class="sr-only">Actions</span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y border-t">
@@ -167,6 +185,28 @@ function subCategoryCount(category: CategoryListItem): string {
                                     </td>
                                     <td class="px-4 py-2.5 break-words">
                                         {{ subCategory.name }}
+                                    </td>
+                                    <td class="px-2 py-1 text-right">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            as-child
+                                        >
+                                            <Link
+                                                :href="
+                                                    subCategories.edit(
+                                                        subCategory.id,
+                                                    )
+                                                "
+                                                :aria-label="`Edit ${subCategory.name}`"
+                                                data-test="edit-sub-category-link"
+                                            >
+                                                <Pencil />
+                                                <span class="hidden sm:inline">
+                                                    Edit
+                                                </span>
+                                            </Link>
+                                        </Button>
                                     </td>
                                 </tr>
                             </tbody>
