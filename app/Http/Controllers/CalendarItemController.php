@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCalendarItemRequest;
+use App\Models\Category;
+use App\Models\SubCategory;
 use App\Support\CalendarItemTimeline;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -47,9 +50,31 @@ class CalendarItemController extends Controller
         ]);
     }
 
-    public function create(): Response
+    /**
+     * Show the form with the user's categories that have sub-categories, and
+     * the sub-categories in each one, both in alphabetical order.
+     */
+    public function create(Request $request): Response
     {
-        return Inertia::render('calendar-items/Create');
+        $categories = $request->user()->categories()
+            ->whereHas('subCategories')
+            ->with(['subCategories' => fn (HasMany $query) => $query->orderByRaw('lower(name)')->orderBy('id')])
+            ->orderByRaw('lower(name)')
+            ->orderBy('id')
+            ->get();
+
+        return Inertia::render('calendar-items/Create', [
+            'categories' => $categories->map(fn (Category $category): array => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'colour' => $category->colour,
+                'subCategories' => $category->subCategories->map(fn (SubCategory $subCategory): array => [
+                    'id' => $subCategory->id,
+                    'emoji' => $subCategory->emoji,
+                    'name' => $subCategory->name,
+                ]),
+            ]),
+        ]);
     }
 
     public function store(StoreCalendarItemRequest $request): RedirectResponse

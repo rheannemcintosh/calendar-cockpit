@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
 import CalendarItemController from '@/actions/App/Http/Controllers/CalendarItemController';
 import DatePicker from '@/components/DatePicker.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import SubCategoryPicker from '@/components/SubCategoryPicker.vue';
 import TimePicker from '@/components/TimePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { create, index } from '@/routes/calendar-items';
+import categories from '@/routes/categories';
+import type { CategoryListItem } from '@/types';
 
 defineOptions({
     layout: {
@@ -24,6 +27,11 @@ defineOptions({
         ],
     },
 });
+
+const props = defineProps<{
+    // The user's categories that have sub-categories, in alphabetical order.
+    categories: CategoryListItem[];
+}>();
 </script>
 
 <template>
@@ -78,6 +86,33 @@ defineOptions({
                     />
                     <InputError :message="errors.end_time" />
                 </div>
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="sub_category_id">Category</Label>
+                <template v-if="props.categories.length > 0">
+                    <SubCategoryPicker
+                        id="sub_category_id"
+                        name="sub_category_id"
+                        :categories="props.categories"
+                        :invalid="!!errors.sub_category_id"
+                    />
+                    <InputError :message="errors.sub_category_id" />
+                </template>
+                <p
+                    v-else
+                    class="text-muted-foreground text-sm"
+                    data-test="no-sub-categories"
+                >
+                    Add a sub-category to one of your categories to sort
+                    calendar items.
+                    <Link
+                        :href="categories.index()"
+                        class="text-foreground underline underline-offset-4"
+                    >
+                        Set up your categories
+                    </Link>
+                </p>
             </div>
 
             <Button
