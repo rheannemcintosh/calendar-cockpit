@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { CalendarDays, LayoutGrid } from '@lucide/vue';
+import { CalendarDays, LayoutGrid, Tags } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import calendarItems from '@/routes/calendar-items';
+import categories from '@/routes/categories';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -31,6 +32,17 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'New calendar item',
                 href: calendarItems.create(),
+            },
+        ],
+    },
+    {
+        title: 'Categories',
+        href: categories.create(),
+        icon: Tags,
+        items: [
+            {
+                title: 'New category',
+                href: categories.create(),
             },
         ],
     },
