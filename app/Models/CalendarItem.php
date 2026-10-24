@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int $id
  * @property int $user_id
+ * @property int|null $sub_category_id
  * @property string $title
  * @property CarbonImmutable $starts_at
  * @property CarbonImmutable $ends_at
@@ -33,12 +34,21 @@ class CalendarItem extends Model
     }
 
     /**
+     * @return BelongsTo<SubCategory, $this>
+     */
+    public function subCategory(): BelongsTo
+    {
+        return $this->belongsTo(SubCategory::class);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
             'user_id' => 'integer',
+            'sub_category_id' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
         ];
