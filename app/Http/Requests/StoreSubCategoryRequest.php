@@ -3,8 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Models\Category;
+use App\Models\SubCategory;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -67,11 +69,23 @@ class StoreSubCategoryRequest extends FormRequest
     }
 
     /**
+     * The sub-categories that the name must not match: those in the chosen
+     * category, or null when the category is not the user's, which is left
+     * to its own rule.
+     *
+     * @return HasMany<SubCategory, Category>|null
+     */
+    protected function otherSubCategories(): ?HasMany
+    {
+        return $this->user()->categories()->find($this->integer('category_id'))?->subCategories();
+    }
+
+    /**
      * Fail unless the value is exactly one emoji. An emoji with a skin tone,
      * a flag or a combined emoji such as 👩‍💻 is one character on screen,
      * so it counts as one.
      */
-    private function singleEmoji(string $attribute, mixed $value, Closure $fail): void
+    protected function singleEmoji(string $attribute, mixed $value, Closure $fail): void
     {
         $isSingleEmoji = is_string($value)
             && strlen($value) <= self::EMOJI_MAX_BYTES
@@ -84,20 +98,17 @@ class StoreSubCategoryRequest extends FormRequest
     }
 
     /**
-     * Fail when the chosen category already has a sub-category with this
-     * name, ignoring upper and lower case. Spaces at either end are already
-     * trimmed. A category that is not the user's is left to its own rule.
+     * Fail when the category already has a sub-category with this name,
+     * ignoring upper and lower case. Spaces at either end are already trimmed.
      */
-    private function uniqueInCategory(string $attribute, mixed $value, Closure $fail): void
+    protected function uniqueInCategory(string $attribute, mixed $value, Closure $fail): void
     {
         if (! is_string($value)) {
             return;
         }
 
-        $category = $this->user()->categories()->find($this->integer('category_id'));
-
-        $exists = $category?->subCategories()
-            ->whereRaw('lower(name) = ?', [mb_strtolower($value)])
+        $exists = $this->otherSubCategories()
+            ?->whereRaw('lower(name) = ?', [mb_strtolower($value)])
             ->exists();
 
         if ($exists) {

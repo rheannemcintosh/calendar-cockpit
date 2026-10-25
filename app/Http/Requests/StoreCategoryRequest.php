@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Category;
+use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCategoryRequest extends FormRequest
@@ -46,6 +49,16 @@ class StoreCategoryRequest extends FormRequest
     }
 
     /**
+     * The user's categories that the name must not match.
+     *
+     * @return HasMany<Category, User>
+     */
+    protected function otherCategories(): HasMany
+    {
+        return $this->user()->categories();
+    }
+
+    /**
      * Fail when the user already has a category with this name, ignoring
      * upper and lower case. Spaces at either end are already trimmed.
      */
@@ -55,7 +68,7 @@ class StoreCategoryRequest extends FormRequest
             return;
         }
 
-        $exists = $this->user()->categories()
+        $exists = $this->otherCategories()
             ->whereRaw('lower(name) = ?', [mb_strtolower($value)])
             ->exists();
 
