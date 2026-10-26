@@ -18,4 +18,13 @@ class SubCategoryPolicy
             ? Response::allow()
             : Response::denyAsNotFound();
     }
+
+    /**
+     * Only the user who owns a sub-category's category can delete it, on the
+     * same terms as changing it.
+     */
+    public function delete(User $user, SubCategory $subCategory): Response
+    {
+        return $this->update($user, $subCategory);
+    }
 }

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -40,6 +41,16 @@ class Category extends Model
     public function subCategories(): HasMany
     {
         return $this->hasMany(SubCategory::class);
+    }
+
+    /**
+     * The calendar items in this category, through their sub-categories.
+     *
+     * @return HasManyThrough<CalendarItem, SubCategory, $this>
+     */
+    public function calendarItems(): HasManyThrough
+    {
+        return $this->hasManyThrough(CalendarItem::class, SubCategory::class);
     }
 
     /**

@@ -18,4 +18,13 @@ class CategoryPolicy
             ? Response::allow()
             : Response::denyAsNotFound();
     }
+
+    /**
+     * Only the user who owns a category can delete it, on the same terms as
+     * changing it.
+     */
+    public function delete(User $user, Category $category): Response
+    {
+        return $this->update($user, $category);
+    }
 }

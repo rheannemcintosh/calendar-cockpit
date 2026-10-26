@@ -16,12 +16,18 @@ class CategoryController extends Controller
 {
     /**
      * Show the user's categories with the sub-categories in each one, both in
-     * alphabetical order.
+     * alphabetical order, and how many calendar items each one holds so that
+     * deleting it can say how many will become uncategorised.
      */
     public function index(Request $request): Response
     {
         $categories = $request->user()->categories()
-            ->with(['subCategories' => fn (HasMany $query) => $query->orderByRaw('lower(name)')->orderBy('id')])
+            ->with(['subCategories' => fn (HasMany $query) => $query
+                ->withCount('calendarItems')
+                ->orderByRaw('lower(name)')
+                ->orderBy('id'),
+            ])
+            ->withCount('calendarItems')
             ->orderByRaw('lower(name)')
             ->orderBy('id')
             ->get();
@@ -31,10 +37,12 @@ class CategoryController extends Controller
                 'id' => $category->id,
                 'name' => $category->name,
                 'colour' => $category->colour,
+                'calendarItemsCount' => (int) $category->calendar_items_count,
                 'subCategories' => $category->subCategories->map(fn (SubCategory $subCategory): array => [
                     'id' => $subCategory->id,
                     'emoji' => $subCategory->emoji,
                     'name' => $subCategory->name,
+                    'calendarItemsCount' => (int) $subCategory->calendar_items_count,
                 ]),
             ]),
         ]);
@@ -66,6 +74,19 @@ class CategoryController extends Controller
         $category->update($request->categoryAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category updated.')]);
+
+        return to_route('categories.index');
+    }
+
+    /**
+     * Delete the category and its sub-categories, keeping their calendar
+     * items as uncategorised.
+     */
+    public function destroy(Category $category): RedirectResponse
+    {
+        $category->delete();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Category deleted.')]);
 
         return to_route('categories.index');
     }
