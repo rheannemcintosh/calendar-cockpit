@@ -18,3 +18,15 @@ export type SubCategoryListItem = {
 export type CategoryListItem = CategoryOption & {
     subCategories: SubCategoryListItem[];
 };
+
+// A sub-category on the categories page, with how many calendar items use it.
+export type ManagedSubCategory = SubCategoryListItem & {
+    calendarItemsCount: number;
+};
+
+// A category on the categories page, with how many calendar items are in it
+// through its sub-categories.
+export type ManagedCategory = CategoryOption & {
+    calendarItemsCount: number;
+    subCategories: ManagedSubCategory[];
+};

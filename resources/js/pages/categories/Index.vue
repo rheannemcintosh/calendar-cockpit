@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { ChevronRight, Pencil, Plus, Tags } from '@lucide/vue';
+import { Form, Head, Link } from '@inertiajs/vue3';
+import { ChevronRight, Pencil, Plus, Tags, Trash2 } from '@lucide/vue';
+import { ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,9 +9,18 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { create, edit, index } from '@/routes/categories';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { create, destroy, edit, index } from '@/routes/categories';
 import subCategories from '@/routes/sub-categories';
-import type { CategoryListItem } from '@/types';
+import type { ManagedCategory, ManagedSubCategory } from '@/types';
 
 defineOptions({
     layout: {
@@ -25,13 +35,63 @@ defineOptions({
 
 defineProps<{
     // The user's categories and their sub-categories, in alphabetical order.
-    categories: CategoryListItem[];
+    categories: ManagedCategory[];
 }>();
 
-function subCategoryCount(category: CategoryListItem): string {
-    const count = category.subCategories.length;
+// What the delete dialog is asking to confirm, or null when it is closed.
+type PendingDelete = {
+    form: ReturnType<typeof destroy.form>;
+    title: string;
+    description: string;
+};
 
-    return `${count} sub-categor${count === 1 ? 'y' : 'ies'}`;
+const pendingDelete = ref<PendingDelete | null>(null);
+
+function plural(count: number, one: string, many: string): string {
+    return `${count} ${count === 1 ? one : many}`;
+}
+
+function subCategoryCount(category: ManagedCategory): string {
+    return plural(
+        category.subCategories.length,
+        'sub-category',
+        'sub-categories',
+    );
+}
+
+// What happens to the calendar items that use what is being deleted.
+function calendarItemsNote(count: number): string {
+    if (!count) {
+        return 'No calendar items are affected.';
+    }
+
+    return `${plural(count, 'calendar item', 'calendar items')} will be kept but will no longer have a category.`;
+}
+
+function confirmDeleteCategory(category: ManagedCategory): void {
+    const withSubCategories = category.subCategories.length
+        ? ` and its ${subCategoryCount(category)}`
+        : '';
+
+    pendingDelete.value = {
+        form: destroy.form(category.id),
+        title: `Delete ${category.name}?`,
+        description: `This will permanently delete the ${category.name} category${withSubCategories}. ${calendarItemsNote(category.calendarItemsCount)}`,
+    };
+}
+
+function confirmDeleteSubCategory(subCategory: ManagedSubCategory): void {
+    pendingDelete.value = {
+        form: subCategories.destroy.form(subCategory.id),
+        title: `Delete ${subCategory.name}?`,
+        description: `This will permanently delete the ${subCategory.name} sub-category. ${calendarItemsNote(subCategory.calendarItemsCount)}`,
+    };
+}
+
+function closeDeleteDialog(open: boolean): void {
+    if (!open) {
+        pendingDelete.value = null;
+    }
 }
 </script>
 
@@ -123,6 +183,17 @@ function subCategoryCount(category: CategoryListItem): string {
                         <Button
                             variant="ghost"
                             size="sm"
+                            class="text-destructive hover:text-destructive shrink-0"
+                            :aria-label="`Delete ${category.name}`"
+                            data-test="delete-category-button"
+                            @click="confirmDeleteCategory(category)"
+                        >
+                            <Trash2 />
+                            <span class="hidden sm:inline">Delete</span>
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             as-child
                             class="shrink-0"
                         >
@@ -186,7 +257,9 @@ function subCategoryCount(category: CategoryListItem): string {
                                     <td class="px-4 py-2.5 break-words">
                                         {{ subCategory.name }}
                                     </td>
-                                    <td class="px-2 py-1 text-right">
+                                    <td
+                                        class="px-2 py-1 text-right whitespace-nowrap"
+                                    >
                                         <Button
                                             variant="ghost"
                                             size="sm"
@@ -207,6 +280,23 @@ function subCategoryCount(category: CategoryListItem): string {
                                                 </span>
                                             </Link>
                                         </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            class="text-destructive hover:text-destructive"
+                                            :aria-label="`Delete ${subCategory.name}`"
+                                            data-test="delete-sub-category-button"
+                                            @click="
+                                                confirmDeleteSubCategory(
+                                                    subCategory,
+                                                )
+                                            "
+                                        >
+                                            <Trash2 />
+                                            <span class="hidden sm:inline">
+                                                Delete
+                                            </span>
+                                        </Button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -224,5 +314,39 @@ function subCategoryCount(category: CategoryListItem): string {
                 </Collapsible>
             </li>
         </ul>
+
+        <Dialog :open="pendingDelete !== null" @update:open="closeDeleteDialog">
+            <DialogContent v-if="pendingDelete">
+                <Form
+                    v-bind="pendingDelete.form"
+                    :options="{ preserveScroll: true }"
+                    class="space-y-6"
+                    v-slot="{ processing }"
+                    @success="pendingDelete = null"
+                >
+                    <DialogHeader class="space-y-3">
+                        <DialogTitle>{{ pendingDelete.title }}</DialogTitle>
+                        <DialogDescription data-test="delete-description">
+                            {{ pendingDelete.description }}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter class="gap-2">
+                        <DialogClose as-child>
+                            <Button variant="secondary">Cancel</Button>
+                        </DialogClose>
+
+                        <Button
+                            type="submit"
+                            variant="destructive"
+                            :disabled="processing"
+                            data-test="confirm-delete-button"
+                        >
+                            Delete
+                        </Button>
+                    </DialogFooter>
+                </Form>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

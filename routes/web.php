@@ -13,12 +13,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('calendar-items', CalendarItemController::class)->only(['index', 'create', 'store']);
 
     Route::resource('categories', CategoryController::class)
-        ->only(['index', 'create', 'store', 'edit', 'update'])
-        ->middlewareFor(['edit', 'update'], 'can:update,category');
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->middlewareFor(['edit', 'update'], 'can:update,category')
+        ->middlewareFor('destroy', 'can:delete,category');
 
     Route::resource('sub-categories', SubCategoryController::class)
-        ->only(['create', 'store', 'edit', 'update'])
-        ->middlewareFor(['edit', 'update'], 'can:update,sub_category');
+        ->only(['create', 'store', 'edit', 'update', 'destroy'])
+        ->middlewareFor(['edit', 'update'], 'can:update,sub_category')
+        ->middlewareFor('destroy', 'can:delete,sub_category');
 });
 
 require __DIR__.'/settings.php';

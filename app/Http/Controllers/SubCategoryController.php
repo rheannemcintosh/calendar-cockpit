@@ -58,4 +58,16 @@ class SubCategoryController extends Controller
 
         return to_route('categories.index');
     }
+
+    /**
+     * Delete the sub-category, keeping its calendar items as uncategorised.
+     */
+    public function destroy(SubCategory $subCategory): RedirectResponse
+    {
+        $subCategory->delete();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Sub-category deleted.')]);
+
+        return to_route('categories.index');
+    }
 }

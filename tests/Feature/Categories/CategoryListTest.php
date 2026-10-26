@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CalendarItem;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\User;
@@ -37,18 +38,20 @@ test('categories and their sub-categories are listed in alphabetical order', fun
                     'id' => $family->id,
                     'name' => 'family',
                     'colour' => '#EF4444',
+                    'calendarItemsCount' => 0,
                     'subCategories' => [
-                        ['id' => $birthdays->id, 'emoji' => '🎂', 'name' => 'Birthdays'],
+                        ['id' => $birthdays->id, 'emoji' => '🎂', 'name' => 'Birthdays', 'calendarItemsCount' => 0],
                     ],
                 ],
                 [
                     'id' => $work->id,
                     'name' => 'Work',
                     'colour' => '#3B82F6',
+                    'calendarItemsCount' => 0,
                     'subCategories' => [
-                        ['id' => $admin->id, 'emoji' => '🗂️', 'name' => 'admin'],
-                        ['id' => $deepWork->id, 'emoji' => '💻', 'name' => 'Deep work'],
-                        ['id' => $meetings->id, 'emoji' => '📅', 'name' => 'Meetings'],
+                        ['id' => $admin->id, 'emoji' => '🗂️', 'name' => 'admin', 'calendarItemsCount' => 0],
+                        ['id' => $deepWork->id, 'emoji' => '💻', 'name' => 'Deep work', 'calendarItemsCount' => 0],
+                        ['id' => $meetings->id, 'emoji' => '📅', 'name' => 'Meetings', 'calendarItemsCount' => 0],
                     ],
                 ],
             ]));
@@ -80,4 +83,21 @@ test('other users\' categories and sub-categories are not listed', function () {
             ->where('categories.0.id', $mine->id)
             ->has('categories.0.subCategories', 1)
             ->where('categories.0.subCategories.0.name', 'Meetings'));
+});
+
+test('each category and sub-category says how many calendar items use it', function () {
+    $user = User::factory()->create();
+    $work = Category::factory()->for($user)->create(['name' => 'Work']);
+    $meetings = SubCategory::factory()->for($work)->create(['name' => 'Meetings']);
+    $admin = SubCategory::factory()->for($work)->create(['name' => 'Admin']);
+    CalendarItem::factory()->count(2)->for($user)->for($meetings)->create();
+    CalendarItem::factory()->for($user)->for($admin)->create();
+    CalendarItem::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->get(route('categories.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('categories.0.calendarItemsCount', 3)
+            ->where('categories.0.subCategories.0.calendarItemsCount', 1)
+            ->where('categories.0.subCategories.1.calendarItemsCount', 2));
 });
