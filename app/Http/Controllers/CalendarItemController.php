@@ -35,6 +35,7 @@ class CalendarItemController extends Controller
 
         $calendarItems = $request->user()->calendarItems()
             ->where('starts_at', '>=', $from)
+            ->with('subCategory.category')
             ->orderBy('starts_at')
             ->orderBy('id')
             ->get();

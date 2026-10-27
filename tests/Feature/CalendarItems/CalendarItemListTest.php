@@ -1,7 +1,10 @@
 <?php
 
 use App\Models\CalendarItem;
+use App\Models\Category;
+use App\Models\SubCategory;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 // The list starts at today, so pin today to Sunday 18 October 2026.
@@ -155,6 +158,90 @@ test('previous calendar items load about 20 at a time, rounded out to whole days
             ->where('years.0.weeks.0.days.0.date', '2026-09-28')
             ->has('years.0.weeks.0.days.0.items', 2)
             ->where('previousFrom', '2026-09-01'));
+});
+
+test('calendar items show their category and sub-category', function () {
+    $user = User::factory()->create();
+    $deepWork = SubCategory::factory()
+        ->for(Category::factory()->for($user)->create(['name' => 'Work', 'colour' => '#2563EB']))
+        ->create(['emoji' => '💻', 'name' => 'Deep work']);
+    CalendarItem::factory()->for($user)->for($deepWork)->between('2026-10-20 09:00', '2026-10-20 10:00')->create(['title' => 'Write report']);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.title', 'Write report')
+            ->where('years.0.weeks.0.days.0.items.0.category', ['name' => 'Work', 'colour' => '#2563EB'])
+            ->where('years.0.weeks.0.days.0.items.0.subCategory', ['emoji' => '💻', 'name' => 'Deep work']));
+});
+
+test('uncategorised calendar items have no category or sub-category', function () {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-20 10:00')->create(['title' => 'Dentist']);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.title', 'Dentist')
+            ->where('years.0.weeks.0.days.0.items.0.time', '09:00–10:00')
+            ->where('years.0.weeks.0.days.0.items.0.category', null)
+            ->where('years.0.weeks.0.days.0.items.0.subCategory', null));
+});
+
+test('calendar items show the latest names, colour and emoji of their category and sub-category', function () {
+    $user = User::factory()->create();
+    $category = Category::factory()->for($user)->create(['name' => 'Work', 'colour' => '#2563EB']);
+    $subCategory = SubCategory::factory()->for($category)->create(['emoji' => '💻', 'name' => 'Deep work']);
+    CalendarItem::factory()->for($user)->for($subCategory)->between('2026-10-20 09:00', '2026-10-20 10:00')->create();
+    CalendarItem::factory()->for($user)->for($subCategory)->between('2026-10-21 09:00', '2026-10-21 10:00')->create();
+
+    $category->update(['name' => 'Job', 'colour' => '#16A34A']);
+    $subCategory->update(['emoji' => '🧠', 'name' => 'Focus']);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.category', ['name' => 'Job', 'colour' => '#16A34A'])
+            ->where('years.0.weeks.0.days.0.items.0.subCategory', ['emoji' => '🧠', 'name' => 'Focus'])
+            ->where('years.0.weeks.0.days.1.items.0.category', ['name' => 'Job', 'colour' => '#16A34A'])
+            ->where('years.0.weeks.0.days.1.items.0.subCategory', ['emoji' => '🧠', 'name' => 'Focus']));
+});
+
+test('previous calendar items show their category and sub-category', function () {
+    $user = User::factory()->create();
+    $birthdays = SubCategory::factory()
+        ->for(Category::factory()->for($user)->create(['name' => 'Family', 'colour' => '#DB2777']))
+        ->create(['emoji' => '🎂', 'name' => 'Birthdays']);
+    CalendarItem::factory()->for($user)->for($birthdays)->between('2026-10-10 18:00', '2026-10-10 21:00')->create();
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index', ['from' => '2026-10-10']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.category', ['name' => 'Family', 'colour' => '#DB2777'])
+            ->where('years.0.weeks.0.days.0.items.0.subCategory', ['emoji' => '🎂', 'name' => 'Birthdays']));
+});
+
+test('categories and sub-categories are loaded with the calendar items, not one at a time', function () {
+    $user = User::factory()->create();
+
+    $queriesFor = function (int $count) use ($user): int {
+        CalendarItem::query()->delete();
+
+        foreach (range(1, $count) as $daysAhead) {
+            $day = now()->addDays($daysAhead)->toDateString();
+            $subCategory = SubCategory::factory()->for(Category::factory()->for($user))->create();
+            CalendarItem::factory()->for($user)->for($subCategory)->between("{$day} 09:00", "{$day} 10:00")->create();
+        }
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->actingAs($user)->get(route('calendar-items.index'))->assertOk();
+        DB::disableQueryLog();
+
+        return count(DB::getQueryLog());
+    };
+
+    expect($queriesFor(5))->toBe($queriesFor(1));
 });
 
 test('an invalid day to load from is rejected', function () {
