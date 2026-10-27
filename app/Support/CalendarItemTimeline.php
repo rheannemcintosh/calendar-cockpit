@@ -13,7 +13,9 @@ use Illuminate\Support\Collection;
  * Weeks run Sunday to Saturday. Week 1 is the week that contains 1 January,
  * so a week that crosses New Year belongs to the new year.
  *
- * @phpstan-type TimelineItem array{id: int, title: string, time: string}
+ * @phpstan-type TimelineCategory array{name: string, colour: string}
+ * @phpstan-type TimelineSubCategory array{emoji: string, name: string}
+ * @phpstan-type TimelineItem array{id: int, title: string, time: string, category: TimelineCategory|null, subCategory: TimelineSubCategory|null}
  * @phpstan-type TimelineDay array{date: string, label: string, items: list<TimelineItem>}
  * @phpstan-type TimelineWeek array{key: string, number: int, range: string, days: list<TimelineDay>}
  * @phpstan-type TimelineYear array{year: int, weeks: list<TimelineWeek>}
@@ -22,6 +24,7 @@ class CalendarItemTimeline
 {
     /**
      * Group calendar items, which must already be in start order, into years, weeks and days.
+     * Eager load their sub-categories and categories so each one is not fetched separately.
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<TimelineYear>
@@ -56,6 +59,14 @@ class CalendarItemTimeline
                 'id' => $calendarItem->id,
                 'title' => $calendarItem->title,
                 'time' => static::timeRange($calendarItem->starts_at, $calendarItem->ends_at),
+                'category' => $calendarItem->subCategory ? [
+                    'name' => $calendarItem->subCategory->category->name,
+                    'colour' => $calendarItem->subCategory->category->colour,
+                ] : null,
+                'subCategory' => $calendarItem->subCategory ? [
+                    'emoji' => $calendarItem->subCategory->emoji,
+                    'name' => $calendarItem->subCategory->name,
+                ] : null,
             ];
         }
 

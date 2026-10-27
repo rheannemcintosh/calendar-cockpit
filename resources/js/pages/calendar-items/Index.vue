@@ -210,15 +210,46 @@ const appear =
                         <li
                             v-for="item in day.items"
                             :key="item.id"
-                            class="flex flex-col gap-0.5 px-4 py-3 sm:flex-row sm:items-baseline sm:gap-4"
+                            class="relative flex flex-col gap-0.5 py-3 pr-4 pl-6 sm:flex-row sm:items-baseline sm:gap-4"
                         >
+                            <!-- Any colour can be chosen, so the outline keeps the marker visible on either background. -->
+                            <span
+                                :class="[
+                                    'absolute inset-y-2 left-2 w-1 rounded-full ring-1 ring-black/10 dark:ring-white/20',
+                                    !item.category && 'bg-muted',
+                                ]"
+                                :style="
+                                    item.category
+                                        ? {
+                                              backgroundColor:
+                                                  item.category.colour,
+                                          }
+                                        : undefined
+                                "
+                                aria-hidden="true"
+                                data-test="category-marker"
+                            />
                             <span
                                 class="text-muted-foreground shrink-0 text-sm tabular-nums sm:w-44"
                             >
                                 {{ item.time }}
                             </span>
-                            <span class="font-medium break-words">
-                                {{ item.title }}
+                            <span class="flex min-w-0 flex-col gap-0.5">
+                                <span class="font-medium break-words">
+                                    <span
+                                        v-if="item.subCategory"
+                                        class="mr-1.5"
+                                        aria-hidden="true"
+                                        >{{ item.subCategory.emoji }}</span
+                                    >{{ item.title }}
+                                </span>
+                                <span
+                                    v-if="item.category && item.subCategory"
+                                    class="text-muted-foreground text-sm break-words"
+                                >
+                                    {{ item.category.name }} ·
+                                    {{ item.subCategory.name }}
+                                </span>
                             </span>
                         </li>
                     </ul>
