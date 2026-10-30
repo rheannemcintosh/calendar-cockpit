@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -24,6 +25,7 @@ class CalendarItemFactory extends Factory
             'title' => fake()->sentence(3),
             'starts_at' => $startsAt,
             'ends_at' => $startsAt->copy()->addMinutes(fake()->randomElement([30, 60, 90, 120])),
+            'time_type' => TimeType::Exact,
         ];
     }
 
@@ -33,5 +35,20 @@ class CalendarItemFactory extends Factory
             'starts_at' => Carbon::parse($startsAt),
             'ends_at' => Carbon::parse($endsAt),
         ]);
+    }
+
+    public function window(): static
+    {
+        return $this->state(fn (array $attributes) => ['time_type' => TimeType::Window]);
+    }
+
+    public function block(): static
+    {
+        return $this->state(fn (array $attributes) => ['time_type' => TimeType::Block]);
+    }
+
+    public function approximate(): static
+    {
+        return $this->state(fn (array $attributes) => ['time_type' => TimeType::Approximate]);
     }
 }
