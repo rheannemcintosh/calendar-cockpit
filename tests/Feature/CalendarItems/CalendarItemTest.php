@@ -4,6 +4,7 @@ use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\User;
 use Carbon\CarbonInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -75,6 +76,19 @@ test('a calendar item stored without going through the model is exact', function
     ]);
 
     expect(CalendarItem::find($id)->time_type)->toBe(TimeType::Exact);
+});
+
+test('the database refuses a time type that is not one of the four', function () {
+    $insert = fn () => DB::table('calendar_items')->insert([
+        'user_id' => User::factory()->create()->id,
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+        'time_type' => 'sometime',
+    ]);
+
+    expect($insert)->toThrow(QueryException::class, 'calendar_items_time_type_check')
+        ->and(CalendarItem::count())->toBe(0);
 });
 
 test('a calendar item is saved and read back with its time type', function (TimeType $timeType) {
