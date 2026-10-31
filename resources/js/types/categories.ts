@@ -20,10 +20,16 @@ export type EditableSubCategory = SubCategoryListItem & {
     defaultTimeType: TimeTypeValue;
 };
 
-// A category as listed on the categories page, with its sub-categories in
-// alphabetical order.
+// A sub-category as offered on the create calendar item form, with the time
+// type new calendar items in it start with.
+export type SubCategoryOption = SubCategoryListItem & {
+    defaultTimeType: TimeTypeValue;
+};
+
+// A category as offered on the create calendar item form, with its
+// sub-categories in alphabetical order.
 export type CategoryListItem = CategoryOption & {
-    subCategories: SubCategoryListItem[];
+    subCategories: SubCategoryOption[];
 };
 
 // A sub-category on the categories page, with how many calendar items use it.
