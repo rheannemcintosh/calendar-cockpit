@@ -42,6 +42,8 @@
 #                       writes it. Left unset if there is none.
 #   SQL_SERVER          pin an existing server when the resource group has several.
 #   GHCR_USERNAME, GHCR_PAT   pull credentials for a private ghcr.io package.
+#   MAPBOX_ACCESS_TOKEN the Mapbox token for location search, stored as a secret.
+#                       Left as it was on a re-run without one.
 #   APP_KEY             default: generated on the first provision only.
 #   BUDGET_AMOUNT       default: 1, in your subscription's billing currency.
 #   BUDGET_EMAIL        default: the signed-in Azure user, when that is an email
@@ -102,6 +104,9 @@ resolve_app_display
 # Only needed if the ghcr.io package is private.
 GHCR_USERNAME="${GHCR_USERNAME:-}"
 GHCR_PAT="${GHCR_PAT:-}"
+
+# Only set on a run that gives it, so a re-run without it keeps the stored token.
+MAPBOX_ACCESS_TOKEN="${MAPBOX_ACCESS_TOKEN:-}"
 
 BUDGET_AMOUNT="${BUDGET_AMOUNT:-1}"
 if [[ ! "$BUDGET_AMOUNT" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
@@ -228,19 +233,27 @@ if [[ -n "$APP_TAGLINE" ]]; then
   ENV_VARS+=("APP_TAGLINE=$APP_TAGLINE")
 fi
 
+SECRETS=("db-password=$SQL_ADMIN_PASSWORD")
+
+if [[ -n "$MAPBOX_ACCESS_TOKEN" ]]; then
+  ENV_VARS+=("MAPBOX_ACCESS_TOKEN=secretref:mapbox-token")
+  SECRETS+=("mapbox-token=$MAPBOX_ACCESS_TOKEN")
+fi
+
 if az containerapp show -g "$RESOURCE_GROUP" -n "$ACA_APP" --output none 2>/dev/null; then
   FIRST_PROVISION=false
   echo "==> Container app exists — refreshing image and env vars (APP_KEY secret kept)"
+  # Secrets first, so an env var that refers to a new secret can find it.
+  az containerapp secret set \
+    --name "$ACA_APP" \
+    --resource-group "$RESOURCE_GROUP" \
+    --secrets "${SECRETS[@]}" \
+    --output none
   az containerapp update \
     --name "$ACA_APP" \
     --resource-group "$RESOURCE_GROUP" \
     --image "$IMAGE" \
     --set-env-vars "${ENV_VARS[@]}" \
-    --output none
-  az containerapp secret set \
-    --name "$ACA_APP" \
-    --resource-group "$RESOURCE_GROUP" \
-    --secrets "db-password=$SQL_ADMIN_PASSWORD" \
     --output none
   if [[ -n "$GHCR_PAT" ]]; then
     echo "==> Refreshing ghcr.io pull credential"
@@ -275,7 +288,7 @@ else
     --min-replicas 0 \
     --max-replicas 1 \
     --cpu 0.5 --memory 1.0Gi \
-    --secrets "app-key=$APP_KEY" "db-password=$SQL_ADMIN_PASSWORD" \
+    --secrets "app-key=$APP_KEY" "${SECRETS[@]}" \
     --env-vars "${ENV_VARS[@]}" \
     ${REGISTRY_ARGS[@]+"${REGISTRY_ARGS[@]}"} \
     --output none

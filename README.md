@@ -258,6 +258,7 @@ The full set is in `.env.example`. The ones the template relies on:
 | `QUEUE_CONNECTION`            | Queue backend, `database` by default.                                      |
 | `CACHE_STORE`                 | Cache backend, `database` by default.                                      |
 | `MAIL_MAILER`                 | Mail transport, `log` by default so emails are written to the log.         |
+| `MAPBOX_ACCESS_TOKEN`         | Mapbox token for location search. Without one, location search is off.     |
 
 ### Branding
 
@@ -322,7 +323,7 @@ If the build stops with "Expected @voidzero-dev/vite-plus-core@X, but found @voi
     SQL_ADMIN_PASSWORD='choose-a-strong-password' ./deploy/azure-provision.sh
     ```
 
-Also set `GHCR_USERNAME` and `GHCR_PAT` (a token with `read:packages`) if the `ghcr.io` package is private. The script header lists every setting, such as `APP_NAME`, `LOCATION`, `BUDGET_AMOUNT` and `BUDGET_EMAIL`. The deployed app shows the `APP_NAME` and `APP_TAGLINE` in `.env.example`, which `npm run brand` writes, so run it first if you want the live app to carry your name and tagline. Without a name there (or with the template's placeholder, `My App`) it uses the repository name in title case. Set `APP_TITLE` or `APP_TAGLINE` to override either. The budget alert emails the signed-in Azure user at 80% and 100% of the budget, or `BUDGET_EMAIL` if you set it.
+Also set `GHCR_USERNAME` and `GHCR_PAT` (a token with `read:packages`) if the `ghcr.io` package is private. The script header lists every setting, such as `APP_NAME`, `LOCATION`, `BUDGET_AMOUNT` and `BUDGET_EMAIL`. The deployed app shows the `APP_NAME` and `APP_TAGLINE` in `.env.example`, which `npm run brand` writes, so run it first if you want the live app to carry your name and tagline. Without a name there (or with the template's placeholder, `My App`) it uses the repository name in title case. Set `APP_TITLE` or `APP_TAGLINE` to override either. Set `MAPBOX_ACCESS_TOKEN` to turn on location search. It is stored as a secret, and a re-run without it keeps the one already stored. The budget alert emails the signed-in Azure user at 80% and 100% of the budget, or `BUDGET_EMAIL` if you set it.
 
 Re-running the script is safe: it reuses existing resources and keeps the data and secrets. The container app is created behind Easy Auth and returns HTTP 403 to everyone until sign-in is set up, which the next section covers.
 
