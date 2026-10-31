@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 test('the calendar items table has the expected columns', function () {
-    expect(Schema::hasColumns('calendar_items', ['id', 'user_id', 'title', 'starts_at', 'ends_at', 'time_type', 'created_at', 'updated_at']))->toBeTrue();
+    expect(Schema::hasColumns('calendar_items', ['id', 'user_id', 'title', 'starts_at', 'ends_at', 'time_type', 'time_type_overridden', 'created_at', 'updated_at']))->toBeTrue();
 });
 
 test('a calendar item is saved and read back with its title, start and end intact', function () {
@@ -108,3 +108,25 @@ test('the factory has a state for each of the other time types', function (strin
     'block' => ['block', TimeType::Block],
     'approximate' => ['approximate', TimeType::Approximate],
 ]);
+
+test('a calendar item is not overridden unless told otherwise', function () {
+    $calendarItem = User::factory()->create()->calendarItems()->create([
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+    ]);
+
+    expect($calendarItem->time_type_overridden)->toBeFalse()
+        ->and($calendarItem->fresh()->time_type_overridden)->toBeFalse();
+});
+
+test('a calendar item stored without going through the model is not overridden', function () {
+    $id = DB::table('calendar_items')->insertGetId([
+        'user_id' => User::factory()->create()->id,
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+    ]);
+
+    expect(CalendarItem::find($id)->time_type_overridden)->toBeFalse();
+});
