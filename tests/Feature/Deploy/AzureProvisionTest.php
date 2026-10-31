@@ -107,6 +107,52 @@ test('a key is generated once and the passwords are stored as secrets, never pri
         ->not->toContain($secrets['app-key']);
 });
 
+test('a Mapbox token is stored as a secret that the app reads, never printed', function () {
+    $result = provision($this, ['MAPBOX_ACCESS_TOKEN' => 'pk.mapbox_token']);
+    $app = $this->azure->state()['apps']['acme-tracker'];
+
+    expect($app['secrets']['mapbox-token'])->toBe('pk.mapbox_token')
+        ->and($app['env_vars']['MAPBOX_ACCESS_TOKEN'])->toBe('secretref:mapbox-token')
+        ->and($result->output().$result->errorOutput())->not->toContain('pk.mapbox_token');
+});
+
+test('without a Mapbox token the app has no Mapbox settings', function () {
+    provision($this);
+    $app = $this->azure->state()['apps']['acme-tracker'];
+
+    expect($app['secrets'])->not->toHaveKey('mapbox-token')
+        ->and($app['env_vars'])->not->toHaveKey('MAPBOX_ACCESS_TOKEN');
+});
+
+test('running it again with a Mapbox token adds or replaces it, and without one keeps it', function () {
+    provision($this);
+    provision($this, ['MAPBOX_ACCESS_TOKEN' => 'pk.first']);
+
+    expect($this->azure->state()['apps']['acme-tracker']['secrets']['mapbox-token'])->toBe('pk.first')
+        ->and($this->azure->state()['apps']['acme-tracker']['env_vars']['MAPBOX_ACCESS_TOKEN'])->toBe('secretref:mapbox-token');
+
+    provision($this, ['MAPBOX_ACCESS_TOKEN' => 'pk.second']);
+
+    expect($this->azure->state()['apps']['acme-tracker']['secrets']['mapbox-token'])->toBe('pk.second');
+
+    provision($this);
+    $app = $this->azure->state()['apps']['acme-tracker'];
+
+    expect($app['secrets']['mapbox-token'])->toBe('pk.second')
+        ->and($app['env_vars']['MAPBOX_ACCESS_TOKEN'])->toBe('secretref:mapbox-token');
+});
+
+test('a re-run sets the secrets before the settings that refer to them', function () {
+    provision($this);
+    provision($this, ['MAPBOX_ACCESS_TOKEN' => 'pk.first']);
+
+    $log = collect($this->azure->log())->values();
+    $lastSecretSet = $log->keys()->filter(fn (int $i) => str_starts_with($log[$i], 'az containerapp secret set'))->last();
+    $lastUpdate = $log->keys()->filter(fn (int $i) => str_starts_with($log[$i], 'az containerapp update') && str_contains($log[$i], '--image'))->last();
+
+    expect($lastSecretSet)->toBeLessThan($lastUpdate);
+});
+
 test('a budget alert goes to the signed-in user at 80 and 100 percent', function () {
     provision($this);
     $budget = $this->azure->state()['budgets']['rg-acme-tracker/acme-tracker-monthly']['properties'];

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CalendarItemController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\LocationSearchController;
 use App\Http\Controllers\SubCategoryController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +12,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 
     Route::resource('calendar-items', CalendarItemController::class)->only(['index', 'create', 'store']);
+
+    Route::get('locations/search', LocationSearchController::class)
+        ->middleware('throttle:60,1')
+        ->name('locations.search');
 
     Route::resource('categories', CategoryController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
