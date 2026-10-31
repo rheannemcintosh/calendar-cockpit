@@ -287,3 +287,110 @@ test('whether a calendar item is overridden is worked out on the server, not tak
     'sent as overridden' => true,
     'sent as not overridden' => false,
 ]);
+
+const CHOSEN_LOCATION = [
+    'location_name' => 'Smile Dental Practice',
+    'location_address' => '12 High Street, Edinburgh EH1 1SR, United Kingdom',
+    'location_latitude' => '55.9500812',
+    'location_longitude' => '-3.1883611',
+];
+
+const NO_LOCATION = [
+    'location_name' => '',
+    'location_address' => '',
+    'location_latitude' => '',
+    'location_longitude' => '',
+];
+
+test('the form offers location search when there is a Mapbox token', function () {
+    config(['services.mapbox.token' => 'pk.test-token']);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('calendar-items.create'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('locationSearch', true));
+});
+
+test('the form does not offer location search without a Mapbox token', function (?string $token) {
+    config(['services.mapbox.token' => $token]);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('calendar-items.create'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('locationSearch', false));
+})->with([
+    'null' => null,
+    'empty' => '',
+]);
+
+test('a user can create a calendar item with a chosen location', function () {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, ...CHOSEN_LOCATION])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('calendar-items.index'));
+
+    $calendarItem = CalendarItem::sole();
+
+    expect($calendarItem->location_name)->toBe('Smile Dental Practice')
+        ->and($calendarItem->location_address)->toBe('12 High Street, Edinburgh EH1 1SR, United Kingdom')
+        ->and($calendarItem->location_latitude)->toBe(55.9500812)
+        ->and($calendarItem->location_longitude)->toBe(-3.1883611);
+});
+
+test('a calendar item can be given a location that has no address', function () {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, ...CHOSEN_LOCATION, 'location_address' => ''])
+        ->assertSessionHasNoErrors();
+
+    $calendarItem = CalendarItem::sole();
+
+    expect($calendarItem->location_name)->toBe('Smile Dental Practice')
+        ->and($calendarItem->location_address)->toBeNull();
+});
+
+test('a calendar item has no location when none is chosen', function (array $location) {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, ...$location])
+        ->assertSessionHasNoErrors();
+
+    $calendarItem = CalendarItem::sole();
+
+    expect($calendarItem->location_name)->toBeNull()
+        ->and($calendarItem->location_address)->toBeNull()
+        ->and($calendarItem->location_latitude)->toBeNull()
+        ->and($calendarItem->location_longitude)->toBeNull();
+})->with([
+    'not sent' => [[]],
+    'sent empty' => [NO_LOCATION],
+]);
+
+test('the rest of a location is ignored when it has no name', function () {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, ...CHOSEN_LOCATION, 'location_name' => ''])
+        ->assertSessionHasNoErrors();
+
+    $calendarItem = CalendarItem::sole();
+
+    expect($calendarItem->location_address)->toBeNull()
+        ->and($calendarItem->location_latitude)->toBeNull()
+        ->and($calendarItem->location_longitude)->toBeNull();
+});
+
+test('a calendar item cannot be given a location that is not a place on the map', function (string $field, mixed $value) {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, ...CHOSEN_LOCATION, $field => $value])
+        ->assertSessionHasErrors([$field => 'Please choose the location again.']);
+
+    expect(CalendarItem::count())->toBe(0);
+})->with([
+    'no latitude' => ['location_latitude', ''],
+    'no longitude' => ['location_longitude', ''],
+    'a latitude that is not a number' => ['location_latitude', 'north'],
+    'a latitude above 90' => ['location_latitude', '90.5'],
+    'a latitude below -90' => ['location_latitude', '-90.5'],
+    'a longitude above 180' => ['location_longitude', '180.5'],
+    'a longitude below -180' => ['location_longitude', '-180.5'],
+    'a name longer than 255 characters' => ['location_name', str_repeat('a', 256)],
+    'an address longer than 255 characters' => ['location_address', str_repeat('a', 256)],
+    'a name that is a list' => ['location_name', ['Smile Dental Practice']],
+]);
