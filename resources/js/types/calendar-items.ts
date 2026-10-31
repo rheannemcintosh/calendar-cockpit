@@ -1,10 +1,13 @@
 // The shape of App\Support\CalendarItemTimeline::group(), passed to the calendar items list.
 
+import type { TimeTypeValue } from './time-types';
+
 // A calendar item's category and sub-category are both null when it is uncategorised.
 export type TimelineItem = {
     id: number;
     title: string;
     time: string;
+    timeType: TimeTypeValue;
     category: { name: string; colour: string } | null;
     subCategory: { emoji: string; name: string } | null;
 };

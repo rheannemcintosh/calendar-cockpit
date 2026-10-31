@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
@@ -15,7 +16,7 @@ use Illuminate\Support\Collection;
  *
  * @phpstan-type TimelineCategory array{name: string, colour: string}
  * @phpstan-type TimelineSubCategory array{emoji: string, name: string}
- * @phpstan-type TimelineItem array{id: int, title: string, time: string, category: TimelineCategory|null, subCategory: TimelineSubCategory|null}
+ * @phpstan-type TimelineItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null}
  * @phpstan-type TimelineDay array{date: string, label: string, items: list<TimelineItem>}
  * @phpstan-type TimelineWeek array{key: string, number: int, range: string, days: list<TimelineDay>}
  * @phpstan-type TimelineYear array{year: int, weeks: list<TimelineWeek>}
@@ -59,6 +60,7 @@ class CalendarItemTimeline
                 'id' => $calendarItem->id,
                 'title' => $calendarItem->title,
                 'time' => static::timeRange($calendarItem->starts_at, $calendarItem->ends_at),
+                'timeType' => $calendarItem->time_type->value,
                 'category' => $calendarItem->subCategory ? [
                     'name' => $calendarItem->subCategory->category->name,
                     'colour' => $calendarItem->subCategory->category->colour,

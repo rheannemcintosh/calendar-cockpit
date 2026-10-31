@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\Category;
 use App\Models\SubCategory;
@@ -21,7 +22,8 @@ test('a user with no calendar items gets an empty list', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('calendar-items/Index')
             ->where('years', [])
-            ->where('previousFrom', null));
+            ->where('previousFrom', null)
+            ->where('timeTypes', TimeType::options()));
 });
 
 test('calendar items are grouped by year, week and day', function () {
@@ -42,7 +44,29 @@ test('calendar items are grouped by year, week and day', function () {
             ->where('years.0.weeks.0.days.0.label', 'Tuesday 20 October')
             ->has('years.0.weeks.0.days.0.items', 1)
             ->where('years.0.weeks.0.days.0.items.0.title', 'Dentist')
-            ->where('years.0.weeks.0.days.0.items.0.time', '09:00–10:30'));
+            ->where('years.0.weeks.0.days.0.items.0.time', '09:00–10:30')
+            ->where('years.0.weeks.0.days.0.items.0.timeType', 'exact'));
+});
+
+test('calendar items show their time type next to their time, which stays as it is', function (string $timeType) {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->{$timeType}()->between('2026-10-20 07:30', '2026-10-20 08:00')->create();
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.time', '07:30–08:00')
+            ->where('years.0.weeks.0.days.0.items.0.timeType', $timeType));
+})->with(['window', 'block', 'approximate']);
+
+test('previous calendar items show their time type', function () {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->approximate()->between('2026-10-10 18:00', '2026-10-10 21:00')->create();
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index', ['from' => '2026-10-10']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.timeType', 'approximate'));
 });
 
 test('years, weeks, days and calendar items are in date order, earliest first', function () {

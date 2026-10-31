@@ -49,6 +49,7 @@ class CalendarItemController extends Controller
         return Inertia::render('calendar-items/Index', [
             'years' => CalendarItemTimeline::group($calendarItems),
             'previousFrom' => $earliestPrevious?->toDateString(),
+            'timeTypes' => TimeType::options(),
         ]);
     }
 

@@ -2,11 +2,12 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { CalendarPlus, History, Plus } from '@lucide/vue';
 import { nextTick, ref } from 'vue';
+import CalendarItemTime from '@/components/CalendarItemTime.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { create, index } from '@/routes/calendar-items';
-import type { TimelineYear } from '@/types';
+import type { TimelineYear, TimeTypeOption } from '@/types';
 
 defineOptions({
     layout: {
@@ -23,7 +24,12 @@ const props = defineProps<{
     years: TimelineYear[];
     // The day to load from to show earlier calendar items, or null when there are none.
     previousFrom: string | null;
+    timeTypes: TimeTypeOption[];
 }>();
+
+const timeTypes = Object.fromEntries(
+    props.timeTypes.map((timeType) => [timeType.value, timeType]),
+);
 
 const loading = ref(false);
 
@@ -211,6 +217,7 @@ const appear =
                             v-for="item in day.items"
                             :key="item.id"
                             class="relative flex flex-col gap-0.5 py-3 pr-4 pl-6 sm:flex-row sm:items-baseline sm:gap-4"
+                            :data-time-type="item.timeType"
                         >
                             <!-- Any colour can be chosen, so the outline keeps the marker visible on either background. -->
                             <span
@@ -232,7 +239,10 @@ const appear =
                             <span
                                 class="text-muted-foreground shrink-0 text-sm tabular-nums sm:w-44"
                             >
-                                {{ item.time }}
+                                <CalendarItemTime
+                                    :time="item.time"
+                                    :time-type="timeTypes[item.timeType]"
+                                />
                             </span>
                             <span class="flex min-w-0 flex-col gap-0.5">
                                 <span class="font-medium break-words">
