@@ -16,7 +16,8 @@ use Illuminate\Support\Collection;
  *
  * @phpstan-type TimelineCategory array{name: string, colour: string}
  * @phpstan-type TimelineSubCategory array{emoji: string, name: string}
- * @phpstan-type TimelineItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null}
+ * @phpstan-type TimelineLocation array{name: string, address: string|null, mapsUrl: string}
+ * @phpstan-type TimelineItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null, location: TimelineLocation|null}
  * @phpstan-type TimelineDay array{date: string, label: string, items: list<TimelineItem>}
  * @phpstan-type TimelineWeek array{key: string, number: int, range: string, days: list<TimelineDay>}
  * @phpstan-type TimelineYear array{year: int, weeks: list<TimelineWeek>}
@@ -68,6 +69,11 @@ class CalendarItemTimeline
                 'subCategory' => $calendarItem->subCategory ? [
                     'emoji' => $calendarItem->subCategory->emoji,
                     'name' => $calendarItem->subCategory->name,
+                ] : null,
+                'location' => $calendarItem->location_name !== null ? [
+                    'name' => $calendarItem->location_name,
+                    'address' => $calendarItem->location_address,
+                    'mapsUrl' => static::mapsUrl($calendarItem->location_latitude, $calendarItem->location_longitude),
                 ] : null,
             ];
         }
@@ -124,6 +130,18 @@ class CalendarItemTimeline
         }
 
         return $weekStart->format('j').'–'.$weekEnd->format('j M');
+    }
+
+    /**
+     * A link that drops a pin on the location's point in Google Maps. It opens
+     * the Google Maps app where one is installed, or the website if not.
+     */
+    public static function mapsUrl(float $latitude, float $longitude): string
+    {
+        return 'https://www.google.com/maps/search/?'.http_build_query([
+            'api' => 1,
+            'query' => $latitude.','.$longitude,
+        ]);
     }
 
     /**

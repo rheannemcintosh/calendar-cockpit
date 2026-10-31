@@ -245,6 +245,63 @@ test('previous calendar items show their category and sub-category', function ()
             ->where('years.0.weeks.0.days.0.items.0.subCategory', ['emoji' => '🎂', 'name' => 'Birthdays']));
 });
 
+test('calendar items show their location with a link that opens it in maps', function () {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-20 10:00')->create([
+        'location_name' => 'Royal Albert Hall',
+        'location_address' => 'Kensington Gore, London SW7 2AP',
+        'location_latitude' => 51.50097,
+        'location_longitude' => -0.177459,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.location', [
+                'name' => 'Royal Albert Hall',
+                'address' => 'Kensington Gore, London SW7 2AP',
+                'mapsUrl' => 'https://www.google.com/maps/search/?api=1&query=51.50097%2C-0.177459',
+            ]));
+});
+
+test('a location without an address still shows its name and maps link', function () {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-20 10:00')->create([
+        'location_name' => 'Hyde Park',
+        'location_latitude' => 51.507268,
+        'location_longitude' => -0.16573,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.location', [
+                'name' => 'Hyde Park',
+                'address' => null,
+                'mapsUrl' => 'https://www.google.com/maps/search/?api=1&query=51.507268%2C-0.16573',
+            ]));
+});
+
+test('calendar items without a location have no location', function () {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-20 10:00')->create();
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.location', null));
+});
+
+test('previous calendar items show their location', function () {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->withLocation()->between('2026-10-10 18:00', '2026-10-10 21:00')->create(['location_name' => 'The Ivy']);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index', ['from' => '2026-10-10']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.location.name', 'The Ivy'));
+});
+
 test('categories and sub-categories are loaded with the calendar items, not one at a time', function () {
     $user = User::factory()->create();
 
