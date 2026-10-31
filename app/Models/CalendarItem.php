@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TimeType;
 use Carbon\CarbonImmutable;
 use Database\Factories\CalendarItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -16,14 +17,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $title
  * @property CarbonImmutable $starts_at
  * @property CarbonImmutable $ends_at
+ * @property TimeType $time_type
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['title', 'starts_at', 'ends_at', 'sub_category_id'])]
+#[Fillable(['title', 'starts_at', 'ends_at', 'sub_category_id', 'time_type'])]
 class CalendarItem extends Model
 {
     /** @use HasFactory<CalendarItemFactory> */
     use HasFactory;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'time_type' => TimeType::Exact->value,
+    ];
 
     /**
      * @return BelongsTo<User, $this>
@@ -51,6 +60,7 @@ class CalendarItem extends Model
             'sub_category_id' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
+            'time_type' => TimeType::class,
         ];
     }
 }
