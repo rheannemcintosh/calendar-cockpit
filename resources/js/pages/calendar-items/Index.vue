@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { CalendarPlus, History, Plus } from '@lucide/vue';
+import { CalendarPlus, ExternalLink, History, MapPin, Plus } from '@lucide/vue';
 import { nextTick, ref } from 'vue';
 import CalendarItemTime from '@/components/CalendarItemTime.vue';
 import Heading from '@/components/Heading.vue';
@@ -260,6 +260,38 @@ const appear =
                                     {{ item.category.name }} ·
                                     {{ item.subCategory.name }}
                                 </span>
+                                <!-- A long name is cut short; hovering shows it in full with the address. -->
+                                <a
+                                    v-if="item.location"
+                                    :href="item.location.mapsUrl"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    :title="
+                                        [
+                                            item.location.name,
+                                            item.location.address,
+                                        ]
+                                            .filter(Boolean)
+                                            .join(', ')
+                                    "
+                                    class="text-muted-foreground hover:text-foreground flex max-w-full items-center gap-1.5 self-start text-sm underline-offset-4 hover:underline"
+                                    data-test="location"
+                                >
+                                    <MapPin
+                                        class="size-3.5 shrink-0"
+                                        aria-hidden="true"
+                                    />
+                                    <span class="truncate">{{
+                                        item.location.name
+                                    }}</span>
+                                    <span class="sr-only"
+                                        >(opens in maps in a new tab)</span
+                                    >
+                                    <ExternalLink
+                                        class="size-3 shrink-0"
+                                        aria-hidden="true"
+                                    />
+                                </a>
                             </span>
                         </li>
                     </ul>

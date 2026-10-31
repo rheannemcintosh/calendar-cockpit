@@ -10,6 +10,8 @@ export type TimelineItem = {
     timeType: TimeTypeValue;
     category: { name: string; colour: string } | null;
     subCategory: { emoji: string; name: string } | null;
+    // Null when the calendar item has no location. Not every place has an address.
+    location: { name: string; address: string | null; mapsUrl: string } | null;
 };
 
 export type TimelineDay = {
