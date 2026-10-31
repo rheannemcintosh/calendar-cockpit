@@ -28,6 +28,7 @@ export type CategoryListItem = CategoryOption & {
 
 // A sub-category on the categories page, with how many calendar items use it.
 export type ManagedSubCategory = SubCategoryListItem & {
+    defaultTimeTypeLabel: string;
     calendarItemsCount: number;
 };
 

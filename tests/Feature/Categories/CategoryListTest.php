@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\Category;
 use App\Models\SubCategory;
@@ -40,7 +41,7 @@ test('categories and their sub-categories are listed in alphabetical order', fun
                     'colour' => '#EF4444',
                     'calendarItemsCount' => 0,
                     'subCategories' => [
-                        ['id' => $birthdays->id, 'emoji' => '🎂', 'name' => 'Birthdays', 'calendarItemsCount' => 0],
+                        ['id' => $birthdays->id, 'emoji' => '🎂', 'name' => 'Birthdays', 'defaultTimeTypeLabel' => 'Exact', 'calendarItemsCount' => 0],
                     ],
                 ],
                 [
@@ -49,9 +50,9 @@ test('categories and their sub-categories are listed in alphabetical order', fun
                     'colour' => '#3B82F6',
                     'calendarItemsCount' => 0,
                     'subCategories' => [
-                        ['id' => $admin->id, 'emoji' => '🗂️', 'name' => 'admin', 'calendarItemsCount' => 0],
-                        ['id' => $deepWork->id, 'emoji' => '💻', 'name' => 'Deep work', 'calendarItemsCount' => 0],
-                        ['id' => $meetings->id, 'emoji' => '📅', 'name' => 'Meetings', 'calendarItemsCount' => 0],
+                        ['id' => $admin->id, 'emoji' => '🗂️', 'name' => 'admin', 'defaultTimeTypeLabel' => 'Exact', 'calendarItemsCount' => 0],
+                        ['id' => $deepWork->id, 'emoji' => '💻', 'name' => 'Deep work', 'defaultTimeTypeLabel' => 'Exact', 'calendarItemsCount' => 0],
+                        ['id' => $meetings->id, 'emoji' => '📅', 'name' => 'Meetings', 'defaultTimeTypeLabel' => 'Exact', 'calendarItemsCount' => 0],
                     ],
                 ],
             ]));
@@ -100,4 +101,17 @@ test('each category and sub-category says how many calendar items use it', funct
             ->where('categories.0.calendarItemsCount', 3)
             ->where('categories.0.subCategories.0.calendarItemsCount', 1)
             ->where('categories.0.subCategories.1.calendarItemsCount', 2));
+});
+
+test('each sub-category shows its default time type', function () {
+    $user = User::factory()->create();
+    $home = Category::factory()->for($user)->create(['name' => 'Home']);
+    SubCategory::factory()->for($home)->create(['name' => 'Food shop delivery', 'default_time_type' => TimeType::Window]);
+    SubCategory::factory()->for($home)->create(['name' => 'Gardening', 'default_time_type' => TimeType::Block]);
+
+    $this->actingAs($user)
+        ->get(route('categories.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('categories.0.subCategories.0.defaultTimeTypeLabel', 'Window')
+            ->where('categories.0.subCategories.1.defaultTimeTypeLabel', 'Block'));
 });

@@ -239,6 +239,12 @@ function closeDeleteDialog(open: boolean): void {
                                     >
                                         Name
                                     </th>
+                                    <th
+                                        scope="col"
+                                        class="px-4 py-2 text-left font-medium"
+                                    >
+                                        Default time type
+                                    </th>
                                     <th scope="col" class="w-px px-2 py-2">
                                         <span class="sr-only">Actions</span>
                                     </th>
@@ -256,6 +262,9 @@ function closeDeleteDialog(open: boolean): void {
                                     </td>
                                     <td class="px-4 py-2.5 break-words">
                                         {{ subCategory.name }}
+                                    </td>
+                                    <td class="px-4 py-2.5">
+                                        {{ subCategory.defaultTimeTypeLabel }}
                                     </td>
                                     <td
                                         class="px-2 py-1 text-right whitespace-nowrap"
