@@ -28,7 +28,7 @@ The cost is a calendar that can't be trusted at a glance. People misjudge how mu
 
 ## References
 
-[[1]](https://workspaceupdates.googleblog.com/2026/06/custom-event-colors-in-google-calendar.html) Google Workspace Updates, *Custom event colors in Google Calendar*, June 2026. https://workspaceupdates.googleblog.com/2026/06/custom-event-colors-in-google-calendar.html
+[[1]](https://workspaceupdates.googleblog.com/2026/06/custom-event-colors-in-google-calendar.html) Google Workspace Updates, _Custom event colors in Google Calendar_, June 2026. https://workspaceupdates.googleblog.com/2026/06/custom-event-colors-in-google-calendar.html
 
 ## Author's Note
 
