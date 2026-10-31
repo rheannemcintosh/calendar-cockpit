@@ -19,3 +19,11 @@ test('the time types have distinct labels and hints', function () {
     expect(array_unique($labels))->toHaveCount(4)
         ->and(array_unique($hints))->toHaveCount(4);
 });
+
+test('the options list every time type in order with its label and hint', function () {
+    expect(TimeType::options())->toBe(array_map(fn (TimeType $timeType) => [
+        'value' => $timeType->value,
+        'label' => $timeType->label(),
+        'hint' => $timeType->hint(),
+    ], TimeType::cases()));
+});

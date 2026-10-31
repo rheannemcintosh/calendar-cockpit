@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TimeType;
 use Carbon\CarbonImmutable;
 use Database\Factories\SubCategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -16,14 +17,22 @@ use Illuminate\Support\Facades\DB;
  * @property int $category_id
  * @property string $emoji
  * @property string $name
+ * @property TimeType $default_time_type
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['emoji', 'name'])]
+#[Fillable(['emoji', 'name', 'default_time_type'])]
 class SubCategory extends Model
 {
     /** @use HasFactory<SubCategoryFactory> */
     use HasFactory;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'default_time_type' => TimeType::Exact->value,
+    ];
 
     /**
      * @return BelongsTo<Category, $this>
@@ -61,6 +70,7 @@ class SubCategory extends Model
     {
         return [
             'category_id' => 'integer',
+            'default_time_type' => TimeType::class,
         ];
     }
 }

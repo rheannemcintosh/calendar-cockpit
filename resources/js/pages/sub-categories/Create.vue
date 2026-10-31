@@ -6,6 +6,7 @@ import SubCategoryController from '@/actions/App/Http/Controllers/SubCategoryCon
 import EmojiPicker from '@/components/EmojiPicker.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import TimeTypePicker from '@/components/TimeTypePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import categories from '@/routes/categories';
 import { create } from '@/routes/sub-categories';
-import type { CategoryOption } from '@/types';
+import type { CategoryOption, TimeTypeOption, TimeTypeValue } from '@/types';
 
 defineOptions({
     layout: {
@@ -40,11 +41,14 @@ const props = defineProps<{
     categories: CategoryOption[];
     // The category to start with chosen, or null to leave it to the user.
     categoryId: number | null;
+    // Every time type, in order, to choose the default from.
+    timeTypes: TimeTypeOption[];
 }>();
 
 const categoryId = ref(props.categoryId?.toString() ?? '');
 const emoji = ref('');
 const name = ref('');
+const defaultTimeType = ref<TimeTypeValue>('exact');
 
 const chosenCategory = computed(() =>
     props.categories.find(
@@ -150,6 +154,21 @@ const chosenCategory = computed(() =>
                     :aria-invalid="errors.name ? true : undefined"
                 />
                 <InputError :message="errors.name" />
+            </div>
+
+            <div class="grid gap-2">
+                <TimeTypePicker
+                    v-model="defaultTimeType"
+                    name="default_time_type"
+                    legend="Default time type"
+                    :options="props.timeTypes"
+                    :invalid="!!errors.default_time_type"
+                />
+                <p class="text-muted-foreground text-sm">
+                    New calendar items in this sub-category start with this time
+                    type.
+                </p>
+                <InputError :message="errors.default_time_type" />
             </div>
 
             <Button

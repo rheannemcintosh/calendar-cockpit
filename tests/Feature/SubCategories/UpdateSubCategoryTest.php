@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\TimeType;
+use App\Models\CalendarItem;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\User;
@@ -8,6 +10,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 const UPDATED_SUB_CATEGORY = [
     'emoji' => '📅',
     'name' => 'Meetings',
+    'default_time_type' => 'window',
 ];
 
 /**
@@ -35,7 +38,7 @@ test('guests cannot change a sub-category', function () {
     expect($subCategory->fresh()->name)->toBe('Deep work');
 });
 
-test('the edit form is filled in with the sub-category\'s current emoji and name and shows its category', function () {
+test('the edit form is filled in with the sub-category\'s current emoji, name and default time type and shows its category', function () {
     $user = User::factory()->create();
     $subCategory = usersSubCategory($user);
 
@@ -44,11 +47,12 @@ test('the edit form is filled in with the sub-category\'s current emoji and name
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('sub-categories/Edit')
-            ->where('subCategory', ['id' => $subCategory->id, 'emoji' => '💻', 'name' => 'Deep work'])
-            ->where('category', ['id' => $subCategory->category_id, 'name' => 'Work', 'colour' => '#3B82F6']));
+            ->where('subCategory', ['id' => $subCategory->id, 'emoji' => '💻', 'name' => 'Deep work', 'defaultTimeType' => 'exact'])
+            ->where('category', ['id' => $subCategory->category_id, 'name' => 'Work', 'colour' => '#3B82F6'])
+            ->where('timeTypes', TimeType::options()));
 });
 
-test('a user can change a sub-category\'s emoji and name and goes back to the categories list', function () {
+test('a user can change a sub-category\'s emoji, name and default time type and goes back to the categories list', function () {
     $user = User::factory()->create();
     $subCategory = usersSubCategory($user);
 
@@ -60,7 +64,8 @@ test('a user can change a sub-category\'s emoji and name and goes back to the ca
 
     expect($subCategory->fresh())
         ->emoji->toBe('📅')
-        ->name->toBe('Meetings');
+        ->name->toBe('Meetings')
+        ->default_time_type->toBe(TimeType::Window);
 });
 
 test('a sub-category cannot be moved to another category', function () {
@@ -80,7 +85,7 @@ test('a sub-category can keep its own name, in any case, while its emoji changes
     $subCategory = usersSubCategory($user);
 
     $this->actingAs($user)
-        ->put(route('sub-categories.update', $subCategory), ['emoji' => '📅', 'name' => $name])
+        ->put(route('sub-categories.update', $subCategory), [...UPDATED_SUB_CATEGORY, 'name' => $name])
         ->assertSessionHasNoErrors();
 
     expect($subCategory->fresh())
@@ -171,4 +176,45 @@ test('a user gets a not found page for another user\'s sub-category and nothing 
     $this->put(route('sub-categories.update', $subCategory), UPDATED_SUB_CATEGORY)->assertNotFound();
 
     expect($subCategory->fresh()->name)->toBe('Deep work');
+});
+
+test('the edit form shows the default time type the sub-category has now', function () {
+    $user = User::factory()->create();
+    $subCategory = usersSubCategory($user);
+    $subCategory->update(['default_time_type' => TimeType::Block]);
+
+    $this->actingAs($user)
+        ->get(route('sub-categories.edit', $subCategory))
+        ->assertInertia(fn (Assert $page) => $page->where('subCategory.defaultTimeType', 'block'));
+});
+
+test('a sub-category needs a default time type that is one of the four', function (mixed $timeType, string $error) {
+    $user = User::factory()->create();
+    $subCategory = usersSubCategory($user);
+
+    $this->actingAs($user)
+        ->put(route('sub-categories.update', $subCategory), [...UPDATED_SUB_CATEGORY, 'default_time_type' => $timeType])
+        ->assertSessionHasErrors(['default_time_type' => $error]);
+
+    expect($subCategory->fresh())
+        ->name->toBe('Deep work')
+        ->default_time_type->toBe(TimeType::Exact);
+})->with([
+    'none' => ['', 'Please choose a default time type.'],
+    'unknown' => ['sometime', 'Please choose a default time type again.'],
+]);
+
+test('changing the default time type leaves the time types of calendar items already in the sub-category alone', function () {
+    $user = User::factory()->create();
+    $subCategory = usersSubCategory($user);
+    $exact = CalendarItem::factory()->for($user)->for($subCategory)->create();
+    $block = CalendarItem::factory()->for($user)->for($subCategory)->block()->create();
+
+    $this->actingAs($user)
+        ->put(route('sub-categories.update', $subCategory), [...UPDATED_SUB_CATEGORY, 'default_time_type' => 'approximate'])
+        ->assertSessionHasNoErrors();
+
+    expect($subCategory->fresh()->default_time_type)->toBe(TimeType::Approximate)
+        ->and($exact->fresh()->time_type)->toBe(TimeType::Exact)
+        ->and($block->fresh()->time_type)->toBe(TimeType::Block);
 });

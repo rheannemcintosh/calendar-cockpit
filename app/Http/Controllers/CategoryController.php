@@ -42,6 +42,7 @@ class CategoryController extends Controller
                     'id' => $subCategory->id,
                     'emoji' => $subCategory->emoji,
                     'name' => $subCategory->name,
+                    'defaultTimeTypeLabel' => $subCategory->default_time_type->label(),
                     'calendarItemsCount' => (int) $subCategory->calendar_items_count,
                 ]),
             ]),

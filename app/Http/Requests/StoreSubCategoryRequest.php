@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TimeType;
 use App\Models\Category;
 use App\Models\SubCategory;
 use Closure;
@@ -31,6 +32,7 @@ class StoreSubCategoryRequest extends FormRequest
             ],
             'emoji' => ['required', 'string', $this->singleEmoji(...)],
             'name' => ['required', 'string', 'max:50', $this->uniqueInCategory(...)],
+            'default_time_type' => ['required', Rule::enum(TimeType::class)],
         ];
     }
 
@@ -46,6 +48,8 @@ class StoreSubCategoryRequest extends FormRequest
             'emoji.required' => __('Please choose an emoji.'),
             'name.required' => __('Please enter a name.'),
             'name.max' => __('The name cannot be longer than 50 characters.'),
+            'default_time_type.required' => __('Please choose a default time type.'),
+            'default_time_type.enum' => __('Please choose a default time type again.'),
         ];
     }
 
@@ -58,13 +62,14 @@ class StoreSubCategoryRequest extends FormRequest
     }
 
     /**
-     * @return array{emoji: string, name: string}
+     * @return array{emoji: string, name: string, default_time_type: TimeType}
      */
     public function subCategoryAttributes(): array
     {
         return [
             'emoji' => $this->string('emoji')->toString(),
             'name' => $this->string('name')->toString(),
+            'default_time_type' => $this->enum('default_time_type', TimeType::class) ?? TimeType::Exact,
         ];
     }
 
