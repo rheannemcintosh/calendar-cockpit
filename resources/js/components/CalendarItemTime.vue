@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { cn } from '@/lib/utils';
-import type { TimeTypeValue } from '@/types';
+import type { TimeTypeOption } from '@/types';
 
-// A calendar item's times, styled by its time type: a window is shown in a
-// shaded pill and an approximate time starts with "~". Screen readers would
-// read "~" as "tilde", so they hear the time type in words instead.
+// A calendar item's times, with its time type in a small pill underneath.
+// Exact is the default, so it has no pill. An approximate time also starts
+// with "~". Screen readers would read "~" as "tilde", so they hear the time
+// type in words instead.
 const props = defineProps<{
     time: string;
-    timeType: TimeTypeValue;
+    timeType: TimeTypeOption;
 }>();
 
 const spoken = computed(() => {
@@ -19,7 +19,7 @@ const spoken = computed(() => {
         window: `booked slot, ${range}`,
         block: `blocked-out time, ${range}`,
         approximate: `about ${range}`,
-    }[props.timeType];
+    }[props.timeType.value];
 });
 </script>
 
@@ -27,13 +27,18 @@ const spoken = computed(() => {
     <span v-if="spoken" class="sr-only">{{ spoken }}</span>
     <span
         :aria-hidden="spoken ? 'true' : undefined"
-        :class="
-            cn(
-                props.timeType === 'window' &&
-                    'bg-muted -mx-2 rounded-full px-2 py-0.5',
-            )
-        "
-        :data-test="`time-${props.timeType}`"
-        >{{ props.timeType === 'approximate' ? '~' : '' }}{{ props.time }}</span
+        class="flex flex-col items-start gap-1"
+        :data-test="`time-${props.timeType.value}`"
     >
+        <span
+            >{{ props.timeType.value === 'approximate' ? '~' : ''
+            }}{{ props.time }}</span
+        >
+        <span
+            v-if="props.timeType.value !== 'exact'"
+            class="bg-muted text-foreground/80 rounded-full px-1.5 py-0.5 text-[0.6875rem] leading-none font-medium"
+            data-test="time-type-pill"
+            >{{ props.timeType.label }}</span
+        >
+    </span>
 </template>

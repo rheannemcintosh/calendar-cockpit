@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\Category;
 use App\Models\SubCategory;
@@ -21,7 +22,8 @@ test('a user with no calendar items gets an empty list', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('calendar-items/Index')
             ->where('years', [])
-            ->where('previousFrom', null));
+            ->where('previousFrom', null)
+            ->where('timeTypes', TimeType::options()));
 });
 
 test('calendar items are grouped by year, week and day', function () {
