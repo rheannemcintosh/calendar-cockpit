@@ -2,6 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { CalendarPlus, History, Plus } from '@lucide/vue';
 import { nextTick, ref } from 'vue';
+import CalendarItemTime from '@/components/CalendarItemTime.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -210,7 +211,14 @@ const appear =
                         <li
                             v-for="item in day.items"
                             :key="item.id"
-                            class="relative flex flex-col gap-0.5 py-3 pr-4 pl-6 sm:flex-row sm:items-baseline sm:gap-4"
+                            :class="[
+                                'relative flex flex-col gap-0.5 py-3 pr-4 pl-6 sm:flex-row sm:items-baseline sm:gap-4',
+                                // Blocked-out time is your own, so it is lighter than commitments. Only the text
+                                // fades, so the category marker keeps its colour.
+                                item.timeType === 'block' &&
+                                    'outline-muted-foreground/40 rounded-lg outline-1 -outline-offset-4 outline-dashed',
+                            ]"
+                            :data-time-type="item.timeType"
                         >
                             <!-- Any colour can be chosen, so the outline keeps the marker visible on either background. -->
                             <span
@@ -230,11 +238,22 @@ const appear =
                                 data-test="category-marker"
                             />
                             <span
-                                class="text-muted-foreground shrink-0 text-sm tabular-nums sm:w-44"
+                                :class="[
+                                    'text-muted-foreground shrink-0 text-sm tabular-nums sm:w-44',
+                                    item.timeType === 'block' && 'opacity-70',
+                                ]"
                             >
-                                {{ item.time }}
+                                <CalendarItemTime
+                                    :time="item.time"
+                                    :time-type="item.timeType"
+                                />
                             </span>
-                            <span class="flex min-w-0 flex-col gap-0.5">
+                            <span
+                                :class="[
+                                    'flex min-w-0 flex-col gap-0.5',
+                                    item.timeType === 'block' && 'opacity-70',
+                                ]"
+                            >
                                 <span class="font-medium break-words">
                                     <span
                                         v-if="item.subCategory"
