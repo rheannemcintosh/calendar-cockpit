@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TimeType;
 use App\Http\Requests\StoreSubCategoryRequest;
 use App\Http\Requests\UpdateSubCategoryRequest;
 use App\Models\SubCategory;
@@ -26,6 +27,7 @@ class SubCategoryController extends Controller
         return Inertia::render('sub-categories/Create', [
             'categories' => $categories,
             'categoryId' => $categories->firstWhere('id', $request->integer('category'))?->id,
+            'timeTypes' => TimeType::options(),
         ]);
     }
 
@@ -39,14 +41,20 @@ class SubCategoryController extends Controller
     }
 
     /**
-     * Show the form with the sub-category's current emoji and name, and the
-     * category it is in, which cannot be changed.
+     * Show the form with the sub-category's current emoji, name and default
+     * time type, and the category it is in, which cannot be changed.
      */
     public function edit(SubCategory $subCategory): Response
     {
         return Inertia::render('sub-categories/Edit', [
-            'subCategory' => $subCategory->only(['id', 'emoji', 'name']),
+            'subCategory' => [
+                'id' => $subCategory->id,
+                'emoji' => $subCategory->emoji,
+                'name' => $subCategory->name,
+                'defaultTimeType' => $subCategory->default_time_type->value,
+            ],
             'category' => $subCategory->category->only(['id', 'name', 'colour']),
+            'timeTypes' => TimeType::options(),
         ]);
     }
 

@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TimeType;
 use App\Models\Category;
 use App\Models\SubCategory;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\Rule;
 
 /**
  * The same checks as creating a sub-category, except that its category cannot
@@ -21,6 +23,7 @@ class UpdateSubCategoryRequest extends StoreSubCategoryRequest
         return [
             'emoji' => ['required', 'string', $this->singleEmoji(...)],
             'name' => ['required', 'string', 'max:50', $this->uniqueInCategory(...)],
+            'default_time_type' => ['required', Rule::enum(TimeType::class)],
         ];
     }
 

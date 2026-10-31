@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TimeType;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\User;
@@ -8,7 +9,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 /**
  * A valid sub-category to send for the given category.
  *
- * @return array{category_id: int, emoji: string, name: string}
+ * @return array{category_id: int, emoji: string, name: string, default_time_type: string}
  */
 function validSubCategory(Category $category, array $overrides = []): array
 {
@@ -16,6 +17,7 @@ function validSubCategory(Category $category, array $overrides = []): array
         'category_id' => $category->id,
         'emoji' => '💻',
         'name' => 'Deep work',
+        'default_time_type' => 'exact',
         ...$overrides,
     ];
 }
@@ -103,13 +105,14 @@ test('a user can create a sub-category and goes back to the categories list', fu
         ->and($subCategory->name)->toBe('Deep work');
 });
 
-test('a sub-category needs a category, an emoji and a name', function () {
+test('a sub-category needs a category, an emoji, a name and a default time type', function () {
     $this->actingAs(User::factory()->create())
-        ->post(route('sub-categories.store'), ['category_id' => '', 'emoji' => '', 'name' => ''])
+        ->post(route('sub-categories.store'), ['category_id' => '', 'emoji' => '', 'name' => '', 'default_time_type' => ''])
         ->assertSessionHasErrors([
             'category_id' => 'Please choose a category.',
             'emoji' => 'Please choose an emoji.',
             'name' => 'Please enter a name.',
+            'default_time_type' => 'Please choose a default time type.',
         ]);
 
     expect(SubCategory::count())->toBe(0);
@@ -244,4 +247,45 @@ test('a sub-category cannot be added to a category that is not the user\'s', fun
     'someone else\'s' => 'someone else\'s',
     'one that does not exist' => 999,
     'not a number' => 'work',
+]);
+
+test('the form offers every time type with its label and hint', function () {
+    $user = User::factory()->create();
+    Category::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->get(route('sub-categories.create'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('timeTypes', TimeType::options())
+            ->where('timeTypes.1', [
+                'value' => 'window',
+                'label' => 'Window',
+                'hint' => 'A booked slot. It could happen any time in it.',
+            ]));
+});
+
+test('a sub-category is saved with the default time type chosen', function (TimeType $timeType) {
+    $user = User::factory()->create();
+    $category = Category::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->post(route('sub-categories.store'), validSubCategory($category, ['default_time_type' => $timeType->value]))
+        ->assertSessionHasNoErrors();
+
+    expect(SubCategory::sole()->default_time_type)->toBe($timeType);
+})->with(TimeType::cases());
+
+test('a sub-category cannot have a default time type that is not one of the four', function (mixed $timeType) {
+    $user = User::factory()->create();
+    $category = Category::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->post(route('sub-categories.store'), validSubCategory($category, ['default_time_type' => $timeType]))
+        ->assertSessionHasErrors(['default_time_type' => 'Please choose a default time type again.']);
+
+    expect(SubCategory::count())->toBe(0);
+})->with([
+    'unknown' => 'sometime',
+    'upper case' => 'EXACT',
+    'a list' => [['exact']],
 ]);

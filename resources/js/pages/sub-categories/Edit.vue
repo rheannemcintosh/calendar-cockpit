@@ -6,11 +6,16 @@ import SubCategoryController from '@/actions/App/Http/Controllers/SubCategoryCon
 import EmojiPicker from '@/components/EmojiPicker.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import TimeTypePicker from '@/components/TimeTypePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import categories from '@/routes/categories';
-import type { CategoryOption, SubCategoryListItem } from '@/types';
+import type {
+    CategoryOption,
+    EditableSubCategory,
+    TimeTypeOption,
+} from '@/types';
 
 defineOptions({
     layout: {
@@ -31,13 +36,16 @@ defineOptions({
 
 const props = defineProps<{
     // The sub-category being changed, as it is now.
-    subCategory: SubCategoryListItem;
+    subCategory: EditableSubCategory;
     // The category it is in, which cannot be changed.
     category: CategoryOption;
+    // Every time type, in order, to choose the default from.
+    timeTypes: TimeTypeOption[];
 }>();
 
 const emoji = ref(props.subCategory.emoji);
 const name = ref(props.subCategory.name);
+const defaultTimeType = ref(props.subCategory.defaultTimeType);
 </script>
 
 <template>
@@ -55,7 +63,7 @@ const name = ref(props.subCategory.name);
 
         <Heading
             title="Edit sub-category"
-            description="Change its emoji or name. Calendar items in it show the change too"
+            description="Change its emoji, name or default time type. Calendar items in it show a new emoji or name too"
         />
 
         <Form
@@ -103,6 +111,24 @@ const name = ref(props.subCategory.name);
                     :aria-invalid="errors.name ? true : undefined"
                 />
                 <InputError :message="errors.name" />
+            </div>
+
+            <div class="grid gap-2">
+                <TimeTypePicker
+                    v-model="defaultTimeType"
+                    name="default_time_type"
+                    legend="Default time type"
+                    :options="props.timeTypes"
+                    :invalid="!!errors.default_time_type"
+                />
+                <p
+                    class="text-muted-foreground text-sm"
+                    data-test="default-time-type-note"
+                >
+                    Only new calendar items start with this time type. Calendar
+                    items already in this sub-category keep theirs.
+                </p>
+                <InputError :message="errors.default_time_type" />
             </div>
 
             <Button
