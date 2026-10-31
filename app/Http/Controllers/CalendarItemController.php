@@ -56,7 +56,8 @@ class CalendarItemController extends Controller
     /**
      * Show the form with the user's categories that have sub-categories, and
      * the sub-categories in each one with its default time type, both in
-     * alphabetical order, and every time type to choose from.
+     * alphabetical order, every time type to choose from, and whether a
+     * location can be searched for, which needs a Mapbox token.
      */
     public function create(Request $request): Response
     {
@@ -80,6 +81,7 @@ class CalendarItemController extends Controller
                 ]),
             ]),
             'timeTypes' => TimeType::options(),
+            'locationSearch' => filled(config('services.mapbox.token')),
         ]);
     }
 

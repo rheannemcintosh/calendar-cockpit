@@ -6,6 +6,7 @@ import CalendarItemController from '@/actions/App/Http/Controllers/CalendarItemC
 import DatePicker from '@/components/DatePicker.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import LocationPicker from '@/components/LocationPicker.vue';
 import SubCategoryPicker from '@/components/SubCategoryPicker.vue';
 import TimePicker from '@/components/TimePicker.vue';
 import TimeTypePicker from '@/components/TimeTypePicker.vue';
@@ -36,6 +37,8 @@ const props = defineProps<{
     categories: CategoryListItem[];
     // Every time type, in order, to choose from.
     timeTypes: TimeTypeOption[];
+    // Whether a location can be searched for. It is off without a Mapbox token.
+    locationSearch: boolean;
 }>();
 
 const subCategoryId = ref(0);
@@ -69,6 +72,17 @@ const timeTypeWarning = computed(() => {
 
     return `${subCategory.name} is usually ${label}`;
 });
+
+// The location is chosen as a whole, so a problem with any part of it is
+// shown once, under the location.
+function locationError(errors: Record<string, string>): string | undefined {
+    return (
+        errors.location_name ??
+        errors.location_address ??
+        errors.location_latitude ??
+        errors.location_longitude
+    );
+}
 </script>
 
 <template>
@@ -171,6 +185,20 @@ const timeTypeWarning = computed(() => {
                     {{ timeTypeWarning }}
                 </p>
                 <InputError :message="errors.time_type" />
+            </div>
+
+            <div v-if="props.locationSearch" class="grid gap-2">
+                <Label for="location">
+                    Location
+                    <span class="text-muted-foreground font-normal">
+                        (optional)
+                    </span>
+                </Label>
+                <LocationPicker
+                    id="location"
+                    :invalid="!!locationError(errors)"
+                />
+                <InputError :message="locationError(errors)" />
             </div>
 
             <Button
