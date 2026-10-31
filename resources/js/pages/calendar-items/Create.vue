@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
+import { TriangleAlert } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import CalendarItemController from '@/actions/App/Http/Controllers/CalendarItemController';
 import DatePicker from '@/components/DatePicker.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import SubCategoryPicker from '@/components/SubCategoryPicker.vue';
 import TimePicker from '@/components/TimePicker.vue';
+import TimeTypePicker from '@/components/TimeTypePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { create, index } from '@/routes/calendar-items';
 import categories from '@/routes/categories';
-import type { CategoryListItem } from '@/types';
+import type { CategoryListItem, TimeTypeOption, TimeTypeValue } from '@/types';
 
 defineOptions({
     layout: {
@@ -31,7 +34,41 @@ defineOptions({
 const props = defineProps<{
     // The user's categories that have sub-categories, in alphabetical order.
     categories: CategoryListItem[];
+    // Every time type, in order, to choose from.
+    timeTypes: TimeTypeOption[];
 }>();
+
+const subCategoryId = ref(0);
+const timeType = ref<TimeTypeValue>('exact');
+
+const chosenSubCategory = computed(() =>
+    props.categories
+        .flatMap((category) => category.subCategories)
+        .find((subCategory) => subCategory.id === subCategoryId.value),
+);
+
+// Choosing a sub-category always starts the time type from its default.
+watch(chosenSubCategory, (subCategory) => {
+    if (subCategory) {
+        timeType.value = subCategory.defaultTimeType;
+    }
+});
+
+// A reminder, not an error, when the time type is not the sub-category's
+// default. The calendar item can still be created.
+const timeTypeWarning = computed(() => {
+    const subCategory = chosenSubCategory.value;
+
+    if (!subCategory || subCategory.defaultTimeType === timeType.value) {
+        return undefined;
+    }
+
+    const label = props.timeTypes.find(
+        (option) => option.value === subCategory.defaultTimeType,
+    )?.label;
+
+    return `${subCategory.name} is usually ${label}`;
+});
 </script>
 
 <template>
@@ -93,6 +130,7 @@ const props = defineProps<{
                 <template v-if="props.categories.length > 0">
                     <SubCategoryPicker
                         id="sub_category_id"
+                        v-model="subCategoryId"
                         name="sub_category_id"
                         :categories="props.categories"
                         :invalid="!!errors.sub_category_id"
@@ -113,6 +151,26 @@ const props = defineProps<{
                         Set up your categories
                     </Link>
                 </p>
+            </div>
+
+            <div class="grid gap-2">
+                <TimeTypePicker
+                    v-model="timeType"
+                    name="time_type"
+                    legend="Time type"
+                    :options="props.timeTypes"
+                    :invalid="!!errors.time_type"
+                />
+                <p
+                    v-if="timeTypeWarning"
+                    class="flex items-center gap-1.5 text-sm text-amber-700 dark:text-amber-400"
+                    role="status"
+                    data-test="time-type-warning"
+                >
+                    <TriangleAlert class="size-4 shrink-0" aria-hidden="true" />
+                    {{ timeTypeWarning }}
+                </p>
+                <InputError :message="errors.time_type" />
             </div>
 
             <Button

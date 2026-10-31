@@ -154,7 +154,7 @@ test('the same checks apply as when creating a sub-category', function (array $d
     ],
 ]);
 
-test('the create calendar item form shows the sub-category\'s new emoji and name', function () {
+test('the create calendar item form shows the sub-category\'s new emoji, name and default time type', function () {
     $user = User::factory()->create();
     $subCategory = usersSubCategory($user);
 
@@ -164,7 +164,7 @@ test('the create calendar item form shows the sub-category\'s new emoji and name
 
     $this->get(route('calendar-items.create'))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('categories.0.subCategories.0', ['id' => $subCategory->id, 'emoji' => '📅', 'name' => 'Meetings']));
+            ->where('categories.0.subCategories.0', ['id' => $subCategory->id, 'emoji' => '📅', 'name' => 'Meetings', 'defaultTimeType' => 'window']));
 });
 
 test('a user gets a not found page for another user\'s sub-category and nothing is saved', function () {

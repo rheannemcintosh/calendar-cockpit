@@ -14,14 +14,15 @@ import {
     ComboboxTrigger,
     ComboboxViewport,
 } from 'reka-ui';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { cn } from '@/lib/utils';
 import type { CategoryListItem } from '@/types';
 
 // Choose one of the user's sub-categories, listed under its category, or
 // none. Typing filters the list by category or sub-category name. The chosen
 // sub-category's id is submitted through a hidden input named `name`, and is
-// empty when none is chosen.
+// empty when none is chosen. The model is the chosen sub-category's id, or 0
+// when none is chosen.
 const props = defineProps<{
     id: string;
     name: string;
@@ -30,10 +31,11 @@ const props = defineProps<{
     invalid?: boolean;
 }>();
 
-// The value of the "None" option, since a sub-category id is never 0.
+// The value of the "None" option and the model's default, since a
+// sub-category id is never 0.
 const NONE = 0;
 
-const value = ref<number>(NONE);
+const value = defineModel<number>({ default: 0 });
 
 const chosen = computed(() => {
     for (const category of props.categories) {

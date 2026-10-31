@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TimeType;
 use App\Http\Requests\StoreCalendarItemRequest;
 use App\Models\Category;
 use App\Models\SubCategory;
@@ -53,7 +54,8 @@ class CalendarItemController extends Controller
 
     /**
      * Show the form with the user's categories that have sub-categories, and
-     * the sub-categories in each one, both in alphabetical order.
+     * the sub-categories in each one with its default time type, both in
+     * alphabetical order, and every time type to choose from.
      */
     public function create(Request $request): Response
     {
@@ -73,8 +75,10 @@ class CalendarItemController extends Controller
                     'id' => $subCategory->id,
                     'emoji' => $subCategory->emoji,
                     'name' => $subCategory->name,
+                    'defaultTimeType' => $subCategory->default_time_type->value,
                 ]),
             ]),
+            'timeTypes' => TimeType::options(),
         ]);
     }
 
