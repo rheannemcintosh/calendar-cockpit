@@ -51,4 +51,14 @@ class CalendarItemFactory extends Factory
     {
         return $this->state(fn (array $attributes) => ['time_type' => TimeType::Approximate]);
     }
+
+    public function withLocation(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'location_name' => fake()->company(),
+            'location_address' => fake()->address(),
+            'location_latitude' => fake()->latitude(),
+            'location_longitude' => fake()->longitude(),
+        ]);
+    }
 }

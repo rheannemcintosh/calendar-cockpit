@@ -19,10 +19,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable $ends_at
  * @property TimeType $time_type
  * @property bool $time_type_overridden
+ * @property string|null $location_name
+ * @property string|null $location_address
+ * @property float|null $location_latitude
+ * @property float|null $location_longitude
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['title', 'starts_at', 'ends_at', 'sub_category_id', 'time_type', 'time_type_overridden'])]
+#[Fillable(['title', 'starts_at', 'ends_at', 'sub_category_id', 'time_type', 'time_type_overridden', 'location_name', 'location_address', 'location_latitude', 'location_longitude'])]
 class CalendarItem extends Model
 {
     /** @use HasFactory<CalendarItemFactory> */
@@ -64,6 +68,8 @@ class CalendarItem extends Model
             'ends_at' => 'datetime',
             'time_type' => TimeType::class,
             'time_type_overridden' => 'boolean',
+            'location_latitude' => 'float',
+            'location_longitude' => 'float',
         ];
     }
 }

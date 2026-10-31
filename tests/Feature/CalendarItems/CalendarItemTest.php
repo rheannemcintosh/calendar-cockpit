@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 test('the calendar items table has the expected columns', function () {
-    expect(Schema::hasColumns('calendar_items', ['id', 'user_id', 'title', 'starts_at', 'ends_at', 'time_type', 'time_type_overridden', 'created_at', 'updated_at']))->toBeTrue();
+    expect(Schema::hasColumns('calendar_items', ['id', 'user_id', 'title', 'starts_at', 'ends_at', 'time_type', 'time_type_overridden', 'location_name', 'location_address', 'location_latitude', 'location_longitude', 'created_at', 'updated_at']))->toBeTrue();
 });
 
 test('a calendar item is saved and read back with its title, start and end intact', function () {
@@ -130,3 +130,87 @@ test('a calendar item stored without going through the model is not overridden',
 
     expect(CalendarItem::find($id)->time_type_overridden)->toBeFalse();
 });
+
+test('a calendar item has no location unless given one', function () {
+    $calendarItem = CalendarItem::factory()->create()->fresh();
+
+    expect($calendarItem->location_name)->toBeNull()
+        ->and($calendarItem->location_address)->toBeNull()
+        ->and($calendarItem->location_latitude)->toBeNull()
+        ->and($calendarItem->location_longitude)->toBeNull();
+});
+
+test('a calendar item is saved and read back with its location', function () {
+    $calendarItem = User::factory()->create()->calendarItems()->create([
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+        'location_name' => 'Smile Dental Practice',
+        'location_address' => '12 High Street, Edinburgh EH1 1SR, United Kingdom',
+        'location_latitude' => 55.9500812,
+        'location_longitude' => -3.1883611,
+    ])->fresh();
+
+    expect($calendarItem->location_name)->toBe('Smile Dental Practice')
+        ->and($calendarItem->location_address)->toBe('12 High Street, Edinburgh EH1 1SR, United Kingdom')
+        ->and($calendarItem->location_latitude)->toBe(55.9500812)
+        ->and($calendarItem->location_longitude)->toBe(-3.1883611);
+});
+
+test('a calendar item location does not need an address', function () {
+    $calendarItem = CalendarItem::factory()->create([
+        'location_name' => 'Arthur\'s Seat',
+        'location_latitude' => 55.9440833,
+        'location_longitude' => -3.1618333,
+    ])->fresh();
+
+    expect($calendarItem->location_name)->toBe('Arthur\'s Seat')
+        ->and($calendarItem->location_address)->toBeNull();
+});
+
+test('the factory has a state for a calendar item with a location', function () {
+    $calendarItem = CalendarItem::factory()->withLocation()->create()->fresh();
+
+    expect($calendarItem->location_name)->toBeString()->not->toBeEmpty()
+        ->and($calendarItem->location_address)->toBeString()->not->toBeEmpty()
+        ->and($calendarItem->location_latitude)->toBeFloat()
+        ->and($calendarItem->location_longitude)->toBeFloat();
+});
+
+test('the database refuses a location that is only partly filled in', function (array $location) {
+    $insert = fn () => DB::table('calendar_items')->insert([
+        'user_id' => User::factory()->create()->id,
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+        ...$location,
+    ]);
+
+    expect($insert)->toThrow(QueryException::class, 'calendar_items_location_check')
+        ->and(CalendarItem::count())->toBe(0);
+})->with([
+    'an address only' => [['location_address' => '12 High Street, Edinburgh']],
+    'a name without a point' => [['location_name' => 'Smile Dental Practice']],
+    'a point without a name' => [['location_latitude' => 55.95, 'location_longitude' => -3.19]],
+    'a latitude without a longitude' => [['location_name' => 'Smile Dental Practice', 'location_latitude' => 55.95]],
+    'a longitude without a latitude' => [['location_name' => 'Smile Dental Practice', 'location_longitude' => -3.19]],
+]);
+
+test('the database refuses a point that is not on the map', function (float $latitude, float $longitude) {
+    $insert = fn () => DB::table('calendar_items')->insert([
+        'user_id' => User::factory()->create()->id,
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+        'location_name' => 'Nowhere',
+        'location_latitude' => $latitude,
+        'location_longitude' => $longitude,
+    ]);
+
+    expect($insert)->toThrow(QueryException::class, 'calendar_items_location_check');
+})->with([
+    'latitude above 90' => [90.5, 0],
+    'latitude below -90' => [-90.5, 0],
+    'longitude above 180' => [0, 180.5],
+    'longitude below -180' => [0, -180.5],
+]);
