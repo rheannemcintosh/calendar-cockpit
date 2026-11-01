@@ -46,8 +46,8 @@ const props = defineProps<{
 }>();
 
 const categoryId = ref(props.categoryId?.toString() ?? '');
-const emoji = ref('');
 const name = ref('');
+const emoji = ref('');
 const defaultTimeType = ref<TimeTypeValue>('exact');
 
 const chosenCategory = computed(() =>
@@ -133,17 +133,6 @@ const chosenCategory = computed(() =>
             </div>
 
             <div class="grid gap-2">
-                <Label for="emoji">Emoji</Label>
-                <EmojiPicker
-                    id="emoji"
-                    v-model="emoji"
-                    name="emoji"
-                    :invalid="!!errors.emoji"
-                />
-                <InputError :message="errors.emoji" />
-            </div>
-
-            <div class="grid gap-2">
                 <Label for="name">Name</Label>
                 <Input
                     id="name"
@@ -154,6 +143,17 @@ const chosenCategory = computed(() =>
                     :aria-invalid="errors.name ? true : undefined"
                 />
                 <InputError :message="errors.name" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="emoji">Emoji</Label>
+                <EmojiPicker
+                    id="emoji"
+                    v-model="emoji"
+                    name="emoji"
+                    :invalid="!!errors.emoji"
+                />
+                <InputError :message="errors.emoji" />
             </div>
 
             <div class="grid gap-2">
