@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CalendarItemController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\EmojiSuggestionController;
 use App\Http\Controllers\LocationSearchController;
 use App\Http\Controllers\SubCategoryController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->middlewareFor(['edit', 'update'], 'can:update,category')
         ->middlewareFor('destroy', 'can:delete,category');
+
+    Route::get('sub-categories/emoji-suggestion', EmojiSuggestionController::class)
+        ->middleware('throttle:60,1')
+        ->name('sub-categories.emoji-suggestion');
 
     Route::resource('sub-categories', SubCategoryController::class)
         ->only(['create', 'store', 'edit', 'update', 'destroy'])
