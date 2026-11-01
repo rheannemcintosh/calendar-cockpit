@@ -51,11 +51,12 @@ const name = ref('');
 const emoji = ref('');
 const defaultTimeType = ref<TimeTypeValue>('exact');
 
-const { loading: suggestingEmoji } = useEmojiSuggestion(
-    name,
-    emoji,
-    () => Number(categoryId.value) || null,
-);
+const {
+    loading: suggestingEmoji,
+    hint: emojiHint,
+    acceptHint: acceptEmojiHint,
+    dismissHint: dismissEmojiHint,
+} = useEmojiSuggestion(name, emoji, () => Number(categoryId.value) || null);
 
 const chosenCategory = computed(() =>
     props.categories.find(
@@ -160,6 +161,9 @@ const chosenCategory = computed(() =>
                     name="emoji"
                     :invalid="!!errors.emoji"
                     :loading="suggestingEmoji"
+                    :hint="emojiHint"
+                    @accept-hint="acceptEmojiHint"
+                    @dismiss-hint="dismissEmojiHint"
                 />
                 <InputError :message="errors.emoji" />
             </div>
