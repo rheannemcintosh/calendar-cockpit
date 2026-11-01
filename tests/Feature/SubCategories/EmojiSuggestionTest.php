@@ -46,6 +46,18 @@ test('the candidates fit in one choice question and are each a single emoji', fu
     }
 });
 
+test('pages are told whether emoji suggestions are enabled', function (?string $key, bool $enabled) {
+    config(['services.typesafe.key' => $key]);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page->where('emojiSuggestionsEnabled', $enabled));
+})->with([
+    'with a key' => ['ts-test-key', true],
+    'without a key' => [null, false],
+    'with a blank key' => ['', false],
+]);
+
 test('guests cannot ask for a suggestion', function () {
     Http::fake();
 

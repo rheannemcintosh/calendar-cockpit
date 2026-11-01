@@ -21,6 +21,17 @@ class EmojiSuggester
     public const NONE = 'none';
 
     /**
+     * Whether a TypeSafe API key is set, so the forms only ask for
+     * suggestions when there can be one.
+     */
+    public static function isEnabled(): bool
+    {
+        $key = config('services.typesafe.key');
+
+        return is_string($key) && $key !== '';
+    }
+
+    /**
      * Suggest an emoji for a sub-category's name, and the name of the
      * category it is in when there is one. Returns null, rather than failing,
      * when there is no API key, Jev errors or times out, or Jev is not
@@ -28,13 +39,13 @@ class EmojiSuggester
      */
     public function suggest(string $name, ?string $categoryName = null): ?string
     {
-        $key = config('services.typesafe.key');
-
-        if (! is_string($key) || $key === '') {
-            Log::warning('No TypeSafe API key is set, so no emoji is suggested. Set TYPESAFE_API_KEY.');
+        if (! self::isEnabled()) {
+            Log::debug('No TypeSafe API key is set, so no emoji is suggested. Set TYPESAFE_API_KEY.');
 
             return null;
         }
+
+        $key = config()->string('services.typesafe.key');
 
         try {
             $response = Http::withToken($key)
