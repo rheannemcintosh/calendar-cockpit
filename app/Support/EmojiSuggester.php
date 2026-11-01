@@ -2,9 +2,6 @@
 
 namespace App\Support;
 
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -13,12 +10,12 @@ use Illuminate\Support\Facades\Log;
  */
 class EmojiSuggester
 {
-    private const URL = 'https://api.typesafe.ai/v1/systemone';
-
     /**
      * The option Jev picks when none of the emoji fit the name.
      */
     public const NONE = 'none';
+
+    public function __construct(private readonly Jev $jev) {}
 
     /**
      * Whether a TypeSafe API key is set, so the forms only ask for
@@ -26,9 +23,7 @@ class EmojiSuggester
      */
     public static function isEnabled(): bool
     {
-        $key = config('services.typesafe.key');
-
-        return is_string($key) && $key !== '';
+        return Jev::isEnabled();
     }
 
     /**
@@ -45,47 +40,27 @@ class EmojiSuggester
             return null;
         }
 
-        $key = config()->string('services.typesafe.key');
+        $answer = $this->jev->choose(
+            'emoji',
+            array_filter([
+                'sub_category' => $name,
+                'category' => $categoryName,
+            ], fn (?string $value): bool => $value !== null && $value !== ''),
+            'Which emoji best represents this sub-category of a personal calendar, given its name and the category it belongs to? Choose "none" if no emoji fits the name.',
+            [
+                ...EmojiSuggestionCandidates::ALL,
+                self::NONE => 'None of these emoji fit the sub-category, or the name is not meaningful',
+            ],
+        );
 
-        try {
-            $response = Http::withToken($key)
-                ->acceptJson()
-                ->timeout(config()->float('services.typesafe.timeout'))
-                ->post(self::URL, [
-                    'model' => config()->string('services.typesafe.model'),
-                    'state' => array_filter([
-                        'sub_category' => $name,
-                        'category' => $categoryName,
-                    ], fn (?string $value): bool => $value !== null && $value !== ''),
-                    'questions' => [
-                        'emoji' => [
-                            'type' => 'choice',
-                            'instructions' => 'Which emoji best represents this sub-category of a personal calendar, given its name and the category it belongs to? Choose "none" if no emoji fits the name.',
-                            'criteria' => [
-                                ...EmojiSuggestionCandidates::ALL,
-                                self::NONE => 'None of these emoji fit the sub-category, or the name is not meaningful',
-                            ],
-                        ],
-                    ],
-                ])
-                ->throw();
-        } catch (ConnectionException|RequestException $exception) {
-            report($exception);
-
+        if ($answer === null || ! array_key_exists($answer['choice'], EmojiSuggestionCandidates::ALL)) {
             return null;
         }
 
-        $choice = $response->json('answers.emoji.choice');
-        $confidence = $response->json('answers.emoji.confidence');
-
-        if (! is_string($choice) || ! array_key_exists($choice, EmojiSuggestionCandidates::ALL)) {
+        if ($answer['confidence'] < config()->float('services.typesafe.emoji_suggestion_confidence')) {
             return null;
         }
 
-        if (! is_numeric($confidence) || (float) $confidence < config()->float('services.typesafe.emoji_suggestion_confidence')) {
-            return null;
-        }
-
-        return $choice;
+        return $answer['choice'];
     }
 }
