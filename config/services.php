@@ -32,6 +32,7 @@ return [
         'timeout' => (float) env('TYPESAFE_TIMEOUT', 2),
         // Jev's choice is only suggested when its confidence, from 0 to 1, is at least this.
         'emoji_suggestion_confidence' => (float) env('TYPESAFE_EMOJI_SUGGESTION_CONFIDENCE', 0.4),
+        'category_suggestion_confidence' => (float) env('TYPESAFE_CATEGORY_SUGGESTION_CONFIDENCE', 0.4),
     ],
 
     'ses' => [

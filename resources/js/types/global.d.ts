@@ -20,6 +20,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             emojiSuggestionsEnabled: boolean;
+            categorySuggestionsEnabled: boolean;
             [key: string]: unknown;
         };
     }
