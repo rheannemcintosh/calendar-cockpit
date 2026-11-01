@@ -46,8 +46,8 @@ const props = defineProps<{
     timeTypes: TimeTypeOption[];
 }>();
 
-const categoryId = ref(props.categoryId?.toString() ?? '');
 const name = ref('');
+const categoryId = ref(props.categoryId?.toString() ?? '');
 const emoji = ref('');
 const defaultTimeType = ref<TimeTypeValue>('exact');
 
@@ -103,6 +103,19 @@ const chosenCategory = computed(() =>
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
+                <Label for="name">Name</Label>
+                <Input
+                    id="name"
+                    v-model="name"
+                    name="name"
+                    maxlength="50"
+                    placeholder="Meetings, Deep work, Admin…"
+                    :aria-invalid="errors.name ? true : undefined"
+                />
+                <InputError :message="errors.name" />
+            </div>
+
+            <div class="grid gap-2">
                 <Label for="category_id">Category</Label>
                 <Select v-model="categoryId" name="category_id">
                     <SelectTrigger
@@ -138,19 +151,6 @@ const chosenCategory = computed(() =>
                     </SelectContent>
                 </Select>
                 <InputError :message="errors.category_id" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="name">Name</Label>
-                <Input
-                    id="name"
-                    v-model="name"
-                    name="name"
-                    maxlength="50"
-                    placeholder="Meetings, Deep work, Admin…"
-                    :aria-invalid="errors.name ? true : undefined"
-                />
-                <InputError :message="errors.name" />
             </div>
 
             <div class="grid gap-2">
