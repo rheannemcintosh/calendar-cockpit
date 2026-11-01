@@ -1,13 +1,8 @@
-import { useHttp, usePage } from '@inertiajs/vue3';
-import { watchDebounced } from '@vueuse/core';
+import { usePage } from '@inertiajs/vue3';
 import type { ComputedRef, MaybeRefOrGetter, Ref } from 'vue';
-import { computed, onBeforeUnmount, ref, toValue, watch } from 'vue';
+import { computed, ref, toValue, watch } from 'vue';
+import { useNameSuggestion } from '@/composables/useNameSuggestion';
 import subCategories from '@/routes/sub-categories';
-
-// Suggestions are asked for once typing pauses, and only for names long
-// enough to mean something.
-const DEBOUNCE_MS = 600;
-const MIN_NAME_LENGTH = 2;
 
 export type UseEmojiSuggestionReturn = {
     loading: Ref<boolean>;
@@ -18,25 +13,17 @@ export type UseEmojiSuggestionReturn = {
 };
 
 // Fill in an empty emoji with one suggested for the sub-category's name once
-// the user stops typing it. An emoji filled in this way follows the name as
-// it changes, but one the user picked or typed is never replaced: the
-// suggestion is offered as a hint instead.
+// the user stops typing it. An emoji filled in this way follows the name, and
+// the category, as they change, but one the user picked or typed is never
+// replaced: the suggestion is offered as a hint instead.
 export function useEmojiSuggestion(
     name: Ref<string>,
     emoji: Ref<string>,
     categoryId: MaybeRefOrGetter<number | null>,
 ): UseEmojiSuggestionReturn {
-    const loading = ref(false);
-    const http = useHttp();
-    const enabled = usePage().props.emojiSuggestionsEnabled;
-
     // The emoji most recently filled in for the user, if they haven't
     // changed it since.
     let filledIn: string | null = null;
-
-    // Only the latest request may fill in its emoji, so a slow earlier
-    // answer never replaces a newer one.
-    let latestRequest = 0;
 
     // The suggestion for the chosen emoji, and the name it was for.
     const suggestion = ref<{ name: string; emoji: string } | null>(null);
@@ -58,13 +45,6 @@ export function useEmojiSuggestion(
         return !dismissedNames.has(name.toLowerCase());
     }
 
-    function cancel(): void {
-        latestRequest++;
-        loading.value = false;
-        suggestion.value = null;
-        http.cancel();
-    }
-
     function acceptHint(): void {
         if (hint.value) {
             emoji.value = hint.value;
@@ -81,59 +61,46 @@ export function useEmojiSuggestion(
         suggestion.value = null;
     }
 
-    // Typing again means any suggestion still on its way is for an old name.
-    watch(name, cancel);
+    const { loading, ask } = useNameSuggestion<{ emoji: string | null }>(name, {
+        enabled: usePage().props.emojiSuggestionsEnabled,
+        wanted: (query) => canFillIn() || canHint(query),
+        url: (query) => {
+            const category = toValue(categoryId);
 
-    watchDebounced(
-        name,
-        async (value) => {
-            const query = value.trim();
-
-            if (
-                !enabled ||
-                query.length < MIN_NAME_LENGTH ||
-                (!canFillIn() && !canHint(query))
-            ) {
+            return subCategories.emojiSuggestion.url({
+                query: {
+                    name: query,
+                    ...(category ? { category_id: category } : {}),
+                },
+            });
+        },
+        apply: (response, query) => {
+            if (!response.emoji) {
                 return;
             }
 
-            const request = ++latestRequest;
-            const category = toValue(categoryId);
-
-            loading.value = true;
-
-            try {
-                const response = (await http.get(
-                    subCategories.emojiSuggestion.url({
-                        query: {
-                            name: query,
-                            ...(category ? { category_id: category } : {}),
-                        },
-                    }),
-                )) as { emoji: string | null };
-
-                if (request !== latestRequest || !response.emoji) {
-                    return;
-                }
-
-                if (canFillIn()) {
-                    emoji.value = response.emoji;
-                    filledIn = response.emoji;
-                } else if (canHint(query)) {
-                    suggestion.value = { name: query, emoji: response.emoji };
-                }
-            } catch {
-                // With no suggestion the emoji is left as it is.
-            } finally {
-                if (request === latestRequest) {
-                    loading.value = false;
-                }
+            if (canFillIn()) {
+                emoji.value = response.emoji;
+                filledIn = response.emoji;
+            } else if (canHint(query)) {
+                suggestion.value = { name: query, emoji: response.emoji };
             }
         },
-        { debounce: DEBOUNCE_MS },
-    );
+        onCancel: () => {
+            suggestion.value = null;
+        },
+    });
 
-    onBeforeUnmount(cancel);
+    // An emoji filled in for the user is asked for again when the category
+    // changes, such as when a suggested category is chosen, so it fits both.
+    watch(
+        () => toValue(categoryId),
+        () => {
+            if (canFillIn()) {
+                void ask();
+            }
+        },
+    );
 
     return { loading, hint, acceptHint, dismissHint };
 }
