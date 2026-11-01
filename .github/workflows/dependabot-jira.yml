@@ -1,0 +1,166 @@
+name: dependabot-jira
+
+# Creates a Dependency Update work item in Jira for every pull request Dependabot
+# opens, listing the packages it updates, then renames the pull request to start with
+# the work item's key so GitHub for Jira links the two. Dependabot's branch names
+# can't be changed to the key, so the title is the only link.
+#
+# It runs only when the pull request is opened, so a rebase or a new commit on it
+# never creates a second work item.
+#
+# Workflows that Dependabot starts can only read Dependabot secrets, not Actions
+# secrets, so the Jira sign-in lives under Settings, Secrets and variables,
+# Dependabot (see the Dependabot section of the README). Until they are set, a run
+# finishes green with a notice instead of failing every Dependabot pull request.
+on:
+  pull_request:
+    types:
+      - opened
+
+permissions:
+  contents: read
+  pull-requests: write # rename the pull request
+
+env:
+  JIRA_PROJECT: CC
+  # The Dependency Update type's Updates field.
+  JIRA_UPDATES_FIELD: customfield_10156
+
+jobs:
+  jira:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # A secret that is not set reads as empty here. A step condition cannot read
+      # secrets, so this sets an output the next steps check instead.
+      - name: Check the Jira sign-in is set up
+        id: jira
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          missing=""
+          [ -n "$JIRA_BASE_URL" ] || missing="$missing JIRA_BASE_URL"
+          [ -n "$JIRA_EMAIL" ] || missing="$missing JIRA_EMAIL"
+          [ -n "$JIRA_API_TOKEN" ] || missing="$missing JIRA_API_TOKEN"
+          missing="${missing# }"
+
+          if [ -z "$missing" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Jira sign-in not set up::No Dependency Update was created, because these Dependabot secrets are not set: ${missing// /, }."
+          fi
+
+      # Everything from the pull request reaches the script through env, never
+      # straight into it, so a package name can't run as shell.
+      - name: Create the Dependency Update
+        id: create
+        if: steps.jira.outputs.ready == 'true'
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+          ECOSYSTEM: ${{ steps.meta.outputs.package-ecosystem }}
+          GROUP: ${{ steps.meta.outputs.dependency-group }}
+          DEPENDENCIES: ${{ steps.meta.outputs.updated-dependencies-json }}
+        run: |
+          case "$ECOSYSTEM" in
+            composer) ecosystem="Composer" ;;
+            npm_and_yarn) ecosystem="npm" ;;
+            github_actions) ecosystem="GitHub Actions" ;;
+            *) ecosystem="$ECOSYSTEM" ;;
+          esac
+
+          # The app name is the repository name in title case, as the deploy workflow
+          # does when the app has no name of its own.
+          app="$(echo "${GITHUB_REPOSITORY#*/}" | tr '-' ' ' | awk '{ for (i = 1; i <= NF; i++) $i = toupper(substr($i, 1, 1)) substr($i, 2) } 1')"
+
+          date="$(date -u -d "$PR_CREATED_AT" +%y-%m-%d)"
+          summary="Bump $ecosystem Dependencies [$date]"
+
+          # Dependabot adds its labels as it opens the pull request, so read them now
+          # rather than from the event. Each language label becomes dependabot_<label>.
+          # Every one of these is a dependency update, so the dependencies label is left out.
+          labels="$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json labels \
+            --jq '[.labels[].name | select(. != "dependencies") | "dependabot_" + .]')"
+
+          payload="$(jq -n \
+            --arg project "$JIRA_PROJECT" \
+            --arg field "$JIRA_UPDATES_FIELD" \
+            --arg summary "$summary" \
+            --arg ecosystem "$ecosystem" \
+            --arg group "$GROUP" \
+            --arg app "$app" \
+            --argjson labels "$labels" \
+            --argjson deps "$DEPENDENCIES" '
+            def text($t): { type: "text", text: $t };
+            def em($t): { type: "text", text: $t, marks: [{ type: "em" }] };
+            def code($t): { type: "text", text: $t, marks: [{ type: "code" }] };
+            def cell($type; $content): { type: $type, content: [{ type: "paragraph", content: [$content] }] };
+            def doc($content): { type: "doc", version: 1, content: $content };
+
+            ($deps | length) as $count
+            | {
+                fields: {
+                  project: { key: $project },
+                  issuetype: { name: "Dependency Update" },
+                  summary: $summary,
+                  labels: $labels,
+                  description: doc([{
+                    type: "paragraph",
+                    content: [
+                      (if $group != "" then text("Bump the "), em($ecosystem), text(" group in ")
+                       else text("Bump the "), em($ecosystem), text(" dependencies in ") end),
+                      em($app),
+                      text(" with \($count) update\(if $count == 1 then "" else "s" end).")
+                    ]
+                  }]),
+                  ($field): doc([{
+                    type: "table",
+                    attrs: { isNumberColumnEnabled: false, layout: "default" },
+                    content: (
+                      [{ type: "tableRow", content: [cell("tableHeader"; text("Package")), cell("tableHeader"; text("From")), cell("tableHeader"; text("To"))] }]
+                      + [$deps[] | { type: "tableRow", content: [
+                          cell("tableCell"; code(.dependencyName)),
+                          cell("tableCell"; code(.prevVersion)),
+                          cell("tableCell"; code(.newVersion))
+                        ] }]
+                    )
+                  }])
+                }
+              }')"
+
+          response="$(curl -sS -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -X POST "${JIRA_BASE_URL%/}/rest/api/3/issue" \
+            -d "$payload")"
+
+          key="$(echo "$response" | jq -r '.key // empty')"
+          if [ -z "$key" ]; then
+            echo "::error title=Jira didn't create the Dependency Update::$response"
+            exit 1
+          fi
+
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+          echo "summary=$summary" >> "$GITHUB_OUTPUT"
+          echo "Created [$key](${JIRA_BASE_URL%/}/browse/$key): $summary" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Rename the pull request
+        if: steps.create.outputs.key != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          KEY: ${{ steps.create.outputs.key }}
+          SUMMARY: ${{ steps.create.outputs.summary }}
+        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --title "$KEY | $SUMMARY"

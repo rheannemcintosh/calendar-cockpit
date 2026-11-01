@@ -303,6 +303,25 @@ The font is Instrument Sans, installed from the `@fontsource/instrument-sans` pa
 
 If the build stops with "Expected @voidzero-dev/vite-plus-core@X, but found @voidzero-dev/vite-plus-core@Y", one of the three lines is out of step. TypeScript is held at version 6, and Dependabot skips major TypeScript updates, because version 7 fails the front end build.
 
+## Dependabot
+
+Dependabot opens one grouped pull request per ecosystem (Composer, npm and GitHub Actions) each week. The `dependabot-jira` workflow creates a Dependency Update work item in Jira for each one when it's opened. The work item has:
+
+- **Summary:** the ecosystem and the date, such as `Bump Composer Dependencies [26-10-31]`.
+- **Description:** one line, such as "Bump the _Composer_ group in _Calendar Cockpit_ with 3 updates."
+- **Updates field:** a table of every package, with its old and new version.
+- **Labels:** `dependabot_` followed by each of the pull request's language labels, such as `dependabot_php`.
+
+The workflow then renames the pull request to `<key> | <summary>`, which links it to the work item in Jira. It only runs when the pull request is opened, so a rebase never creates a second work item. The Jira project key and the Updates field's ID are set at the top of the workflow.
+
+The workflow needs these secrets. Workflows that Dependabot starts can't read Actions secrets, so add them under Settings, Secrets and variables, Dependabot. Until they are set, the workflow skips with a notice:
+
+| Secret           | Description                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| `JIRA_BASE_URL`  | The Jira site, such as `https://example.atlassian.net`.                                       |
+| `JIRA_EMAIL`     | The email address of the Atlassian account that creates the work items.                       |
+| `JIRA_API_TOKEN` | An [API token](https://id.atlassian.com/manage-profile/security/api-tokens) for that account. |
+
 ## Deployment
 
 ### Provisioning Azure
