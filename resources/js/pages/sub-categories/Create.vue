@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
+import { ArrowLeft, LoaderCircle } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import SubCategoryController from '@/actions/App/Http/Controllers/SubCategoryController';
 import EmojiPicker from '@/components/EmojiPicker.vue';
@@ -17,6 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useCategorySuggestion } from '@/composables/useCategorySuggestion';
 import { useEmojiSuggestion } from '@/composables/useEmojiSuggestion';
 import categories from '@/routes/categories';
 import { create } from '@/routes/sub-categories';
@@ -50,6 +51,8 @@ const name = ref('');
 const categoryId = ref(props.categoryId?.toString() ?? '');
 const emoji = ref('');
 const defaultTimeType = ref<TimeTypeValue>('exact');
+
+const { loading: suggestingCategory } = useCategorySuggestion(name, categoryId);
 
 const {
     loading: suggestingEmoji,
@@ -122,15 +125,26 @@ const chosenCategory = computed(() =>
                         id="category_id"
                         class="w-full"
                         :aria-invalid="errors.category_id ? true : undefined"
+                        :aria-busy="suggestingCategory || undefined"
+                        :data-loading="suggestingCategory || undefined"
                     >
                         <span class="flex min-w-0 items-center gap-2">
                             <span
                                 v-if="chosenCategory"
-                                class="size-3 shrink-0 rounded-full border border-black/10 dark:border-white/20"
+                                :class="[
+                                    'size-3 shrink-0 rounded-full border border-black/10 dark:border-white/20',
+                                    { 'animate-pulse': suggestingCategory },
+                                ]"
                                 :style="{
                                     backgroundColor: chosenCategory.colour,
                                 }"
                                 aria-hidden="true"
+                            />
+                            <LoaderCircle
+                                v-else-if="suggestingCategory"
+                                class="text-muted-foreground size-3 shrink-0 animate-spin"
+                                aria-hidden="true"
+                                data-test="category-suggestion-loading"
                             />
                             <SelectValue placeholder="Choose a category" />
                         </span>
