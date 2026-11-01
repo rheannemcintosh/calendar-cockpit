@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SmilePlus } from '@lucide/vue';
+import { LoaderCircle, SmilePlus } from '@lucide/vue';
 import type { EmojiClickEvent } from 'emoji-picker-element/shared';
 import dataSource from 'emoji-picker-element-data/en/emojibase/data.json?url';
 import {
@@ -18,6 +18,8 @@ const props = defineProps<{
     id: string;
     name: string;
     invalid?: boolean;
+    // Whether an emoji is being suggested, shown subtly on the button.
+    loading?: boolean;
 }>();
 
 const emoji = defineModel<string>({ default: '' });
@@ -71,15 +73,25 @@ watch(container, (element) => {
             <PopoverTrigger
                 type="button"
                 aria-label="Pick an emoji"
+                :aria-busy="props.loading || undefined"
+                :data-loading="props.loading || undefined"
                 class="border-input dark:bg-input/30 hover:bg-accent focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-12 shrink-0 items-center justify-center rounded-md border bg-transparent text-xl shadow-xs outline-none focus-visible:ring-[3px]"
             >
                 <span
                     v-if="emoji.trim()"
-                    class="max-w-full truncate px-1"
+                    :class="[
+                        'max-w-full truncate px-1',
+                        { 'animate-pulse': props.loading },
+                    ]"
                     aria-hidden="true"
                 >
                     {{ emoji.trim() }}
                 </span>
+                <LoaderCircle
+                    v-else-if="props.loading"
+                    class="text-muted-foreground size-4 animate-spin"
+                    data-test="emoji-suggestion-loading"
+                />
                 <SmilePlus v-else class="text-muted-foreground size-4" />
             </PopoverTrigger>
 

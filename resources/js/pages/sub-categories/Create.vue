@@ -17,6 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useEmojiSuggestion } from '@/composables/useEmojiSuggestion';
 import categories from '@/routes/categories';
 import { create } from '@/routes/sub-categories';
 import type { CategoryOption, TimeTypeOption, TimeTypeValue } from '@/types';
@@ -49,6 +50,12 @@ const categoryId = ref(props.categoryId?.toString() ?? '');
 const name = ref('');
 const emoji = ref('');
 const defaultTimeType = ref<TimeTypeValue>('exact');
+
+const { loading: suggestingEmoji } = useEmojiSuggestion(
+    name,
+    emoji,
+    () => Number(categoryId.value) || null,
+);
 
 const chosenCategory = computed(() =>
     props.categories.find(
@@ -152,6 +159,7 @@ const chosenCategory = computed(() =>
                     v-model="emoji"
                     name="emoji"
                     :invalid="!!errors.emoji"
+                    :loading="suggestingEmoji"
                 />
                 <InputError :message="errors.emoji" />
             </div>
