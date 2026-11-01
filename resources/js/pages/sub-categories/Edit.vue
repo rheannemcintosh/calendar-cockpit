@@ -43,8 +43,8 @@ const props = defineProps<{
     timeTypes: TimeTypeOption[];
 }>();
 
-const emoji = ref(props.subCategory.emoji);
 const name = ref(props.subCategory.name);
+const emoji = ref(props.subCategory.emoji);
 const defaultTimeType = ref(props.subCategory.defaultTimeType);
 </script>
 
@@ -63,7 +63,7 @@ const defaultTimeType = ref(props.subCategory.defaultTimeType);
 
         <Heading
             title="Edit sub-category"
-            description="Change its emoji, name or default time type. Calendar items in it show a new emoji or name too"
+            description="Change its name, emoji or default time type. Calendar items in it show a new emoji or name too"
         />
 
         <Form
@@ -90,17 +90,6 @@ const defaultTimeType = ref(props.subCategory.defaultTimeType);
             </div>
 
             <div class="grid gap-2">
-                <Label for="emoji">Emoji</Label>
-                <EmojiPicker
-                    id="emoji"
-                    v-model="emoji"
-                    name="emoji"
-                    :invalid="!!errors.emoji"
-                />
-                <InputError :message="errors.emoji" />
-            </div>
-
-            <div class="grid gap-2">
                 <Label for="name">Name</Label>
                 <Input
                     id="name"
@@ -111,6 +100,17 @@ const defaultTimeType = ref(props.subCategory.defaultTimeType);
                     :aria-invalid="errors.name ? true : undefined"
                 />
                 <InputError :message="errors.name" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="emoji">Emoji</Label>
+                <EmojiPicker
+                    id="emoji"
+                    v-model="emoji"
+                    name="emoji"
+                    :invalid="!!errors.emoji"
+                />
+                <InputError :message="errors.emoji" />
             </div>
 
             <div class="grid gap-2">
