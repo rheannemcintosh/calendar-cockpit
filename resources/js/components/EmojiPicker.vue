@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LoaderCircle, SmilePlus } from '@lucide/vue';
+import { LoaderCircle, SmilePlus, X } from '@lucide/vue';
 import type { EmojiClickEvent } from 'emoji-picker-element/shared';
 import dataSource from 'emoji-picker-element-data/en/emojibase/data.json?url';
 import {
@@ -20,9 +20,31 @@ const props = defineProps<{
     invalid?: boolean;
     // Whether an emoji is being suggested, shown subtly on the button.
     loading?: boolean;
+    // An emoji recommended in place of the current one, offered as a hint.
+    hint?: string | null;
+}>();
+
+const emit = defineEmits<{
+    acceptHint: [];
+    dismissHint: [];
 }>();
 
 const emoji = defineModel<string>({ default: '' });
+
+// The hint's buttons go away once used, so focus returns to the emoji.
+function focusInput(): void {
+    document.getElementById(props.id)?.focus();
+}
+
+function acceptHint(): void {
+    emit('acceptHint');
+    focusInput();
+}
+
+function dismissHint(): void {
+    emit('dismissHint');
+    focusInput();
+}
 
 const open = ref(false);
 const container = ref<HTMLElement | null>(null);
@@ -115,5 +137,39 @@ watch(container, (element) => {
             autocomplete="off"
             :aria-invalid="props.invalid || undefined"
         />
+
+        <div
+            v-if="props.hint"
+            class="bg-muted/50 flex shrink-0 items-center rounded-md border text-sm"
+            data-test="emoji-suggestion-hint"
+            @keydown.esc.prevent.stop="dismissHint"
+        >
+            <button
+                type="button"
+                class="hover:bg-accent focus-visible:ring-ring/50 flex h-8 cursor-pointer items-center gap-1 rounded-l-md px-2 whitespace-nowrap outline-none focus-visible:ring-[3px]"
+                data-test="accept-emoji-suggestion"
+                @click="acceptHint"
+            >
+                Use <span class="text-base">{{ props.hint }}</span> instead?
+            </button>
+            <button
+                type="button"
+                aria-label="Dismiss suggested emoji"
+                title="Dismiss"
+                class="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring/50 flex size-8 cursor-pointer items-center justify-center rounded-r-md outline-none focus-visible:ring-[3px]"
+                data-test="dismiss-emoji-suggestion"
+                @click="dismissHint"
+            >
+                <X class="size-4" />
+            </button>
+        </div>
+
+        <p role="status" class="sr-only">
+            {{
+                props.hint
+                    ? `Suggested emoji: ${props.hint}. Use it instead, or press Escape to dismiss it.`
+                    : ''
+            }}
+        </p>
     </div>
 </template>

@@ -48,11 +48,12 @@ const name = ref(props.subCategory.name);
 const emoji = ref(props.subCategory.emoji);
 const defaultTimeType = ref(props.subCategory.defaultTimeType);
 
-const { loading: suggestingEmoji } = useEmojiSuggestion(
-    name,
-    emoji,
-    props.category.id,
-);
+const {
+    loading: suggestingEmoji,
+    hint: emojiHint,
+    acceptHint: acceptEmojiHint,
+    dismissHint: dismissEmojiHint,
+} = useEmojiSuggestion(name, emoji, props.category.id);
 </script>
 
 <template>
@@ -117,6 +118,9 @@ const { loading: suggestingEmoji } = useEmojiSuggestion(
                     name="emoji"
                     :invalid="!!errors.emoji"
                     :loading="suggestingEmoji"
+                    :hint="emojiHint"
+                    @accept-hint="acceptEmojiHint"
+                    @dismiss-hint="dismissEmojiHint"
                 />
                 <InputError :message="errors.emoji" />
             </div>
