@@ -10,6 +10,7 @@ import TimeTypePicker from '@/components/TimeTypePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useEmojiSuggestion } from '@/composables/useEmojiSuggestion';
 import categories from '@/routes/categories';
 import type {
     CategoryOption,
@@ -46,6 +47,12 @@ const props = defineProps<{
 const name = ref(props.subCategory.name);
 const emoji = ref(props.subCategory.emoji);
 const defaultTimeType = ref(props.subCategory.defaultTimeType);
+
+const { loading: suggestingEmoji } = useEmojiSuggestion(
+    name,
+    emoji,
+    props.category.id,
+);
 </script>
 
 <template>
@@ -109,6 +116,7 @@ const defaultTimeType = ref(props.subCategory.defaultTimeType);
                     v-model="emoji"
                     name="emoji"
                     :invalid="!!errors.emoji"
+                    :loading="suggestingEmoji"
                 />
                 <InputError :message="errors.emoji" />
             </div>
