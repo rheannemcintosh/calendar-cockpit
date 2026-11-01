@@ -19,6 +19,7 @@ declare module '@inertiajs/core' {
             tagline: string;
             auth: Auth;
             sidebarOpen: boolean;
+            emojiSuggestionsEnabled: boolean;
             [key: string]: unknown;
         };
     }

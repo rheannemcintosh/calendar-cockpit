@@ -26,6 +26,14 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    'typesafe' => [
+        'key' => env('TYPESAFE_API_KEY'),
+        'model' => env('TYPESAFE_MODEL', 'jev-latest'),
+        'timeout' => (float) env('TYPESAFE_TIMEOUT', 2),
+        // Jev's choice is only suggested when its confidence, from 0 to 1, is at least this.
+        'emoji_suggestion_confidence' => (float) env('TYPESAFE_EMOJI_SUGGESTION_CONFIDENCE', 0.4),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
