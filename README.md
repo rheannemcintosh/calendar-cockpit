@@ -199,10 +199,10 @@ The app is available at `http://localhost:8000`. Register an account at `/regist
 
 ### Optional Services
 
-| Variable              | Description                                                                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `MAPBOX_ACCESS_TOKEN` | Turns on location search. Create a token in your [Mapbox account](https://account.mapbox.com/access-tokens/).                            |
-| `TYPESAFE_API_KEY`    | Turns on Jev's emoji and category suggestions. Create a key in the [TypeSafe AI console](https://console.typesafe.ai/keys).              |
+| Variable              | Description                                                                                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `MAPBOX_ACCESS_TOKEN` | Turns on location search. Create a token in your [Mapbox account](https://account.mapbox.com/access-tokens/).               |
+| `TYPESAFE_API_KEY`    | Turns on Jev's emoji and category suggestions. Create a key in the [TypeSafe AI console](https://console.typesafe.ai/keys). |
 
 ### Running the Tests
 
