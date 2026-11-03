@@ -98,13 +98,12 @@ The [product strategy](product/strategy.md) sets the order of work. Next are a c
 ### Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph Browser["Browser"]
         Pages["Vue 3 pages<br/>TypeScript + Tailwind"]
     end
 
     subgraph Laravel["Laravel app"]
-        direction TB
         Auth["Fortify<br/>sign-in, 2FA, passkeys"]
         Controllers["Controllers<br/>validation + policies"]
         Timeline["Timeline<br/>groups items by year, week, day"]
@@ -136,7 +135,7 @@ Two features reach out to other services, always from the server so no keys reac
 ### From Merge to Production
 
 ```mermaid
-flowchart LR
+flowchart TB
     PR["Pull request"] -->|tests workflow| Checks["Pint, Larastan,<br/>Pest, frontend checks"]
     Merge["Merge to main"] -->|deploy workflow| Image["Production<br/>Docker image"]
     Image --> GHCR["GitHub Packages<br/>ghcr.io"]
