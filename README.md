@@ -1,123 +1,157 @@
+<img src="public/favicon.svg" alt="Calendar Cockpit icon" width="80" height="80">
+
 # Calendar Cockpit
 
-A GitHub template for new Laravel apps: Vue (Inertia), Pest, Pint and Larastan, Docker, CI, and one-command Azure provisioning with OIDC deploys.
+Your schedule, at your fingertips.
 
-The template provides the base application: a Laravel 13 app with the Vue starter kit, Pest for testing, Pint and Larastan for code quality, and Dependabot for dependency updates. A Docker development environment with a SQL Server database is available through Laravel Sail. A production image, a GitHub Actions workflow that tests every change and deploys merges to Azure Container Apps, and scripts that provision, sign in to, and tear down the Azure resources are included. A neutral home page and dashboard carry no branding, and one command gives a new app its own name, tagline and icon.
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white)
+![Inertia.js](https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Pest](https://img.shields.io/badge/Pest-F472B6?style=for-the-badge)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Mapbox](https://img.shields.io/badge/Mapbox-000000?style=for-the-badge&logo=mapbox&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-181717?style=for-the-badge&logo=githubactions&logoColor=white)
+![Azure Container Apps](https://img.shields.io/badge/Azure%20Container%20Apps-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
+![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-181717?style=for-the-badge&logo=github&logoColor=white)
+![Azure SQL](https://img.shields.io/badge/Azure%20SQL-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
+![TypeSafe AI Jev](https://img.shields.io/badge/TypeSafe%20AI%20Jev-4A4A4A?style=for-the-badge)
+![Dependabot](https://img.shields.io/badge/Dependabot-025E8C?style=for-the-badge&logo=dependabot&logoColor=white)
+![Claude Code](https://img.shields.io/badge/Claude%20Code-D97757?style=for-the-badge)
+![Devin](https://img.shields.io/badge/Devin-FFFFFF?style=for-the-badge)
 
-## Using This Template
+## Contents
 
-### What You Need Installed
+- [Overview](#overview)
+    - [The Problem](#the-problem)
+    - [The Idea](#the-idea)
+    - [Part of Atodo](#part-of-atodo)
+- [Features](#features)
+    - [Plan Time As It Really Is](#plan-time-as-it-really-is)
+    - [Organise Life Your Way](#organise-life-your-way)
+    - [Know Where You're Going](#know-where-youre-going)
+    - [Let Jev Fill in the Details](#let-jev-fill-in-the-details)
+    - [Coming Next](#coming-next)
+- [How It Works](#how-it-works)
+    - [Architecture](#architecture)
+    - [From Merge to Production](#from-merge-to-production)
+- [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Setup](#setup)
+    - [Optional Services](#optional-services)
+    - [Running the Tests](#running-the-tests)
+- [License](#license)
 
-Day-to-day development runs in Docker, but the setup command below runs on your own machine, so it needs these tools there. It checks the versions before it changes anything and stops with a message if one is too old:
+## Overview
 
-| Tool                                                                            | Version                                                                                                                                                                                         | Why                                                                                               |
-| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [Git](https://git-scm.com/downloads)                                            | Any recent version.                                                                                                                                                                             | Commits and pushes the branding.                                                                  |
-| [Node.js and npm](https://nodejs.org/)                                          | Node 18.3 or newer. Node 22.18 or newer is better, because that is what the project's build tooling (`vite-plus`) asks for, and older versions print warnings when installing the dependencies. | Runs `npm run brand`, and installs the dependencies if there are none.                            |
-| [GitHub CLI](https://cli.github.com/), signed in                                | 2.25 or newer, the version that added `gh variable`. Sign in with `gh auth login`.                                                                                                              | Starts the first deploy, sets the repository secrets and variable, and protects `main`.           |
-| [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli), signed in | 2.79 or newer, which is what the `containerapp` extension it installs asks for. An older one gets an older extension that this has not been tried with. Sign in with `az login`.                | Creates everything in Azure.                                                                      |
-| [librsvg](https://wiki.gnome.org/Projects/LibRsvg), optional                    | Any version. `brew install librsvg`, or `apt install librsvg2-bin`.                                                                                                                             | Builds `favicon.ico` and the iOS icon for a new icon. Without it they keep the template's rocket. |
+Why Calendar Cockpit exists, who it is for, and where it is heading.
 
-The scripts run on the older bash that ships with macOS as well as on Linux. Docker is only needed for local development, not for the setup command.
+### The Problem
 
-### Setting Up A New App
+Calendars give every event the same shape: something that starts at one time and ends at another. A 10:00 dentist appointment, a delivery due "between 8 and 12", an afternoon set aside for study and a coffee at "roughly 2" all look identical, so when plans change there is no telling what can move and what must stay put. Colour is the only way to say which part of life something belongs to, and a colour on its own has no name. [The full problem statement](product/problem-statement.md) sets this out in detail.
 
-1. On this repository's page, select Use this template, then Create a new repository. Name the repository with 2 to 32 lowercase letters, numbers and single hyphens, starting with a letter, because its name becomes the name of everything in Azure. The new repository starts with a single commit and none of this repository's history. Read the notes at the end before making it private.
+People who plan their life carefully end up building their own system on top, with colours only they can decode and emojis typed into every event name. Calendar Cockpit is built first for them, [the System Builder](product/personas.md#persona-1--the-system-builder), and then for [the Head Planner](product/personas.md#persona-2--the-head-planner), who keeps soft plans out of a calendar altogether because none of its shapes fit.
 
-2. Clone it, and sign in to GitHub and Azure:
+### The Idea
 
-    ```bash
-    gh auth login
-    ```
+Calendar Cockpit is for the calendar a person keeps for life outside work: health, errands, exercise, family and friends, study and side projects. Its [vision](product/vision.md) is a calendar that holds time in the right-sized pieces and shows at a glance what each one is and which part of life it belongs to. Each item records how precise its time is, and belongs to a named category and sub-category with its own colour and emoji, so the calendar itself understands what used to live in the person's head.
 
-    ```bash
-    az login
-    ```
+### Part of Atodo
 
-3. Run the bootstrap command from the `main` branch, with nothing uncommitted. It asks for the name, tagline and icon, a strong SQL admin password, and a token with `read:packages` if the image is private (leave that empty for a public image), then asks to go ahead:
+Calendar Cockpit will become part of Atodo: one chat interface for running everyday life, backed by separate apps that each look after one area and work together behind it.
 
-    ```bash
-    ./deploy/bootstrap.sh
-    ```
+## Features
 
-    To skip the questions, give the values as options and settings, for example:
+What Calendar Cockpit lets you do with your time today, and what comes next.
 
-    ```bash
-    SQL_ADMIN_PASSWORD='choose-a-strong-password' ./deploy/bootstrap.sh --name "Acme Tracker" --tagline "Track everything." --icon brain --yes
-    ```
+### Plan Time As It Really Is
 
-4. Open the address it prints, sign in with your Microsoft account, and register your account on the app's own register page, once.
+Every item says how firm its time is, so a glance shows what can move and what can't:
 
-The name defaults to the repository name in title case, and the icon is a [Lucide](https://lucide.dev/icons) name such as `brain` or `heart-pulse`. Running the command again is safe, whether a step failed or you want to change a value: finished steps are skipped or repeated safely, and the first image is not built again once the app exists. Run `./deploy/bootstrap.sh --help` for the options.
+- **Exact** — Starts and ends at these times, like an appointment or a train.
+- **Window** — A booked slot it could happen anywhere in, like a delivery.
+- **Block** — Time set aside for something, like study or a side project.
+- **Approximate** — Roughly these times, like coffee at around 2.
 
-### What The Command Does
+### Organise Life Your Way
 
-It runs these steps in order, using the scripts described in the sections below, which still work on their own. Use them directly if you want to do any step by hand:
+Categories are your own, not a fixed set. Each one has a name and a colour, and holds sub-categories with their own name and emoji, so a physio appointment can be told apart from a GP appointment within health. A sub-category can carry a default time type, so a delivery starts as a window and a workout as a block without thinking about it.
 
-1. Sets the name, tagline and icon, the Composer package name and the README title with `npm run brand`, then commits and pushes the result. It installs the dependencies first if there are none. See [Branding](#branding).
-2. Runs the `deploy` workflow once so the image exists in `ghcr.io`, and waits for it to be pushed. The run finishes green: it builds and pushes the image, and skips the Azure steps with a notice, because the deploy sign-in is not set up yet. See [Deploy Workflow](#deploy-workflow).
-3. Provisions Azure with `deploy/azure-provision.sh`. The deployed app shows the name and tagline you set. See [Provisioning Azure](#provisioning-azure).
-4. Sets up Microsoft sign-in with `deploy/azure-easyauth-setup.sh`. Until then the app answers HTTP 403 to everyone. See [Signing In To The App (Easy Auth)](#signing-in-to-the-app-easy-auth).
-5. Requires the `ci` status check on `main`, because a merge deploys without waiting for the tests. If `main` already has protection it is left as it is. Where GitHub does not allow it, see the notes below.
-6. Sets up the deploy sign-in with `deploy/azure-oidc-setup.sh`, which also turns on [deploying after every merge](#deploy-on-merge). That is left off when `main` could not be protected, so a red pull request cannot be merged and deployed.
+### Know Where You're Going
 
-It also gives the app its own Composer package name (the owner and repository, in lowercase) and its own README title, and puts the app's name in the README's example commands. The rest of this README is still the template's documentation, so rewrite it for your app.
+Attach a real place to an item by searching for it by name or address, powered by [Mapbox](https://www.mapbox.com/). The place opens in maps straight from your calendar.
 
-### What A New Repository Does Not Inherit
+### Let Jev Fill in the Details
 
-A repository made from a template gets the files, and nothing else from this repository's settings:
+When you name a sub-category, [Jev](https://typesafe.ai/) from TypeSafe AI suggests an emoji for it and which of your categories it belongs in. It only speaks up when it's confident, and everything works without it.
 
-- **Secrets and variables:** there are none. The bootstrap command sets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `DEPLOY_ON_MERGE` (through the OIDC script). Until then a merge shows the `deploy` job as skipped, which is the intended behaviour.
-- **Branch protection:** it is not copied, so the bootstrap command sets it. GitHub only offers it for private repositories on a paid plan (GitHub Pro or above). On a free account a private repository cannot require the `ci` check, so the command leaves deploying after a merge off and tells you. Either keep the repository public, upgrade and turn it on with `gh variable set DEPLOY_ON_MERGE --body true`, or keep releases manual and start the `deploy` workflow by hand.
-- **Dependabot:** the update configuration is copied, and GitHub runs its first check straight away, so pull requests start arriving on day one. Dependabot security alerts are off until you turn them on in the repository's security settings.
-- **Actions:** workflows run from the first push. The `tests` workflow should pass without changes.
+### Coming Next
 
-## Architecture
+The [product strategy](product/strategy.md) sets the order of work. Next are a calendar view that shows each item's time type, category and sub-category without opening it, and a way to mark items as pre-paid, non-cancellable, important, tentative or just an idea.
 
-The application is a Laravel monolith that renders its Vue 3 pages server-side through Inertia.js, so routing and controllers stay in Laravel while pages are Vue components built with Vite. Authentication is handled by Laravel Fortify with session-based sign-in. Data is stored in SQL Server, which runs in a container in the Sail environment and as a service in the test workflow. Azure SQL is the intended production database.
+## How It Works
 
-## Key Interfaces
+### Architecture
 
-The starter kit's default routes:
+```mermaid
+flowchart TB
+    subgraph Browser["Browser"]
+        Pages["Vue 3 pages<br/>TypeScript + Tailwind"]
+    end
 
-| Method | Route                | Description                                                    |
-| ------ | -------------------- | -------------------------------------------------------------- |
-| `GET`  | `/`                  | Welcome page.                                                  |
-| `GET`  | `/login`             | Sign-in page, with `POST /login` to authenticate.              |
-| `GET`  | `/register`          | Registration page, with `POST /register` to create an account. |
-| `GET`  | `/forgot-password`   | Password reset request page.                                   |
-| `GET`  | `/dashboard`         | Signed-in landing page.                                        |
-| `GET`  | `/settings/profile`  | Profile settings.                                              |
-| `GET`  | `/settings/security` | Password and two-factor settings.                              |
+    subgraph Laravel["Laravel app"]
+        Auth["Fortify<br/>sign-in, 2FA, passkeys"]
+        Controllers["Controllers<br/>validation + policies"]
+        Timeline["Timeline<br/>groups items by year, week, day"]
+        Suggesters["Suggesters<br/>emoji + category"]
+        Locations["Location search"]
+    end
 
-### Tech Stack
+    DB[("SQL Server<br/>users, categories,<br/>sub-categories, items")]
+    Jev["Jev<br/>TypeSafe AI"]
+    Mapbox["Mapbox<br/>Search Box API"]
 
-- **[Laravel](https://laravel.com/docs/13.x)** — Backend framework, routing and database migrations.
-- **[Vue 3](https://vuejs.org/guide/introduction.html)** — Frontend components, written in TypeScript.
-- **[Inertia.js](https://inertiajs.com/docs)** — Connects Laravel controllers to Vue pages without a separate API.
-- **[Laravel Fortify](https://laravel.com/docs/13.x/fortify)** — Authentication backend: sign-in, registration and password reset.
-- **[Tailwind CSS](https://tailwindcss.com/docs)** — Styling.
-- **[Instrument Sans](https://fonts.google.com/specimen/Instrument+Sans)** — The app's font, from the `@fontsource/instrument-sans` package and served by the app itself. Licensed under the SIL Open Font License 1.1.
-- **[Vite](https://vite.dev/guide/)** — Frontend build tooling.
-- **[Pest](https://pestphp.com/docs)** — Test framework.
-- **[Pint](https://laravel.com/docs/13.x/pint)** — PHP code style.
-- **[Larastan](https://github.com/larastan/larastan)** — PHP static analysis.
-- **[SQL Server](https://learn.microsoft.com/en-us/sql/sql-server/)** — Database, run in a container locally and in CI.
-- **[Laravel Sail](https://laravel.com/docs/13.x/sail)** — Docker development environment.
-- **[Dependabot](https://docs.github.com/en/code-security/dependabot)** — Automated dependency update pull requests.
-- **[GitHub Actions](https://docs.github.com/en/actions)** — Runs the test workflow.
+    Pages <-->|Inertia| Controllers
+    Pages <-->|Inertia| Auth
+    Controllers --> Timeline
+    Controllers --> Suggesters
+    Controllers --> Locations
+    Controllers <--> DB
+    Auth <--> DB
+    Suggesters -->|choice question| Jev
+    Locations -->|place search| Mapbox
+```
 
-## Local Development
+Calendar Cockpit is a [Laravel](https://laravel.com/) monolith. Its pages are [Vue 3](https://vuejs.org/) components that [Inertia.js](https://inertiajs.com/) renders from Laravel controllers, so routing, validation and authorisation all stay on the server and there is no separate API. [Laravel Fortify](https://laravel.com/docs/13.x/fortify) handles accounts, including two-factor sign-in and passkeys.
 
-The app runs in Docker through Laravel Sail. Sail starts the app with PHP 8.4, Node and Composer, and a SQL Server 2022 container, so nothing beyond Docker needs installing.
+Each person's categories, sub-categories and calendar items are stored in [SQL Server](https://www.microsoft.com/sql-server), and policies make sure people only ever see and change their own. The calendar items list is grouped into years, weeks and days on the server before it reaches the page.
 
-The Sail image in `docker/8.4` installs PHP from Ondřej Surý's Launchpad PPA (`ppa.launchpadcontent.net/ondrej/php`), not from `packages.sury.org` as the upstream Sail Dockerfile does. Both come from the same maintainer, but sury.org was slower to publish PHP 8.4.27 for Apple Silicon, and the app needs at least that version, so on a Mac the image could not install the app's dependencies. The image picks up whatever 8.4 release the PPA has when it is built, so run `./vendor/bin/sail build --no-cache` after a PHP security release. Re-publishing the Sail files with `sail:publish` brings back the upstream Dockerfile and undoes this change.
+Two features reach out to other services, always from the server so no keys reach the browser. Location search asks [Mapbox](https://www.mapbox.com/) for matching places, and the suggesters ask [Jev](https://typesafe.ai/) a single choice question, then only use its answer when it's one of the options offered and Jev is confident enough. Both are optional and fail quietly: without their keys, or if they're slow, the forms carry on without them.
+
+### From Merge to Production
+
+```mermaid
+flowchart TB
+    PR["Pull request"] -->|tests workflow| Checks["Pint, Larastan,<br/>Pest, frontend checks"]
+    Merge["Merge to main"] -->|deploy workflow| Image["Production<br/>Docker image"]
+    Image --> GHCR["GitHub Packages<br/>ghcr.io"]
+    GHCR --> ACA["Azure Container Apps"]
+    ACA <--> SQL[("Azure SQL<br/>serverless")]
+```
+
+Every pull request runs the full test suite in [GitHub Actions](https://github.com/features/actions) against a SQL Server container. Each merge to `main` builds the production image, pushes it to [GitHub Packages](https://github.com/features/packages) and updates the app on [Azure Container Apps](https://azure.microsoft.com/products/container-apps), which scales to zero when nobody is using it. Production data lives in a serverless [Azure SQL](https://azure.microsoft.com/products/azure-sql/database) database, which pauses when idle, so the app gives it time to wake up on the first request.
+
+## Getting Started
+
+The app runs in Docker through [Laravel Sail](https://laravel.com/docs/13.x/sail), which provides PHP 8.4, Node, Composer and a SQL Server 2022 container.
 
 ### Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/).
-
-Starting a new app from the template needs more tools on your machine. See [What You Need Installed](#what-you-need-installed).
 
 ### Setup
 
@@ -128,25 +162,25 @@ Starting a new app from the template needs more tools on your machine. See [What
     cd calendar-cockpit
     ```
 
-2. Copy the environment file. `DB_PASSWORD` becomes the SQL Server `sa` password, so change it from the placeholder if the machine is shared:
+2. Copy the environment file. `DB_PASSWORD` becomes the SQL Server `sa` password:
 
     ```bash
     cp .env.example .env
     ```
 
-3. Install the PHP dependencies. The `sail` script lives in `vendor`, so if PHP and Composer aren't installed locally, use a throwaway container (with them installed, `composer install` works too):
+3. Install the PHP dependencies. The `sail` script lives in `vendor`, so if PHP and Composer aren't installed locally, use a throwaway container:
 
     ```bash
     docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php84-composer:latest composer install --ignore-platform-reqs
     ```
 
-4. Start the environment. The first run builds the image and takes several minutes. It starts the app and SQL Server, and creates the `laravel` and `laravel_testing` databases:
+4. Start the environment. The first run builds the image and takes several minutes:
 
     ```bash
     ./vendor/bin/sail up -d
     ```
 
-5. Generate the app key, run the migrations and install the frontend dependencies inside the container:
+5. Generate the app key, run the migrations and install the frontend dependencies:
 
     ```bash
     ./vendor/bin/sail artisan key:generate
@@ -160,330 +194,32 @@ Starting a new app from the template needs more tools on your machine. See [What
     ./vendor/bin/sail npm run dev
     ```
 
-The app is available at `http://localhost:8000`. You can register an account at `/register` and sign in to reach the dashboard.
+The app is available at `http://localhost:8000`. Register an account at `/register`, then create a category and sub-category before adding calendar items.
 
-SQL Server is available to a database client at `127.0.0.1:1433`, with the user `sa` and the `DB_PASSWORD` from `.env`. Its data is kept in the `sail-mssql` Docker volume, so it survives restarts.
+### Optional Services
 
-Run any command in the container by prefixing it with `./vendor/bin/sail`. Stop the environment with:
+| Variable              | Description                                                                                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `MAPBOX_ACCESS_TOKEN` | Turns on location search. Create a token in your [Mapbox account](https://account.mapbox.com/access-tokens/).               |
+| `TYPESAFE_API_KEY`    | Turns on Jev's emoji and category suggestions. Create a key in the [TypeSafe AI console](https://console.typesafe.ai/keys). |
 
-```bash
-./vendor/bin/sail down
-```
+### Running the Tests
 
-Add `-v` to also delete the database volume.
-
-Install the frontend dependencies either on your machine or in the container, not both. They use different native binaries, so running `npm install` in the container replaces a `node_modules` installed locally.
-
-If another project already uses port `8000`, `5173` or `1433` (for example another local SQL Server container), Sail fails to start with a "port is already allocated" error. Set `APP_PORT`, `VITE_PORT` or `FORWARD_DB_PORT` in `.env` to free ports and restart.
-
-### Testing Locally
-
-The tests run against the `laravel_testing` database, so they need the environment running. The `DB_HOST` of `mssql` only resolves inside the Sail containers, so run these through Sail.
-
-1. Run the full check, which runs Pint, Larastan and the Pest test suite:
-
-    ```bash
-    ./vendor/bin/sail composer test
-    ```
-
-2. Run the frontend format, lint and type checks:
-
-    ```bash
-    ./vendor/bin/sail npm run check
-    ./vendor/bin/sail npm run types:check
-    ```
-
-3. Fix code style automatically:
-
-    ```bash
-    ./vendor/bin/sail composer lint
-    ./vendor/bin/sail npm run check:fix
-    ```
-
-The scripts in `deploy/` are tested without Azure or GitHub. The tests in `tests/Feature/Deploy` run the real scripts in a scratch git repository, with stand-ins for `az`, `gh` and `curl` in `tests/Support/fakes`. The stand-ins remember what they were asked to create in a small JSON file, so a first run, a re-run and a teardown all see consistent results, and they log every call. They only know the commands and queries the scripts use. If you change a script to use another command or query, its test fails with `fake: unsupported ...` (exit code 97), which means the stand-in needs teaching the new command, and the test then pins down what the script should do with it.
-
-These tests start many small processes, so they take about a minute of the full run.
-
-The PHP requirement in `composer.json` is `^8.4.27`, the first 8.4 release with the fixes for CVE-2026-109618 and CVE-2026-109619, so Composer refuses to install on an unpatched PHP. The production image and CI pin the same version. It must also never be lower than the oldest PHP version the locked packages accept. Dependabot resolves updates against the lowest PHP version that requirement allows, so a requirement lower than what the locked packages need makes every Dependabot run for the PHP packages fail and no update is ever proposed. A test fails if the requirement falls behind. If it does, raise the requirement in `composer.json` to the version it names, refresh the lock file with `composer update --lock`, and commit both.
-
-### Production Image
-
-The `Dockerfile` in the repo root builds the image that gets deployed, separate from the Sail development image in `docker/8.4`. A first stage installs the production PHP dependencies and builds the frontend. A second stage copies the results into a smaller runtime image with nginx, php-fpm and the SQL Server drivers. The container runs as a non-root user and serves the app on port `8080`. On start it caches the config, routes and views, links storage and runs the migrations.
-
-1. Build the image:
-
-    ```bash
-    docker build -t calendar-cockpit .
-    ```
-
-2. Run it. The image has no `.env` and reads its settings from environment variables, so pass the app key and the database settings. This example uses the Sail SQL Server container, so the Sail environment must be running, and the network name is the folder name followed by `_sail`:
-
-    ```bash
-    docker run --rm -p 8090:8080 --network calendar-cockpit_sail \
-      -e APP_KEY="$(./vendor/bin/sail artisan key:generate --show)" \
-      -e APP_URL=http://localhost:8090 \
-      -e DB_CONNECTION=sqlsrv -e DB_HOST=mssql -e DB_PORT=1433 \
-      -e DB_DATABASE=laravel -e DB_USERNAME=sa -e DB_PASSWORD=Your_strong_password123 \
-      -e DB_ENCRYPT=yes -e DB_TRUST_SERVER_CERTIFICATE=true \
-      calendar-cockpit
-    ```
-
-The app is then available at `http://localhost:8090`. Stop it with Ctrl+C. Use a real `DB_PASSWORD` and set `DB_TRUST_SERVER_CERTIFICATE` to `false` for anything other than local testing.
-
-### Environment Variables
-
-The full set is in `.env.example`. The ones the template relies on:
-
-| Variable                      | Description                                                                |
-| ----------------------------- | -------------------------------------------------------------------------- |
-| `APP_NAME`                    | Application name, shown throughout the app. Read at runtime.               |
-| `APP_TAGLINE`                 | Short line about the app, shown on the home page and dashboard.            |
-| `APP_ENV`                     | Environment name, for example `local` or `production`.                     |
-| `APP_KEY`                     | Encryption key, generated by `php artisan key:generate`.                   |
-| `APP_DEBUG`                   | Shows detailed errors when `true`. Set to `false` in production.           |
-| `APP_URL`                     | Base URL of the app, `http://localhost:8000` locally.                      |
-| `DB_CONNECTION`               | Database driver, `sqlsrv` for SQL Server.                                  |
-| `DB_HOST`                     | Database host, `mssql` inside Sail.                                        |
-| `DB_PORT`                     | Database port, `1433`.                                                     |
-| `DB_DATABASE`                 | Application database name, `laravel`. The tests use `laravel_testing`.     |
-| `DB_USERNAME`                 | Database user, `sa` for the Sail container.                                |
-| `DB_PASSWORD`                 | Password for the Sail SQL Server `sa` account. Must be a strong password.  |
-| `DB_ENCRYPT`                  | Encrypts the database connection, `yes` by default.                        |
-| `DB_TRUST_SERVER_CERTIFICATE` | Trusts the container's self-signed certificate, `true` for local use only. |
-| `FORWARD_DB_PORT`             | Host port SQL Server is published on, `1433` by default.                   |
-| `APP_PORT`                    | Host port the Sail app is served on, `8000` by default.                    |
-| `VITE_PORT`                   | Host port for the Vite development server, `5173` by default.              |
-| `WWWUSER` / `WWWGROUP`        | User and group IDs the Sail container runs as, `1000` by default.          |
-| `SESSION_DRIVER`              | Where sessions are stored, `database` by default.                          |
-| `QUEUE_CONNECTION`            | Queue backend, `database` by default.                                      |
-| `CACHE_STORE`                 | Cache backend, `database` by default.                                      |
-| `MAIL_MAILER`                 | Mail transport, `log` by default so emails are written to the log.         |
-| `MAPBOX_ACCESS_TOKEN`         | Mapbox token for location search. Without one, location search is off.     |
-
-### Branding
-
-The template ships with a neutral home page and dashboard, and no Laravel branding. A new app gets its own name, tagline and icon with one command, run from the root of the app after `npm install`:
+The tests run against the `laravel_testing` database inside Sail:
 
 ```bash
-npm run brand -- --name "Acme Tracker" --tagline "Track everything." --icon brain
+./vendor/bin/sail composer test
 ```
 
-Each option is optional, but at least one is needed. It can be run again whenever you want to change them, and a run that changes nothing leaves the files as they were.
-
-| Option      | What it changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--name`    | `APP_NAME` in `.env` and `.env.example`. Shown on the home page, the dashboard, the sidebar, the sign-in pages, the browser tab and emails. It is read when the app runs, so it needs no rebuild.                                                                                                                                                                                                                                                                                   |
-| `--tagline` | `APP_TAGLINE` in `.env` and `.env.example`, shown on the home page and the dashboard. Also read when the app runs.                                                                                                                                                                                                                                                                                                                                                                  |
-| `--package` | A Composer package name such as `acme/acme-tracker`. Renames the package in `composer.json` (only that line), brings the fingerprint in `composer.lock` in step so Composer does not report an out-of-date lock file, makes the README's title the `--name`, and puts the package's repository name in the README's example commands (inside code blocks only). The setup command passes it for you. Without it, `composer.json`, `composer.lock` and the README are never touched. |
-| `--icon`    | A [Lucide](https://lucide.dev/icons) icon name such as `brain` or `heart-pulse`. It swaps the icon in `resources/js/components/AppLogoIcon.vue` and rebuilds `public/favicon.svg` from the same shapes. Rebuild the front end to see it.                                                                                                                                                                                                                                            |
-
-Nothing is written unless every value is valid. An unknown icon name, or a name or tagline containing a double quote, backslash or dollar sign (which would break the `.env` file), stops it with a message and changes nothing. The name and tagline can also be set by hand in `.env`.
-
-`public/favicon.ico` and `public/apple-touch-icon.png` are pictures, which need an image converter. They are rebuilt when `rsvg-convert` is installed (`brew install librsvg`, or `apt install librsvg2-bin`) and left as they were otherwise, with a note. They are only used by old browsers and the iOS home screen. `.env.example` holds placeholders (`My App` and a generic tagline) until you run the command.
-
-The font is Instrument Sans, installed from the `@fontsource/instrument-sans` package and built into the app, so the build downloads no font and the pages ask no other website for one. To use a different font, install its Fontsource package, for example `npm install -D @fontsource/inter`, then change the family and the `fontsource(...)` call in `vite.config.ts` and the `--font-sans` value in `resources/css/app.css` to match.
-
-### Updating Vite+
-
-`vite-plus` builds, lints and formats the app. It carries its own copy of Vite, `vite-plus-core`, and needs exactly the same version of it, so `package.json` points `vite` at that copy: once under `devDependencies` and once under `overrides`. The versions in those three lines must always match. Dependabot can change only one of them, which fails the build, so it is told to skip `vite-plus` and `vite`, and you update them by hand when you want a new version:
-
-1. In `package.json`, set `vite-plus` and both `npm:@voidzero-dev/vite-plus-core@` aliases to the new version.
-
-2. Install. The flag is needed because `vite-plus` lists optional test packages that npm otherwise reports as a conflict:
-
-    ```bash
-    npm install --legacy-peer-deps
-    ```
-
-3. Check that the build and the checks still pass:
-
-    ```bash
-    npm run build && npm run check && npm run types:check
-    ```
-
-If the build stops with "Expected @voidzero-dev/vite-plus-core@X, but found @voidzero-dev/vite-plus-core@Y", one of the three lines is out of step. TypeScript is held at version 6, and Dependabot skips major TypeScript updates, because version 7 fails the front end build.
-
-## Dependabot
-
-Dependabot opens one grouped pull request per ecosystem (Composer, npm and GitHub Actions) each week. The `dependabot-jira` workflow creates a Dependency Update work item in Jira for each one when it's opened. The work item has:
-
-- **Summary:** the ecosystem and the date, such as `Bump Composer Dependencies [26-10-31]`.
-- **Description:** one line, such as "Bump the _Composer_ group in _Calendar Cockpit_ with 3 updates."
-- **Updates field:** a table of every package, with its old and new version.
-- **Labels:** `dependabot_` followed by each of the pull request's language labels, such as `dependabot_php`.
-
-The workflow then renames the pull request to `<key> | <summary>`, which links it to the work item in Jira. It only runs when the pull request is opened, so a rebase never creates a second work item. The Jira project key and the Updates field's ID are set at the top of the workflow.
-
-The workflow needs these secrets. Workflows that Dependabot starts can't read Actions secrets, so add them under Settings, Secrets and variables, Dependabot. Until they are set, the workflow skips with a notice:
-
-| Secret           | Description                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| `JIRA_BASE_URL`  | The Jira site, such as `https://example.atlassian.net`.                                       |
-| `JIRA_EMAIL`     | The email address of the Atlassian account that creates the work items.                       |
-| `JIRA_API_TOKEN` | An [API token](https://id.atlassian.com/manage-profile/security/api-tokens) for that account. |
-
-## Deployment
-
-### Provisioning Azure
-
-`deploy/azure-provision.sh` creates everything an app needs in Azure with one command: a resource group, an Azure SQL server with a serverless database on the free offer, a Container Apps environment, the container app (which scales to zero) and a monthly budget alert. It names everything from the repository name, matching the `deploy` workflow below.
-
-1. Run the `deploy` workflow once from the Actions tab so the image exists in `ghcr.io`. The run finishes green, with a notice that the Azure steps were skipped because the deploy sign-in is not set up yet. It builds and pushes the image, which is all this step is for.
-
-2. Log in to Azure:
-
-    ```bash
-    az login
-    ```
-
-3. Run the script from a clone of the repository. `SQL_ADMIN_PASSWORD` must be a strong password:
-
-    ```bash
-    SQL_ADMIN_PASSWORD='choose-a-strong-password' ./deploy/azure-provision.sh
-    ```
-
-Also set `GHCR_USERNAME` and `GHCR_PAT` (a token with `read:packages`) if the `ghcr.io` package is private. The script header lists every setting, such as `APP_NAME`, `LOCATION`, `BUDGET_AMOUNT` and `BUDGET_EMAIL`. The deployed app shows the `APP_NAME` and `APP_TAGLINE` in `.env.example`, which `npm run brand` writes, so run it first if you want the live app to carry your name and tagline. Without a name there (or with the template's placeholder, `My App`) it uses the repository name in title case. Set `APP_TITLE` or `APP_TAGLINE` to override either. Set `MAPBOX_ACCESS_TOKEN` to turn on location search. It is stored as a secret, and a re-run without it keeps the one already stored. The budget alert emails the signed-in Azure user at 80% and 100% of the budget, or `BUDGET_EMAIL` if you set it.
-
-Re-running the script is safe: it reuses existing resources and keeps the data and secrets. The container app is created behind Easy Auth and returns HTTP 403 to everyone until sign-in is set up, which the next section covers.
-
-### Signing In To The App (Easy Auth)
-
-Until sign-in is set up, the app answers HTTP 403 to everyone, including you. `deploy/azure-easyauth-setup.sh` lets you in with your Microsoft account and keeps everyone else out. Run the provisioning script first, then:
+This runs Pint, Larastan and the Pest suite. The frontend checks are:
 
 ```bash
-./deploy/azure-easyauth-setup.sh
+./vendor/bin/sail npm run check
+./vendor/bin/sail npm run types:check
 ```
 
-The script:
+Stop the environment with `./vendor/bin/sail down`.
 
-- Creates a Microsoft Entra app registration called `<repo>-easyauth`, limited to your own directory, whose redirect address is the app's `/.auth/login/aad/callback`.
-- Requires user assignment on it and assigns only the account signed in to `az`. Anyone else is refused by Microsoft before the request reaches the app, so they cannot wake the app or its database.
-- Connects the app to Microsoft sign-in and switches unauthenticated visitors from the 403 to a redirect to sign in. It restricts access first and redirects last, so there is never a moment when any account in the directory could get in.
-- Checks that visitors really are redirected, and tells you if that is not yet confirmed. Settings can take a few minutes to apply. The check asks the way a browser does, because Easy Auth answers a client that does not look like a browser, such as plain `curl`, with a 401 instead of the redirect.
+## License
 
-Then:
-
-1. Open the app's address in a browser and sign in with the allowed Microsoft account.
-2. Register your account on the app's own register page, once. The app keeps its own login behind Microsoft sign-in.
-3. To check that nobody else gets in, open the address in a private window and sign in with a different Microsoft account. It should be refused.
-
-The sign-in needs a client secret. Container Apps offers no non-expiring alternative, so it expires after two years. The script shows the date and warns when it is within 60 days. To replace it, run the script again with `ROTATE_SECRET=1`, which issues a new secret and removes the old one.
-
-| Setting           | Effect                                                                          |
-| ----------------- | ------------------------------------------------------------------------------- |
-| `ALLOWED_USER_ID` | Object ID of the one user to let in. Defaults to the account signed in to `az`. |
-| `ROTATE_SECRET=1` | Issues a new client secret and removes the old one.                             |
-| `VERIFY=false`    | Skips the final check that visitors are redirected to sign in.                  |
-
-Running the script again is safe. It only changes what has drifted. If other users or groups have been assigned in Microsoft Entra, it reports them and leaves them alone.
-
-### Deploy Sign-In (OIDC)
-
-The `deploy` workflow signs in to Azure with OIDC, so no password is stored anywhere. `deploy/azure-oidc-setup.sh` sets that up for an app. It limits the sign-in to the app's own resource group, so run the provisioning script first.
-
-1. Log in to Azure and GitHub if you haven't:
-
-    ```bash
-    az login
-    ```
-
-    ```bash
-    gh auth login
-    ```
-
-2. Run the script from a clone of the repository:
-
-    ```bash
-    ./deploy/azure-oidc-setup.sh
-    ```
-
-The script creates an app registration called `<repo>-deploy`, gives it the Contributor role on `rg-<repo>` only, adds a trust rule for the repository's `main` branch and sets the three repository secrets listed below. It also sets the repository variable `DEPLOY_ON_MERGE` to `true`, which turns on deploying after a merge to `main` (see below). Re-running is safe. No client secret is created. Set `TRUST_BRANCH` to trust a different branch, which leaves deploy on merge off because merges land on `main`. Set `ENABLE_DEPLOY_ON_MERGE=false` to keep releases manual. If `gh` isn't available, the script prints the three values so you can add them by hand.
-
-If a deploy fails with the error `AADSTS700213`, Azure names the subject it received. Re-run the script with `OIDC_SUBJECT` set to exactly that value.
-
-The scripts in `deploy/` share their naming rules in `deploy/lib.sh`, and the `deploy` workflow derives the same names from the repository name.
-
-### Deploy Workflow
-
-The `deploy` GitHub Actions workflow builds the production image, pushes it to `ghcr.io` and updates an Azure Container App to run it. It runs in two ways: when a change is merged to `main` (once the repository has opted in, see below), and when you start it by hand from the Actions tab by choosing `deploy` and selecting Run workflow. Updating the app needs the deploy sign-in above. A manual run before it is set up builds and pushes the image, skips the Azure steps, and finishes green with a notice naming the missing secrets. A merge that should update the app, because `DEPLOY_ON_MERGE` is on, but has no sign-in set up fails with a clear message, since that is a mistake that should not pass silently.
-
-The workflow takes every name from the repository name, so nothing needs editing per app:
-
-- The image is `ghcr.io/<owner>/<repo>`, tagged with the commit SHA and `latest`, built for `linux/amd64`.
-- The container app is named `<repo>`, in the resource group `rg-<repo>`.
-
-The workflow needs these repository secrets. The OIDC setup script sets them for you, or you can add them by hand under Settings, Secrets and variables, Actions. They are identifiers, not passwords:
-
-| Secret                  | Description                                                 |
-| ----------------------- | ----------------------------------------------------------- |
-| `AZURE_CLIENT_ID`       | Client ID of the Microsoft Entra app registration for OIDC. |
-| `AZURE_TENANT_ID`       | ID of the Microsoft Entra tenant.                           |
-| `AZURE_SUBSCRIPTION_ID` | ID of the Azure subscription that holds the app.            |
-
-The `tests` workflow runs on pushes to `main` and on pull requests, against a SQL Server service container.
-
-#### Deploy On Merge
-
-When a change is merged to `main`, the `deploy` workflow starts by itself. Two things must be true for it to deploy:
-
-- The change is merged to `main`. Pull requests never deploy, and never show a deploy check.
-- The repository variable `DEPLOY_ON_MERGE` is `true`. The OIDC setup script sets it. A new app made from the template has no such variable until its Azure setup is done, so a merge there shows the deploy as skipped in the Actions list instead of failing.
-
-The deploy does not wait for the `tests` workflow, which starts at the same moment on a merge. The safeguard is that the pull request's tests have already passed before you merge it, so require the `ci` check on `main` in the repository's branch settings and only merge green pull requests.
-
-Deploys run one at a time. A newer merge waits for a deploy that is already updating the app instead of interrupting it, and if several merges queue up, only the newest waiting one runs.
-
-To turn it off, delete the variable and releases go back to manual:
-
-```bash
-gh variable delete DEPLOY_ON_MERGE
-```
-
-### Tearing Down An App
-
-`deploy/azure-teardown.sh` removes everything an app created in Azure, so a test environment can be thrown away as quickly as it was set up. Deleting the resource group on its own would leave the deploy identity in Microsoft Entra and the secrets in GitHub behind, so use the script:
-
-```bash
-./deploy/azure-teardown.sh
-```
-
-It removes:
-
-- The budget alert, which sits on the resource group rather than inside it, so the script deletes it explicitly first.
-- The resource group `rg-<repo>` with everything in it: the container app, the database server and database, and the Container Apps environment.
-- The app registrations `<repo>-deploy` and, if it exists, `<repo>-easyauth` in Microsoft Entra.
-- The `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID` repository secrets, and the `DEPLOY_ON_MERGE` variable, but only for the app named after the repository, because the repository has one set of them and they belong to that app. The variable is deleted first, so no merge tries to deploy to an app that is being removed.
-
-The script lists everything it will delete and asks you to type the app name before it deletes anything. A resource group that contains nothing the provisioning script creates for the app is refused, so an unrelated group with the same name is never touched. Deleting a group with a database in it can take ten minutes or more, and the script waits for it to finish.
-
-These settings change how it behaves:
-
-| Setting                | Effect                                                                                                     |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `DRY_RUN=1`            | Lists what would be removed and deletes nothing.                                                           |
-| `FORCE=1`              | Skips the typed confirmation, for automation. The check on the resource group still applies.               |
-| `NO_WAIT=1`            | Returns without waiting for the resource group deletion to finish.                                         |
-| `REMOVE_SECRETS=false` | Leaves the repository secrets and variable alone.                                                          |
-| `APP_NAME=<name>`      | Removes a differently named app, such as a throwaway one. The repository secrets are left alone for these. |
-
-Running the script again is safe. It only removes what still exists.
-
-## Tools & Technologies
-
-![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
-![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
-![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white)
-![Inertia.js](https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Pest](https://img.shields.io/badge/Pest-F472B6?style=for-the-badge)
-![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Composer](https://img.shields.io/badge/Composer-885630?style=for-the-badge&logo=composer&logoColor=white)
-![NPM](https://img.shields.io/badge/NPM-CB3837?style=for-the-badge&logo=npm&logoColor=white)
-![Dependabot](https://img.shields.io/badge/Dependabot-025E8C?style=for-the-badge&logo=dependabot&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-181717?style=for-the-badge&logo=githubactions&logoColor=white)
-![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
-![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
-![Claude Code](https://img.shields.io/badge/Claude%20Code-D97757?style=for-the-badge)
+Copyright © 2026 Rheanne McIntosh. All rights reserved. This repository is public to view, but no licence is granted to use, copy, modify or distribute the code.
