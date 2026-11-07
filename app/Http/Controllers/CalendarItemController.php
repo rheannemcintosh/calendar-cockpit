@@ -25,7 +25,8 @@ class CalendarItemController extends Controller
 
     /**
      * Show the user's calendar items from today onwards, or from an earlier
-     * day once they have loaded previous ones, grouped by year, week and day.
+     * day, such as the one open in the day view or once they have loaded
+     * previous ones, grouped by year, week and day.
      */
     public function index(Request $request): Response
     {
@@ -49,6 +50,10 @@ class CalendarItemController extends Controller
 
         return Inertia::render('calendar-items/Index', [
             'years' => CalendarItemTimeline::group($calendarItems),
+            'from' => $request->filled('from') ? [
+                'date' => $from->toDateString(),
+                'label' => $from->format('l j F Y'),
+            ] : null,
             'previousFrom' => $earliestPrevious?->toDateString(),
             'timeTypes' => TimeType::options(),
         ]);
