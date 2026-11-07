@@ -259,7 +259,7 @@ test('the form offers every time type with its label and hint', function () {
             ->where('timeTypes', TimeType::options())
             ->where('timeTypes.1', [
                 'value' => 'window',
-                'label' => 'Window',
+                'label' => 'Between',
                 'hint' => 'A booked slot. It could happen any time in it.',
             ]));
 });

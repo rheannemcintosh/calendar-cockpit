@@ -57,25 +57,7 @@ class CalendarItemTimeline
                 'items' => [],
             ];
 
-            $years[$year]['weeks'][$weekKey]['days'][$dayKey]['items'][] = [
-                'id' => $calendarItem->id,
-                'title' => $calendarItem->title,
-                'time' => static::timeRange($calendarItem->starts_at, $calendarItem->ends_at),
-                'timeType' => $calendarItem->time_type->value,
-                'category' => $calendarItem->subCategory ? [
-                    'name' => $calendarItem->subCategory->category->name,
-                    'colour' => $calendarItem->subCategory->category->colour,
-                ] : null,
-                'subCategory' => $calendarItem->subCategory ? [
-                    'emoji' => $calendarItem->subCategory->emoji,
-                    'name' => $calendarItem->subCategory->name,
-                ] : null,
-                'location' => $calendarItem->location_name !== null ? [
-                    'name' => $calendarItem->location_name,
-                    'address' => $calendarItem->location_address,
-                    'mapsUrl' => static::mapsUrl($calendarItem->location_latitude, $calendarItem->location_longitude),
-                ] : null,
-            ];
+            $years[$year]['weeks'][$weekKey]['days'][$dayKey]['items'][] = static::item($calendarItem);
         }
 
         return array_values(array_map(fn (array $year) => [
@@ -85,6 +67,35 @@ class CalendarItemTimeline
                 'days' => array_values($week['days']),
             ], $year['weeks'])),
         ], $years));
+    }
+
+    /**
+     * A calendar item as the calendar items list and day view show it. Eager
+     * load its sub-category and category so they are not fetched separately.
+     *
+     * @return TimelineItem
+     */
+    public static function item(CalendarItem $calendarItem): array
+    {
+        return [
+            'id' => $calendarItem->id,
+            'title' => $calendarItem->title,
+            'time' => static::timeRange($calendarItem->starts_at, $calendarItem->ends_at),
+            'timeType' => $calendarItem->time_type->value,
+            'category' => $calendarItem->subCategory ? [
+                'name' => $calendarItem->subCategory->category->name,
+                'colour' => $calendarItem->subCategory->category->colour,
+            ] : null,
+            'subCategory' => $calendarItem->subCategory ? [
+                'emoji' => $calendarItem->subCategory->emoji,
+                'name' => $calendarItem->subCategory->name,
+            ] : null,
+            'location' => $calendarItem->location_name !== null ? [
+                'name' => $calendarItem->location_name,
+                'address' => $calendarItem->location_address,
+                'mapsUrl' => static::mapsUrl($calendarItem->location_latitude, $calendarItem->location_longitude),
+            ] : null,
+        ];
     }
 
     /**

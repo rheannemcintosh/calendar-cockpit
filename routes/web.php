@@ -13,6 +13,10 @@ Route::inertia('/', 'Welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 
+    Route::get('calendar-items/day/{date?}', [CalendarItemController::class, 'day'])
+        ->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        ->name('calendar-items.day');
+
     Route::resource('calendar-items', CalendarItemController::class)->only(['index', 'create', 'store']);
 
     Route::get('locations/search', LocationSearchController::class)

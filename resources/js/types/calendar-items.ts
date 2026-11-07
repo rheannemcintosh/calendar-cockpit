@@ -31,3 +31,13 @@ export type TimelineYear = {
     year: number;
     weeks: TimelineWeek[];
 };
+
+// A calendar item placed on the day view by App\Support\CalendarItemDay::place().
+// Minutes count from midnight, 0 to 1440. Overlapping calendar items share the
+// width in `columns` columns, and this one is in column `column`, from 0.
+export type DayItem = TimelineItem & {
+    startMinute: number;
+    endMinute: number;
+    column: number;
+    columns: number;
+};

@@ -2,13 +2,14 @@
 import { computed } from 'vue';
 import type { TimeTypeOption } from '@/types';
 
-// A calendar item's times, with its time type in a small pill underneath.
-// Exact is the default, so it has no pill. An approximate time also starts
-// with "~". Screen readers would read "~" as "tilde", so they hear the time
-// type in words instead.
+// A calendar item's times, with its time type in a small pill underneath,
+// or beside them when `inline`. Exact is the default, so it has no pill. An
+// approximate time also starts with "~". Screen readers would read "~" as
+// "tilde", so they hear the time type in words instead.
 const props = defineProps<{
     time: string;
     timeType: TimeTypeOption;
+    inline?: boolean;
 }>();
 
 const spoken = computed(() => {
@@ -16,8 +17,8 @@ const spoken = computed(() => {
 
     return {
         exact: null,
-        window: `booked slot, ${range}`,
-        block: `blocked-out time, ${range}`,
+        window: `between ${props.time.replace('–', ' and ')}`,
+        block: `set aside, ${range}`,
         approximate: `about ${range}`,
     }[props.timeType.value];
 });
@@ -27,7 +28,10 @@ const spoken = computed(() => {
     <span v-if="spoken" class="sr-only">{{ spoken }}</span>
     <span
         :aria-hidden="spoken ? 'true' : undefined"
-        class="flex flex-col items-start gap-1"
+        :class="[
+            'flex gap-1',
+            props.inline ? 'flex-row items-center' : 'flex-col items-start',
+        ]"
         :data-test="`time-${props.timeType.value}`"
     >
         <span

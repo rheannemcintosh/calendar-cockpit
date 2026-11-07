@@ -6,7 +6,7 @@ import CalendarItemTime from '@/components/CalendarItemTime.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { create, index } from '@/routes/calendar-items';
+import { create, day as dayView, index } from '@/routes/calendar-items';
 import type { TimelineYear, TimeTypeOption } from '@/types';
 
 defineOptions({
@@ -210,7 +210,13 @@ const appear =
                     ]"
                 >
                     <h4 class="text-sm font-semibold">
-                        <time :datetime="day.date">{{ day.label }}</time>
+                        <Link
+                            :href="dayView(day.date)"
+                            class="underline-offset-4 hover:underline"
+                            data-test="day-view-link"
+                        >
+                            <time :datetime="day.date">{{ day.label }}</time>
+                        </Link>
                     </h4>
                     <ul class="divide-y rounded-lg border">
                         <li

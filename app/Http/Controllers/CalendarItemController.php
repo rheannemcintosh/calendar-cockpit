@@ -6,6 +6,7 @@ use App\Enums\TimeType;
 use App\Http\Requests\StoreCalendarItemRequest;
 use App\Models\Category;
 use App\Models\SubCategory;
+use App\Support\CalendarItemDay;
 use App\Support\CalendarItemTimeline;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -54,6 +55,32 @@ class CalendarItemController extends Controller
     }
 
     /**
+     * Show the user's calendar items on one day, today unless another day is
+     * given, placed on a timeline of the day to the minute.
+     */
+    public function day(Request $request, ?string $date = null): Response
+    {
+        $day = $date === null ? CarbonImmutable::today() : self::dayFrom($date);
+
+        $calendarItems = $request->user()->calendarItems()
+            ->where('starts_at', '<', $day->addDay())
+            ->where('ends_at', '>', $day)
+            ->with('subCategory.category')
+            ->orderBy('starts_at')
+            ->orderBy('id')
+            ->get();
+
+        return Inertia::render('calendar-items/Day', [
+            'date' => $day->toDateString(),
+            'label' => $day->format('l j F Y'),
+            'previousDate' => $day->subDay()->toDateString(),
+            'nextDate' => $day->addDay()->toDateString(),
+            'items' => CalendarItemDay::place($calendarItems, $day),
+            'timeTypes' => TimeType::options(),
+        ]);
+    }
+
+    /**
      * Show the form with the user's categories that have sub-categories, and
      * the sub-categories in each one with its default time type, both in
      * alphabetical order, every time type to choose from, and whether a
@@ -92,5 +119,17 @@ class CalendarItemController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Calendar item created.')]);
 
         return to_route('calendar-items.index');
+    }
+
+    /**
+     * The day a YYYY-MM-DD date names, or not found when it is not a real day.
+     */
+    private static function dayFrom(string $date): CarbonImmutable
+    {
+        $day = CarbonImmutable::createFromFormat('!Y-m-d', $date);
+
+        abort_if($day === null || $day->toDateString() !== $date, 404);
+
+        return $day;
     }
 }

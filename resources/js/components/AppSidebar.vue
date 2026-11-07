@@ -31,6 +31,10 @@ const mainNavItems: NavItem[] = [
         icon: CalendarDays,
         items: [
             {
+                title: 'Day view',
+                href: calendarItems.day(),
+            },
+            {
                 title: 'New calendar item',
                 href: calendarItems.create(),
             },
