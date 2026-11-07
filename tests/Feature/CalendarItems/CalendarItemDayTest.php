@@ -133,3 +133,18 @@ test('overlapping calendar items share the width side by side', function () {
             ->where('items.4.column', 0)
             ->where('items.4.columns', 1));
 });
+
+test('a calendar item with seconds still covers the minutes it touches', function (string $startsAt, string $endsAt, int $startMinute, int $endMinute) {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->between($startsAt, $endsAt)->create();
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.day'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('items.0.startMinute', $startMinute)
+            ->where('items.0.endMinute', $endMinute));
+})->with([
+    'under a minute' => ['2026-10-20 09:00:10', '2026-10-20 09:00:20', 540, 541],
+    'across a minute' => ['2026-10-20 09:00:40', '2026-10-20 09:01:20', 540, 542],
+    'just before midnight' => ['2026-10-20 23:59:50', '2026-10-21 00:00:00', 1439, 1440],
+]);

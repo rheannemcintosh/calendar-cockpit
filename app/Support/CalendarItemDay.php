@@ -37,7 +37,7 @@ class CalendarItemDay
         foreach ($calendarItems as $calendarItem) {
             $minutes[] = [
                 static::minuteOfDay($dayStart, $calendarItem->starts_at),
-                static::minuteOfDay($dayStart, $calendarItem->ends_at),
+                static::minuteOfDay($dayStart, $calendarItem->ends_at, roundUp: true),
             ];
         }
 
@@ -104,11 +104,13 @@ class CalendarItemDay
 
     /**
      * The minute of the day a moment falls on, from 0 at midnight to 1440 at
-     * the next midnight, kept within the day.
+     * the next midnight, kept within the day. A start rounds down and an end
+     * rounds up, so a calendar item of under a minute still covers one.
      */
-    public static function minuteOfDay(CarbonInterface $dayStart, CarbonInterface $moment): int
+    public static function minuteOfDay(CarbonInterface $dayStart, CarbonInterface $moment, bool $roundUp = false): int
     {
-        $minutes = (int) round($dayStart->diffInMinutes($moment));
+        $minutes = $dayStart->diffInMinutes($moment);
+        $minutes = (int) ($roundUp ? ceil($minutes) : floor($minutes));
 
         return max(0, min(self::MINUTES_IN_DAY, $minutes));
     }
