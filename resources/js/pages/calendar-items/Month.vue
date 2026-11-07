@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
-import { useIntervalFn } from '@vueuse/core';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
-import { categoryColours, localDate } from '@/lib/calendarTimeline';
+import { useUserNow } from '@/composables/useUserNow';
+import { categoryColours } from '@/lib/calendarTimeline';
 import { create, day, index, month } from '@/routes/calendar-items';
 import type { MonthDay, MonthItem, TimeTypeOption } from '@/types';
 
@@ -45,9 +45,7 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 // makes way for how many more there are, which opens the day view.
 const MAX_ITEMS = 3;
 
-const now = ref(new Date());
-useIntervalFn(() => (now.value = new Date()), 60_000);
-const today = computed(() => localDate(now.value));
+const { today } = useUserNow();
 
 const isEmpty = computed(() =>
     props.weeks.every((week) =>

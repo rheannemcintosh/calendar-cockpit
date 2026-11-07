@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -24,11 +25,12 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
+ * @property string|null $timezone
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'timezone'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -49,6 +51,32 @@ class User extends Authenticatable implements PasskeyUser
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class);
+    }
+
+    /**
+     * The user's timezone, or the app's until their browser has set one.
+     */
+    public function localTimezone(): string
+    {
+        return $this->timezone ?? config()->string('app.timezone');
+    }
+
+    /**
+     * The time it is now in the user's timezone.
+     */
+    public function now(): CarbonImmutable
+    {
+        return CarbonImmutable::now($this->localTimezone());
+    }
+
+    /**
+     * The start of today in the user's timezone. Calendar item times are the
+     * times the user typed in, with no timezone of their own, so it is the
+     * same date and time in the app's timezone, which they are stored in.
+     */
+    public function today(): CarbonImmutable
+    {
+        return CarbonImmutable::parse($this->now()->toDateString());
     }
 
     /**

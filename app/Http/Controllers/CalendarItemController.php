@@ -26,7 +26,7 @@ class CalendarItemController extends Controller
     private const PREVIOUS_STEP = 20;
 
     /**
-     * Show the user's calendar items from today onwards, or from an earlier
+     * Show the user's calendar items from today, in their timezone, onwards, or from an earlier
      * day, such as the one open in the day view or once they have loaded
      * previous ones, grouped by year, week and day.
      */
@@ -36,7 +36,7 @@ class CalendarItemController extends Controller
 
         $from = $request->filled('from')
             ? CarbonImmutable::createFromFormat('!Y-m-d', $request->string('from')->toString())
-            : CarbonImmutable::today();
+            : $request->user()->today();
 
         $calendarItems = $request->user()->calendarItems()
             ->where('starts_at', '>=', $from)
@@ -67,7 +67,7 @@ class CalendarItemController extends Controller
      */
     public function day(Request $request, ?string $date = null): Response
     {
-        $day = $date === null ? CarbonImmutable::today() : self::dayFrom($date);
+        $day = $date === null ? $request->user()->today() : self::dayFrom($date);
 
         $calendarItems = $request->user()->calendarItems()
             ->where('starts_at', '<', $day->addDay())
@@ -94,7 +94,7 @@ class CalendarItemController extends Controller
      */
     public function week(Request $request, ?string $date = null): Response
     {
-        $day = $date === null ? CarbonImmutable::today() : self::dayFrom($date);
+        $day = $date === null ? $request->user()->today() : self::dayFrom($date);
         $weekStart = CarbonImmutable::instance(CalendarItemTimeline::weekStart($day));
         $weekEnd = $weekStart->addDays(6);
 
@@ -129,7 +129,7 @@ class CalendarItemController extends Controller
     public function month(Request $request, ?string $date = null): Response
     {
         $day = match (true) {
-            $date === null => CarbonImmutable::today(),
+            $date === null => $request->user()->today(),
             strlen($date) === 7 => self::monthFrom($date),
             default => self::dayFrom($date),
         };

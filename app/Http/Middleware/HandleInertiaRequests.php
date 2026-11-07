@@ -44,6 +44,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Today and now are worked out in this timezone on every page.
+            'timezone' => $request->user()?->localTimezone() ?? config('app.timezone'),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'emojiSuggestionsEnabled' => EmojiSuggester::isEnabled(),
             'categorySuggestionsEnabled' => CategorySuggester::isEnabled(),
