@@ -4,6 +4,7 @@ import {
     CalendarPlus,
     ChevronLeft,
     ChevronRight,
+    Clock,
     MapPin,
     Plus,
 } from '@lucide/vue';
@@ -12,6 +13,11 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import CalendarItemTime from '@/components/CalendarItemTime.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { create, day, index } from '@/routes/calendar-items';
 import type { DayItem, TimeTypeOption } from '@/types';
 
@@ -45,14 +51,40 @@ const timeTypes = Object.fromEntries(
     props.timeTypes.map((timeType) => [timeType.value, timeType]),
 );
 
-// Each minute of the day is this many pixels tall, so a 15-minute calendar
+// Each minute of the day is this many pixels tall, so a 10-minute calendar
 // item still has room for a line of text.
-const PIXELS_PER_MINUTE = 1.2;
+const PIXELS_PER_MINUTE = 2;
 const DAY_HEIGHT = 24 * 60 * PIXELS_PER_MINUTE;
 const hours = Array.from({ length: 24 }, (_, hour) => hour);
 
+// Below this length a block is too short for text, so it shows only its
+// colour and the details are in its hover.
+const SHORT_MINUTES = 10;
+// From this length a block has room for the time on a line of its own.
+const STACKED_MINUTES = 25;
+// From this length a block also has room for its location.
+const LOCATION_MINUTES = 35;
+
 function hourLabel(hour: number): string {
     return `${String(hour).padStart(2, '0')}:00`;
+}
+
+function minutes(item: DayItem): number {
+    return item.endMinute - item.startMinute;
+}
+
+function duration(item: DayItem): string {
+    const total = minutes(item);
+    const hoursPart = Math.floor(total / 60);
+    const minutesPart = total % 60;
+
+    if (!hoursPart) {
+        return `${minutesPart} min`;
+    }
+
+    return minutesPart
+        ? `${hoursPart} hr ${minutesPart} min`
+        : `${hoursPart} hr`;
 }
 
 function placement(item: DayItem) {
@@ -194,79 +226,148 @@ watch(
                     />
 
                     <ol class="absolute inset-0 mr-1 ml-0.5">
-                        <li
+                        <Tooltip
                             v-for="item in items"
                             :key="item.id"
-                            :class="[
-                                'absolute flex overflow-hidden rounded-md border border-l-4 px-2 text-xs leading-4',
-                                !item.category &&
-                                    'bg-muted border-l-muted-foreground/40',
-                                item.timeType === 'block'
-                                    ? 'border-foreground/40 border-dashed'
-                                    : 'border-black/10 dark:border-white/20',
-                                item.endMinute - item.startMinute >= 45
-                                    ? 'flex-col gap-0.5 py-1'
-                                    : 'items-start gap-1.5',
-                                item.endMinute - item.startMinute >= 25 &&
-                                    item.endMinute - item.startMinute < 45 &&
-                                    'py-1',
-                            ]"
-                            :style="{ ...placement(item), ...colours(item) }"
-                            :title="`${item.title}, ${item.time}`"
-                            :data-time-type="item.timeType"
-                            data-test="day-item"
+                            :delay-duration="150"
                         >
-                            <span class="truncate font-medium">
-                                <span
-                                    v-if="item.subCategory"
-                                    class="mr-1"
-                                    aria-hidden="true"
-                                    >{{ item.subCategory.emoji }}</span
-                                >{{ item.title }}
-                            </span>
-                            <span
-                                class="text-muted-foreground shrink-0 tabular-nums"
-                            >
-                                <CalendarItemTime
-                                    :time="item.time"
-                                    :time-type="timeTypes[item.timeType]"
-                                    inline
-                                />
-                            </span>
-                            <span
-                                v-if="
-                                    item.category &&
-                                    item.subCategory &&
-                                    item.endMinute - item.startMinute >= 60
-                                "
-                                class="text-muted-foreground truncate"
-                            >
-                                {{ item.category.name }} ·
-                                {{ item.subCategory.name }}
-                            </span>
-                            <a
-                                v-if="
-                                    item.location &&
-                                    item.endMinute - item.startMinute >= 75
-                                "
-                                :href="item.location.mapsUrl"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="text-muted-foreground hover:text-foreground flex max-w-full items-center gap-1 self-start underline-offset-4 hover:underline"
-                                data-test="location"
-                            >
-                                <MapPin
-                                    class="size-3 shrink-0"
-                                    aria-hidden="true"
-                                />
-                                <span class="truncate">{{
-                                    item.location.name
-                                }}</span>
-                                <span class="sr-only"
-                                    >(opens in maps in a new tab)</span
+                            <TooltipTrigger as-child>
+                                <li
+                                    tabindex="0"
+                                    :class="[
+                                        'focus-visible:ring-ring absolute flex overflow-hidden rounded-md border border-l-4 px-2 text-xs leading-4 outline-none focus-visible:ring-2',
+                                        !item.category &&
+                                            'bg-muted border-l-muted-foreground/40',
+                                        item.timeType === 'block'
+                                            ? 'border-foreground/40 border-dashed'
+                                            : 'border-black/10 dark:border-white/20',
+                                        minutes(item) >= STACKED_MINUTES
+                                            ? 'flex-col gap-0.5 py-1'
+                                            : 'items-start gap-1.5',
+                                    ]"
+                                    :style="{
+                                        ...placement(item),
+                                        ...colours(item),
+                                    }"
+                                    :data-time-type="item.timeType"
+                                    data-test="day-item"
                                 >
-                            </a>
-                        </li>
+                                    <span
+                                        v-if="minutes(item) < SHORT_MINUTES"
+                                        class="sr-only"
+                                        >{{ item.title }}, {{ item.time }}</span
+                                    >
+                                    <template v-else>
+                                        <span class="truncate font-medium">
+                                            <span
+                                                v-if="item.subCategory"
+                                                class="mr-1"
+                                                aria-hidden="true"
+                                                >{{
+                                                    item.subCategory.emoji
+                                                }}</span
+                                            >{{ item.title }}
+                                        </span>
+                                        <span
+                                            class="text-muted-foreground flex shrink-0 items-center gap-1 tabular-nums"
+                                        >
+                                            <Clock
+                                                v-if="
+                                                    minutes(item) >=
+                                                    STACKED_MINUTES
+                                                "
+                                                class="size-3 shrink-0"
+                                                aria-hidden="true"
+                                            />
+                                            <CalendarItemTime
+                                                :time="item.time"
+                                                :time-type="
+                                                    timeTypes[item.timeType]
+                                                "
+                                                inline
+                                            />
+                                        </span>
+                                        <a
+                                            v-if="
+                                                item.location &&
+                                                minutes(item) >=
+                                                    LOCATION_MINUTES
+                                            "
+                                            :href="item.location.mapsUrl"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="text-muted-foreground hover:text-foreground flex max-w-full items-center gap-1 self-start underline-offset-4 hover:underline"
+                                            data-test="location"
+                                        >
+                                            <MapPin
+                                                class="size-3 shrink-0"
+                                                aria-hidden="true"
+                                            />
+                                            <span class="truncate">{{
+                                                item.location.name
+                                            }}</span>
+                                            <span class="sr-only"
+                                                >(opens in maps in a new
+                                                tab)</span
+                                            >
+                                        </a>
+                                    </template>
+                                </li>
+                            </TooltipTrigger>
+                            <TooltipContent
+                                side="top"
+                                align="start"
+                                :collision-padding="8"
+                                class="flex max-w-64 flex-col gap-1 py-2"
+                                data-test="day-item-details"
+                            >
+                                <span class="font-medium">
+                                    <span
+                                        v-if="item.subCategory"
+                                        class="mr-1"
+                                        aria-hidden="true"
+                                        >{{ item.subCategory.emoji }}</span
+                                    >{{ item.title }}
+                                </span>
+                                <span
+                                    class="flex items-center gap-1.5 tabular-nums"
+                                >
+                                    <Clock
+                                        class="size-3 shrink-0"
+                                        aria-hidden="true"
+                                    />
+                                    {{
+                                        item.timeType === 'approximate'
+                                            ? '~'
+                                            : ''
+                                    }}{{ item.time }} · {{ duration(item) }}
+                                </span>
+                                <span
+                                    v-if="item.timeType !== 'exact'"
+                                    class="opacity-80"
+                                >
+                                    {{ timeTypes[item.timeType].label }}:
+                                    {{ timeTypes[item.timeType].hint }}
+                                </span>
+                                <span
+                                    v-if="item.location"
+                                    class="flex items-start gap-1.5"
+                                >
+                                    <MapPin
+                                        class="mt-0.5 size-3 shrink-0"
+                                        aria-hidden="true"
+                                    />
+                                    <span>
+                                        {{ item.location.name }}
+                                        <span
+                                            v-if="item.location.address"
+                                            class="block opacity-80"
+                                            >{{ item.location.address }}</span
+                                        >
+                                    </span>
+                                </span>
+                            </TooltipContent>
+                        </Tooltip>
                     </ol>
 
                     <div
