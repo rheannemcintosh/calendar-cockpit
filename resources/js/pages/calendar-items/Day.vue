@@ -11,6 +11,7 @@ import {
 import { useIntervalFn } from '@vueuse/core';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import CalendarItemTime from '@/components/CalendarItemTime.vue';
+import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -158,37 +159,39 @@ watch(
                 :title="label"
                 description="Your calendar items, placed to the minute"
             />
-            <div class="flex items-center gap-2">
-                <nav aria-label="Days" class="flex items-center gap-2">
-                    <Button variant="outline" size="icon" as-child>
-                        <Link
-                            :href="day(previousDate)"
-                            aria-label="Previous day"
-                            data-test="previous-day-link"
-                        >
-                            <ChevronLeft />
-                        </Link>
-                    </Button>
-                    <Button variant="outline" as-child>
-                        <Link :href="day()" data-test="today-link">Today</Link>
-                    </Button>
-                    <Button variant="outline" size="icon" as-child>
-                        <Link
-                            :href="day(nextDate)"
-                            aria-label="Next day"
-                            data-test="next-day-link"
-                        >
-                            <ChevronRight />
-                        </Link>
-                    </Button>
-                </nav>
-                <Button as-child>
-                    <Link :href="create()">
-                        <Plus />
-                        New calendar item
+            <Button as-child>
+                <Link :href="create()">
+                    <Plus />
+                    New calendar item
+                </Link>
+            </Button>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <CalendarViewSwitcher current="day" :date="date" />
+            <nav aria-label="Days" class="flex items-center gap-2">
+                <Button variant="outline" size="icon" as-child>
+                    <Link
+                        :href="day(previousDate)"
+                        aria-label="Previous day"
+                        data-test="previous-day-link"
+                    >
+                        <ChevronLeft />
                     </Link>
                 </Button>
-            </div>
+                <Button variant="outline" as-child>
+                    <Link :href="day()" data-test="today-link">Today</Link>
+                </Button>
+                <Button variant="outline" size="icon" as-child>
+                    <Link
+                        :href="day(nextDate)"
+                        aria-label="Next day"
+                        data-test="next-day-link"
+                    >
+                        <ChevronRight />
+                    </Link>
+                </Button>
+            </nav>
         </div>
 
         <div
