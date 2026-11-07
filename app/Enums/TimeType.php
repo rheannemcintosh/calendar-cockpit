@@ -16,9 +16,9 @@ enum TimeType: string
     {
         return match ($this) {
             self::Exact => __('Exact'),
-            self::Window => __('Window'),
-            self::Block => __('Block'),
-            self::Approximate => __('Approximate'),
+            self::Window => __('Between'),
+            self::Block => __('Set aside'),
+            self::Approximate => __('About'),
         };
     }
 

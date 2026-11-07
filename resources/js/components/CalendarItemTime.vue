@@ -17,8 +17,8 @@ const spoken = computed(() => {
 
     return {
         exact: null,
-        window: `booked slot, ${range}`,
-        block: `blocked-out time, ${range}`,
+        window: `between ${props.time.replace('–', ' and ')}`,
+        block: `set aside, ${range}`,
         approximate: `about ${range}`,
     }[props.timeType.value];
 });

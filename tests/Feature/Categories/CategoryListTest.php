@@ -112,6 +112,6 @@ test('each sub-category shows its default time type', function () {
     $this->actingAs($user)
         ->get(route('categories.index'))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('categories.0.subCategories.0.defaultTimeTypeLabel', 'Window')
-            ->where('categories.0.subCategories.1.defaultTimeTypeLabel', 'Block'));
+            ->where('categories.0.subCategories.0.defaultTimeTypeLabel', 'Between')
+            ->where('categories.0.subCategories.1.defaultTimeTypeLabel', 'Set aside'));
 });
