@@ -7,7 +7,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PIXELS_PER_MINUTE } from '@/lib/calendarTimeline';
+import { categoryColours, PIXELS_PER_MINUTE } from '@/lib/calendarTimeline';
 import type { DayItem, TimeTypeOption } from '@/types';
 
 // A calendar item as a block on a day's timeline, placed to the minute, with
@@ -51,18 +51,7 @@ const placement = computed(() => {
     };
 });
 
-// Any colour can be chosen, so the block is a tint of it with the colour
-// itself down the side, and the text stays in the page's own colour.
-const colours = computed(() => {
-    if (!props.item.category) {
-        return undefined;
-    }
-
-    return {
-        backgroundColor: `color-mix(in srgb, ${props.item.category.colour} 22%, var(--background))`,
-        borderLeftColor: props.item.category.colour,
-    };
-});
+const colours = computed(() => categoryColours(props.item.category));
 </script>
 
 <template>
