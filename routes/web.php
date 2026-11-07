@@ -17,6 +17,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')
         ->name('calendar-items.day');
 
+    Route::get('calendar-items/week/{date?}', [CalendarItemController::class, 'week'])
+        ->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        ->name('calendar-items.week');
+
     Route::resource('calendar-items', CalendarItemController::class)->only(['index', 'create', 'store']);
 
     Route::get('locations/search', LocationSearchController::class)

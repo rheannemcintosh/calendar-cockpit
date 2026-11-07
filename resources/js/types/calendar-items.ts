@@ -41,3 +41,15 @@ export type DayItem = TimelineItem & {
     column: number;
     columns: number;
 };
+
+// A day of the week view, from App\Support\CalendarItemWeek::days().
+export type WeekDay = {
+    // As YYYY-MM-DD.
+    date: string;
+    // Short, e.g. "Sun".
+    weekday: string;
+    dayOfMonth: number;
+    // In full, e.g. "Sunday 18 October 2026".
+    label: string;
+    items: DayItem[];
+};
