@@ -1,19 +1,14 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
-import { useIntervalFn } from '@vueuse/core';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import CalendarDayColumn from '@/components/CalendarDayColumn.vue';
 import CalendarHourGutter from '@/components/CalendarHourGutter.vue';
 import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
-import {
-    DAY_HEIGHT,
-    localDate,
-    minuteOfDay,
-    scrollTopFor,
-} from '@/lib/calendarTimeline';
+import { useUserNow } from '@/composables/useUserNow';
+import { DAY_HEIGHT, scrollTopFor } from '@/lib/calendarTimeline';
 import { create, day, index, week } from '@/routes/calendar-items';
 import type { TimeTypeOption, WeekDay } from '@/types';
 
@@ -45,9 +40,7 @@ const props = defineProps<{
     timeTypes: TimeTypeOption[];
 }>();
 
-const now = ref(new Date());
-useIntervalFn(() => (now.value = new Date()), 60_000);
-const today = computed(() => localDate(now.value));
+const { today, nowMinute } = useUserNow();
 
 const isEmpty = computed(() => props.days.every((d) => !d.items.length));
 
@@ -64,7 +57,7 @@ function scrollToStart(): void {
     timeline.value?.scrollTo({
         top: scrollTopFor(
             hasToday
-                ? minuteOfDay(now.value)
+                ? nowMinute.value
                 : starts.length
                   ? Math.min(...starts)
                   : null,
@@ -189,9 +182,7 @@ watch(
                         :key="weekDay.date"
                         :items="weekDay.items"
                         :time-types="timeTypes"
-                        :now-minute="
-                            weekDay.date === today ? minuteOfDay(now) : null
-                        "
+                        :now-minute="weekDay.date === today ? nowMinute : null"
                         :class="weekDay.date === today && 'bg-primary/5'"
                         :data-date="weekDay.date"
                         data-test="week-day"
