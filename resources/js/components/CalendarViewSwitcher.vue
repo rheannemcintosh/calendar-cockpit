@@ -3,7 +3,7 @@ import type { InertiaLinkProps } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import type { LucideIcon } from '@lucide/vue';
 import { Calendar1, CalendarDays, CalendarRange, List } from '@lucide/vue';
-import { day, index } from '@/routes/calendar-items';
+import { day, index, week } from '@/routes/calendar-items';
 
 export type CalendarView = 'list' | 'day' | 'week' | 'month';
 
@@ -37,7 +37,12 @@ const views: ViewOption[] = [
         icon: Calendar1,
         href: (date) => (date ? day(date) : day()),
     },
-    { value: 'week', label: 'Week', icon: CalendarRange, href: null },
+    {
+        value: 'week',
+        label: 'Week',
+        icon: CalendarRange,
+        href: (date) => (date ? week(date) : week()),
+    },
     { value: 'month', label: 'Month', icon: CalendarDays, href: null },
 ];
 

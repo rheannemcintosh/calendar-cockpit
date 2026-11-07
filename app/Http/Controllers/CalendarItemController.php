@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\SubCategory;
 use App\Support\CalendarItemDay;
 use App\Support\CalendarItemTimeline;
+use App\Support\CalendarItemWeek;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
@@ -81,6 +82,38 @@ class CalendarItemController extends Controller
             'previousDate' => $day->subDay()->toDateString(),
             'nextDate' => $day->addDay()->toDateString(),
             'items' => CalendarItemDay::place($calendarItems, $day),
+            'timeTypes' => TimeType::options(),
+        ]);
+    }
+
+    /**
+     * Show the user's calendar items in one week, Sunday to Saturday, placed on
+     * a timeline of each day to the minute. The week is this week unless a day
+     * in another week is given, and that day is kept so other views open on it.
+     */
+    public function week(Request $request, ?string $date = null): Response
+    {
+        $day = $date === null ? CarbonImmutable::today() : self::dayFrom($date);
+        $weekStart = CarbonImmutable::instance(CalendarItemTimeline::weekStart($day));
+        $weekEnd = $weekStart->addDays(6);
+
+        $calendarItems = $request->user()->calendarItems()
+            ->where('starts_at', '<', $weekEnd->addDay())
+            ->where('ends_at', '>', $weekStart)
+            ->with('subCategory.category')
+            ->orderBy('starts_at')
+            ->orderBy('id')
+            ->get();
+
+        $range = CalendarItemTimeline::weekRange($weekStart);
+
+        return Inertia::render('calendar-items/Week', [
+            'date' => $day->toDateString(),
+            'label' => $weekStart->year === $weekEnd->year ? $range.' '.$weekEnd->year : $range,
+            'weekNumber' => CalendarItemTimeline::weekNumber($weekStart),
+            'previousDate' => $day->subWeek()->toDateString(),
+            'nextDate' => $day->addWeek()->toDateString(),
+            'days' => CalendarItemWeek::days($calendarItems, $weekStart),
             'timeTypes' => TimeType::options(),
         ]);
     }
