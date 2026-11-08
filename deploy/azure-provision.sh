@@ -44,7 +44,10 @@
 #   GHCR_USERNAME, GHCR_PAT   pull credentials for a private ghcr.io package.
 #   MAPBOX_ACCESS_TOKEN the Mapbox token for location search, stored as a secret.
 #                       Left as it was on a re-run without one.
-#   APP_KEY             default: generated on the first provision only.
+#   TYPESAFE_API_KEY    the TypeSafe AI key for Jev's emoji and category
+#                       suggestions, stored as a secret. Left as it was on a
+#                       re-run without one.
+#   APP_KEY            default: generated on the first provision only.
 #   BUDGET_AMOUNT       default: 1, in your subscription's billing currency.
 #   BUDGET_EMAIL        default: the signed-in Azure user, when that is an email
 #                       address. Without one the budget alert is skipped.
@@ -105,8 +108,9 @@ resolve_app_display
 GHCR_USERNAME="${GHCR_USERNAME:-}"
 GHCR_PAT="${GHCR_PAT:-}"
 
-# Only set on a run that gives it, so a re-run without it keeps the stored token.
+# Each is only set on a run that gives it, so a re-run without one keeps the stored secret.
 MAPBOX_ACCESS_TOKEN="${MAPBOX_ACCESS_TOKEN:-}"
+TYPESAFE_API_KEY="${TYPESAFE_API_KEY:-}"
 
 BUDGET_AMOUNT="${BUDGET_AMOUNT:-1}"
 if [[ ! "$BUDGET_AMOUNT" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
@@ -238,6 +242,11 @@ SECRETS=("db-password=$SQL_ADMIN_PASSWORD")
 if [[ -n "$MAPBOX_ACCESS_TOKEN" ]]; then
   ENV_VARS+=("MAPBOX_ACCESS_TOKEN=secretref:mapbox-token")
   SECRETS+=("mapbox-token=$MAPBOX_ACCESS_TOKEN")
+fi
+
+if [[ -n "$TYPESAFE_API_KEY" ]]; then
+  ENV_VARS+=("TYPESAFE_API_KEY=secretref:typesafe-api-key")
+  SECRETS+=("typesafe-api-key=$TYPESAFE_API_KEY")
 fi
 
 if az containerapp show -g "$RESOURCE_GROUP" -n "$ACA_APP" --output none 2>/dev/null; then
