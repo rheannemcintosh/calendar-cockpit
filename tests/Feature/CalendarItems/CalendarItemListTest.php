@@ -22,6 +22,7 @@ test('a user with no calendar items gets an empty list', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('calendar-items/Index')
             ->where('years', [])
+            ->where('from', null)
             ->where('previousFrom', null)
             ->where('timeTypes', TimeType::options()));
 });
@@ -158,6 +159,20 @@ test('loading previous calendar items shows them from the given day', function (
             ->where('years.0.weeks.0.days.0.items.0.title', 'Last week')
             ->where('years.0.weeks.1.days.0.items.0.title', 'Tuesday')
             ->where('previousFrom', '2026-10-01'));
+});
+
+test('the list opened from a day, such as from the day view, starts at that day and remembers it', function () {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-20 10:00')->create(['title' => 'Tuesday']);
+    CalendarItem::factory()->for($user)->between('2026-10-22 09:00', '2026-10-22 10:00')->create(['title' => 'Thursday']);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index', ['from' => '2026-10-22']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('from', ['date' => '2026-10-22', 'label' => 'Thursday 22 October 2026'])
+            ->has('years.0.weeks.0.days', 1)
+            ->where('years.0.weeks.0.days.0.items.0.title', 'Thursday')
+            ->where('previousFrom', '2026-10-20'));
 });
 
 test('previous calendar items load about 20 at a time, rounded out to whole days', function () {

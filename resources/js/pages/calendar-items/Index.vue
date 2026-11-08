@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { CalendarPlus, ExternalLink, History, MapPin, Plus } from '@lucide/vue';
 import { nextTick, ref } from 'vue';
 import CalendarItemTime from '@/components/CalendarItemTime.vue';
+import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -22,6 +23,9 @@ defineOptions({
 
 const props = defineProps<{
     years: TimelineYear[];
+    // The day the list was opened from, such as from the day view, or null
+    // when it starts at today.
+    from: { date: string; label: string } | null;
     // The day to load from to show earlier calendar items, or null when there are none.
     previousFrom: string | null;
     timeTypes: TimeTypeOption[];
@@ -129,6 +133,12 @@ const appear =
             </Button>
         </div>
 
+        <CalendarViewSwitcher
+            current="list"
+            :date="from?.date"
+            class="self-start"
+        />
+
         <Button
             v-if="previousFrom"
             variant="outline"
@@ -150,7 +160,8 @@ const appear =
             <div v-if="previousFrom" class="space-y-1">
                 <p class="font-medium">Nothing coming up</p>
                 <p class="text-muted-foreground text-sm">
-                    You have no calendar items from today onwards.
+                    You have no calendar items from
+                    {{ from ? from.label : 'today' }} onwards.
                 </p>
             </div>
             <div v-else class="space-y-1">
