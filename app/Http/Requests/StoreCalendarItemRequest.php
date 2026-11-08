@@ -38,6 +38,9 @@ class StoreCalendarItemRequest extends FormRequest
             'location_address' => ['exclude_without:location_name', 'nullable', 'string', 'max:255'],
             'location_latitude' => ['exclude_without:location_name', 'required', 'numeric', 'between:-90,90'],
             'location_longitude' => ['exclude_without:location_name', 'required', 'numeric', 'between:-180,180'],
+            // Text typed into the location search without choosing one of the
+            // matches. Locations are lookup only, so it is never saved.
+            'location_search' => ['prohibited'],
         ];
     }
 
@@ -60,6 +63,7 @@ class StoreCalendarItemRequest extends FormRequest
             'location_address.*' => __('Please choose the location again.'),
             'location_latitude.*' => __('Please choose the location again.'),
             'location_longitude.*' => __('Please choose the location again.'),
+            'location_search.prohibited' => __('Please choose a place from the list, or clear the field.'),
         ];
     }
 

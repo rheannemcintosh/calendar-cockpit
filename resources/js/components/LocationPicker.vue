@@ -12,7 +12,7 @@ import {
     ComboboxRoot,
     ComboboxViewport,
 } from 'reka-ui';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { cn } from '@/lib/utils';
 import locations from '@/routes/locations';
 import type { LocationMatch } from '@/types';
@@ -21,7 +21,8 @@ import type { LocationMatch } from '@/types';
 // or none. The chosen place's name, address, latitude and longitude are
 // submitted through hidden inputs named location_name, location_address,
 // location_latitude and location_longitude, which are empty when none is
-// chosen.
+// chosen. Text typed without choosing a match is kept in the input and
+// submitted as location_search, so the form can refuse it.
 defineProps<{
     id: string;
     invalid?: boolean;
@@ -39,6 +40,13 @@ const searching = ref(false);
 const failed = ref(false);
 
 const http = useHttp();
+
+// What is typed in the input when it is not the chosen match's name.
+const unchosenText = computed(() => {
+    const text = searchTerm.value.trim();
+
+    return text === '' || text === chosen.value?.name ? '' : text;
+});
 
 // Only the latest search may show its matches, so a slow earlier answer
 // never replaces a newer one.
@@ -99,7 +107,12 @@ function clear(): void {
 </script>
 
 <template>
-    <ComboboxRoot v-model="chosen" by="id" ignore-filter>
+    <ComboboxRoot
+        v-model="chosen"
+        by="id"
+        ignore-filter
+        :reset-search-term-on-blur="false"
+    >
         <input type="hidden" name="location_name" :value="chosen?.name ?? ''" />
         <input
             type="hidden"
@@ -116,6 +129,7 @@ function clear(): void {
             name="location_longitude"
             :value="chosen?.longitude ?? ''"
         />
+        <input type="hidden" name="location_search" :value="unchosenText" />
 
         <ComboboxAnchor
             :aria-invalid="invalid || undefined"
@@ -146,9 +160,9 @@ function clear(): void {
                 aria-hidden="true"
             />
             <button
-                v-else-if="chosen"
+                v-else-if="chosen || searchTerm"
                 type="button"
-                class="text-muted-foreground hover:text-foreground shrink-0"
+                class="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
                 aria-label="Remove location"
                 data-test="location-picker-clear"
                 @click="clear"
@@ -213,7 +227,7 @@ function clear(): void {
     </ComboboxRoot>
 
     <p
-        v-if="chosen?.address"
+        v-if="chosen?.address && !unchosenText"
         class="text-muted-foreground text-sm"
         data-test="location-picker-address"
     >
