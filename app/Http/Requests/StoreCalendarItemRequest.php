@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Models\SubCategory;
 use Carbon\CarbonImmutable;
@@ -31,6 +32,7 @@ class StoreCalendarItemRequest extends FormRequest
                 ),
             ],
             'time_type' => ['required', Rule::enum(TimeType::class)],
+            'firmness' => ['required', Rule::enum(Firmness::class)],
             // A location is optional. When one is chosen it comes from a
             // location search, so it always has a name and a point on the map.
             // Without a name, the rest of the location is ignored.
@@ -56,6 +58,8 @@ class StoreCalendarItemRequest extends FormRequest
             'sub_category_id.exists' => __('Please choose a category again.'),
             'time_type.required' => __('Please choose a time type.'),
             'time_type.enum' => __('Please choose a time type again.'),
+            'firmness.required' => __('Please choose how firm it is.'),
+            'firmness.enum' => __('Please choose how firm it is again.'),
             'location_name.*' => __('Please choose the location again.'),
             'location_address.*' => __('Please choose the location again.'),
             'location_latitude.*' => __('Please choose the location again.'),
@@ -81,7 +85,7 @@ class StoreCalendarItemRequest extends FormRequest
      * default, which is worked out here rather than trusted from the form.
      * Every part of the location is null when no location is chosen.
      *
-     * @return array{title: string, starts_at: CarbonImmutable, ends_at: CarbonImmutable, sub_category_id: int|null, time_type: TimeType, time_type_overridden: bool, location_name: string|null, location_address: string|null, location_latitude: float|null, location_longitude: float|null}
+     * @return array{title: string, starts_at: CarbonImmutable, ends_at: CarbonImmutable, sub_category_id: int|null, time_type: TimeType, time_type_overridden: bool, firmness: Firmness, location_name: string|null, location_address: string|null, location_latitude: float|null, location_longitude: float|null}
      */
     public function calendarItemAttributes(): array
     {
@@ -97,6 +101,7 @@ class StoreCalendarItemRequest extends FormRequest
             'sub_category_id' => $subCategory?->id,
             'time_type' => $timeType,
             'time_type_overridden' => $subCategory !== null && $subCategory->default_time_type !== $timeType,
+            'firmness' => $this->enum('firmness', Firmness::class) ?? Firmness::Confirmed,
             'location_name' => $hasLocation ? $this->string('location_name')->toString() : null,
             'location_address' => $hasLocation && $this->filled('location_address') ? $this->string('location_address')->toString() : null,
             'location_latitude' => $hasLocation ? $this->float('location_latitude') : null,

@@ -9,13 +9,19 @@ import InputError from '@/components/InputError.vue';
 import LocationPicker from '@/components/LocationPicker.vue';
 import SubCategoryPicker from '@/components/SubCategoryPicker.vue';
 import TimePicker from '@/components/TimePicker.vue';
-import TimeTypePicker from '@/components/TimeTypePicker.vue';
+import ChoicePicker from '@/components/ChoicePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { create, index } from '@/routes/calendar-items';
 import categories from '@/routes/categories';
-import type { CategoryListItem, TimeTypeOption, TimeTypeValue } from '@/types';
+import type {
+    CategoryListItem,
+    FirmnessOption,
+    FirmnessValue,
+    TimeTypeOption,
+    TimeTypeValue,
+} from '@/types';
 
 defineOptions({
     layout: {
@@ -37,12 +43,15 @@ const props = defineProps<{
     categories: CategoryListItem[];
     // Every time type, in order, to choose from.
     timeTypes: TimeTypeOption[];
+    // Every firmness, in order, to choose from.
+    firmnesses: FirmnessOption[];
     // Whether a location can be searched for. It is off without a Mapbox token.
     locationSearch: boolean;
 }>();
 
 const subCategoryId = ref(0);
 const timeType = ref<TimeTypeValue>('exact');
+const firmness = ref<FirmnessValue>('confirmed');
 
 const chosenSubCategory = computed(() =>
     props.categories
@@ -168,7 +177,7 @@ function locationError(errors: Record<string, string>): string | undefined {
             </div>
 
             <div class="grid gap-2">
-                <TimeTypePicker
+                <ChoicePicker
                     v-model="timeType"
                     name="time_type"
                     legend="Time type"
@@ -185,6 +194,17 @@ function locationError(errors: Record<string, string>): string | undefined {
                     {{ timeTypeWarning }}
                 </p>
                 <InputError :message="errors.time_type" />
+            </div>
+
+            <div class="grid gap-2">
+                <ChoicePicker
+                    v-model="firmness"
+                    name="firmness"
+                    legend="Firmness"
+                    :options="props.firmnesses"
+                    :invalid="!!errors.firmness"
+                />
+                <InputError :message="errors.firmness" />
             </div>
 
             <div v-if="props.locationSearch" class="grid gap-2">

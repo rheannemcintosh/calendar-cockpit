@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\User;
@@ -26,6 +27,7 @@ class CalendarItemFactory extends Factory
             'starts_at' => $startsAt,
             'ends_at' => $startsAt->copy()->addMinutes(fake()->randomElement([30, 60, 90, 120])),
             'time_type' => TimeType::Exact,
+            'firmness' => Firmness::Confirmed,
         ];
     }
 
@@ -50,6 +52,16 @@ class CalendarItemFactory extends Factory
     public function approximate(): static
     {
         return $this->state(fn (array $attributes) => ['time_type' => TimeType::Approximate]);
+    }
+
+    public function tentative(): static
+    {
+        return $this->state(fn (array $attributes) => ['firmness' => Firmness::Tentative]);
+    }
+
+    public function idea(): static
+    {
+        return $this->state(fn (array $attributes) => ['firmness' => Firmness::Idea]);
     }
 
     public function withLocation(): static

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\Category;
@@ -13,6 +14,7 @@ const VALID_CALENDAR_ITEM = [
     'start_time' => '09:00:00',
     'end_time' => '10:30:00',
     'time_type' => 'exact',
+    'firmness' => 'confirmed',
 ];
 
 test('guests are sent to the login page from the create calendar item form', function () {
@@ -73,6 +75,13 @@ test('the form offers every time type in order', function () {
         ->get(route('calendar-items.create'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('timeTypes', TimeType::options()));
+});
+
+test('the form offers every firmness in order', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('calendar-items.create'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('firmnesses', Firmness::options()));
 });
 
 test('the form only lists the user\'s own categories', function () {
@@ -209,6 +218,38 @@ test('a calendar item is saved with the time type that was chosen', function (Ti
 
     expect(CalendarItem::sole()->time_type)->toBe($timeType);
 })->with(TimeType::cases());
+
+test('a calendar item is saved with the firmness that was chosen', function (Firmness $firmness) {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, 'firmness' => $firmness->value])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('calendar-items.index'));
+
+    expect(CalendarItem::sole()->firmness)->toBe($firmness);
+})->with(Firmness::cases());
+
+test('a calendar item needs a firmness', function (?string $firmness) {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, 'firmness' => $firmness])
+        ->assertSessionHasErrors(['firmness' => 'Please choose how firm it is.']);
+
+    expect(CalendarItem::count())->toBe(0);
+})->with([
+    'empty' => '',
+    'null' => null,
+]);
+
+test('a calendar item cannot be given a firmness that is not one of the three', function (mixed $firmness) {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, 'firmness' => $firmness])
+        ->assertSessionHasErrors(['firmness' => 'Please choose how firm it is again.']);
+
+    expect(CalendarItem::count())->toBe(0);
+})->with([
+    'unknown' => 'maybe',
+    'wrong case' => 'Confirmed',
+    'a list' => [['confirmed']],
+]);
 
 test('a calendar item needs a time type', function (?string $timeType) {
     $this->actingAs(User::factory()->create())

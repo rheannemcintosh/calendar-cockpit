@@ -18,8 +18,9 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { firmnessFill, secondaryText, titleText } from '@/lib/firmness';
 import { create, day, index } from '@/routes/calendar-items';
-import type { DayItem, TimeTypeOption } from '@/types';
+import type { DayItem, FirmnessOption, TimeTypeOption } from '@/types';
 
 defineOptions({
     layout: {
@@ -45,11 +46,23 @@ const props = defineProps<{
     nextDate: string;
     items: DayItem[];
     timeTypes: TimeTypeOption[];
+    firmnesses: FirmnessOption[];
 }>();
 
 const timeTypes = Object.fromEntries(
     props.timeTypes.map((timeType) => [timeType.value, timeType]),
 );
+
+const firmnesses = Object.fromEntries(
+    props.firmnesses.map((firmness) => [firmness.value, firmness]),
+);
+
+// Confirmed is the default, so like Exact it isn't announced.
+function spokenFirmness(item: DayItem): string {
+    return item.firmness === 'confirmed'
+        ? ''
+        : `, ${firmnesses[item.firmness].label.toLowerCase()}`;
+}
 
 // Each minute of the day is this many pixels tall, so a 10-minute calendar
 // item still has room for a line of text.
@@ -99,14 +112,24 @@ function placement(item: DayItem) {
 }
 
 // Any colour can be chosen, so the block is a tint of it with the colour
-// itself down the side, and the text stays in the page's own colour.
+// itself down the side, and the text stays in the page's own colour. How
+// firm the calendar item is changes only the tint.
+const DAY_TINT = 22;
+
 function colours(item: DayItem) {
+    const fill = firmnessFill(
+        item.firmness,
+        item.category?.colour ?? null,
+        DAY_TINT,
+    );
+
     if (!item.category) {
-        return undefined;
+        return fill;
     }
 
     return {
-        backgroundColor: `color-mix(in srgb, ${item.category.colour} 22%, var(--background))`,
+        backgroundColor: `color-mix(in srgb, ${item.category.colour} ${DAY_TINT}%, var(--background))`,
+        ...fill,
         borderLeftColor: item.category.colour,
     };
 }
@@ -250,15 +273,23 @@ watch(
                                         ...colours(item),
                                     }"
                                     :data-time-type="item.timeType"
+                                    :data-firmness="item.firmness"
                                     data-test="day-item"
                                 >
                                     <span
                                         v-if="minutes(item) < SHORT_MINUTES"
                                         class="sr-only"
-                                        >{{ item.title }}, {{ item.time }}</span
+                                        >{{ item.title
+                                        }}{{ spokenFirmness(item) }},
+                                        {{ item.time }}</span
                                     >
                                     <template v-else>
-                                        <span class="truncate font-medium">
+                                        <span
+                                            :class="[
+                                                'truncate font-medium',
+                                                titleText(item.firmness),
+                                            ]"
+                                        >
                                             <span
                                                 v-if="item.subCategory"
                                                 class="mr-1"
@@ -266,10 +297,23 @@ watch(
                                                 >{{
                                                     item.subCategory.emoji
                                                 }}</span
-                                            >{{ item.title }}
+                                            >{{ item.title
+                                            }}<span
+                                                v-if="
+                                                    item.firmness !==
+                                                    'confirmed'
+                                                "
+                                                class="sr-only"
+                                                >{{
+                                                    spokenFirmness(item)
+                                                }}</span
+                                            >
                                         </span>
                                         <span
-                                            class="text-muted-foreground flex shrink-0 items-center gap-1 tabular-nums"
+                                            :class="[
+                                                'flex shrink-0 items-center gap-1 tabular-nums',
+                                                secondaryText(item.firmness),
+                                            ]"
                                         >
                                             <Clock
                                                 v-if="
@@ -296,7 +340,10 @@ watch(
                                             :href="item.location.mapsUrl"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            class="text-muted-foreground hover:text-foreground flex max-w-full items-center gap-1 self-start underline-offset-4 hover:underline"
+                                            :class="[
+                                                'hover:text-foreground flex max-w-full items-center gap-1 self-start underline-offset-4 hover:underline',
+                                                secondaryText(item.firmness),
+                                            ]"
                                             data-test="location"
                                         >
                                             <MapPin
@@ -348,6 +395,14 @@ watch(
                                 >
                                     {{ timeTypes[item.timeType].label }}:
                                     {{ timeTypes[item.timeType].hint }}
+                                </span>
+                                <span
+                                    v-if="item.firmness !== 'confirmed'"
+                                    class="opacity-80"
+                                    data-test="firmness"
+                                >
+                                    {{ firmnesses[item.firmness].label }}:
+                                    {{ firmnesses[item.firmness].hint }}
                                 </span>
                                 <span
                                     v-if="item.location"

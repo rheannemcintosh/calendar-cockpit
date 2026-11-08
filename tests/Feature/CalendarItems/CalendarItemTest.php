@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\User;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 test('the calendar items table has the expected columns', function () {
-    expect(Schema::hasColumns('calendar_items', ['id', 'user_id', 'title', 'starts_at', 'ends_at', 'time_type', 'time_type_overridden', 'location_name', 'location_address', 'location_latitude', 'location_longitude', 'created_at', 'updated_at']))->toBeTrue();
+    expect(Schema::hasColumns('calendar_items', ['id', 'user_id', 'title', 'starts_at', 'ends_at', 'time_type', 'time_type_overridden', 'firmness', 'location_name', 'location_address', 'location_latitude', 'location_longitude', 'created_at', 'updated_at']))->toBeTrue();
 });
 
 test('a calendar item is saved and read back with its title, start and end intact', function () {
@@ -107,6 +108,74 @@ test('the factory has a state for each of the other time types', function (strin
     'window' => ['window', TimeType::Window],
     'block' => ['block', TimeType::Block],
     'approximate' => ['approximate', TimeType::Approximate],
+]);
+
+test('a calendar item created without a firmness is confirmed', function () {
+    $calendarItem = User::factory()->create()->calendarItems()->create([
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+    ]);
+
+    expect($calendarItem->firmness)->toBe(Firmness::Confirmed)
+        ->and($calendarItem->fresh()->firmness)->toBe(Firmness::Confirmed);
+});
+
+test('a calendar item stored without going through the model is confirmed', function () {
+    $id = DB::table('calendar_items')->insertGetId([
+        'user_id' => User::factory()->create()->id,
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+    ]);
+
+    expect(CalendarItem::find($id)->firmness)->toBe(Firmness::Confirmed);
+});
+
+test('the database refuses a firmness that is not one of the three', function (?string $firmness) {
+    $insert = fn () => DB::table('calendar_items')->insert([
+        'user_id' => User::factory()->create()->id,
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+        'firmness' => $firmness,
+    ]);
+
+    expect($insert)->toThrow(QueryException::class)
+        ->and(CalendarItem::count())->toBe(0);
+})->with([
+    'unknown' => 'maybe',
+    'empty' => '',
+    'null' => null,
+]);
+
+test('the firmness check constraint is named so it can be changed later', function () {
+    $insert = fn () => DB::table('calendar_items')->insert([
+        'user_id' => User::factory()->create()->id,
+        'title' => 'Dentist',
+        'starts_at' => '2026-10-20 09:00:00',
+        'ends_at' => '2026-10-20 10:30:00',
+        'firmness' => 'maybe',
+    ]);
+
+    expect($insert)->toThrow(QueryException::class, 'calendar_items_firmness_check');
+});
+
+test('a calendar item is saved and read back with its firmness', function (Firmness $firmness) {
+    $calendarItem = CalendarItem::factory()->create(['firmness' => $firmness]);
+
+    expect($calendarItem->fresh()->firmness)->toBe($firmness);
+})->with(Firmness::cases());
+
+test('the factory makes confirmed calendar items by default', function () {
+    expect(CalendarItem::factory()->create()->firmness)->toBe(Firmness::Confirmed);
+});
+
+test('the factory has a state for each of the other firmnesses', function (string $state, Firmness $firmness) {
+    expect(CalendarItem::factory()->{$state}()->create()->fresh()->firmness)->toBe($firmness);
+})->with([
+    'tentative' => ['tentative', Firmness::Tentative],
+    'idea' => ['idea', Firmness::Idea],
 ]);
 
 test('a calendar item is not overridden unless told otherwise', function () {

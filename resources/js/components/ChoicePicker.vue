@@ -1,17 +1,16 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string">
 import { cn } from '@/lib/utils';
-import type { TimeTypeOption, TimeTypeValue } from '@/types';
 
-// Choose one time type from a list of radio buttons, each with its label and
+// Choose one option from a list of radio buttons, each with its label and
 // hint. The chosen value is submitted through the radio buttons named `name`.
 const props = defineProps<{
     name: string;
     legend: string;
-    options: TimeTypeOption[];
+    options: { value: T; label: string; hint: string }[];
     invalid?: boolean;
 }>();
 
-const value = defineModel<TimeTypeValue>({ required: true });
+const value = defineModel<T>({ required: true });
 </script>
 
 <template>
@@ -22,7 +21,16 @@ const value = defineModel<TimeTypeValue>({ required: true });
     >
         <legend class="mb-2 text-sm font-medium">{{ props.legend }}</legend>
 
-        <div class="grid gap-2 sm:grid-cols-2">
+        <div
+            :class="
+                cn(
+                    'grid gap-2',
+                    props.options.length === 3
+                        ? 'sm:grid-cols-3'
+                        : 'sm:grid-cols-2',
+                )
+            "
+        >
             <label
                 v-for="option in props.options"
                 :key="option.value"

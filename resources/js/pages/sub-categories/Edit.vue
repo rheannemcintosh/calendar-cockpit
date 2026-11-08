@@ -6,7 +6,7 @@ import SubCategoryController from '@/actions/App/Http/Controllers/SubCategoryCon
 import EmojiPicker from '@/components/EmojiPicker.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
-import TimeTypePicker from '@/components/TimeTypePicker.vue';
+import ChoicePicker from '@/components/ChoicePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -126,7 +126,7 @@ const {
             </div>
 
             <div class="grid gap-2">
-                <TimeTypePicker
+                <ChoicePicker
                     v-model="defaultTimeType"
                     name="default_time_type"
                     legend="Default time type"
