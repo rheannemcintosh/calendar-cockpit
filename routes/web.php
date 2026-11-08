@@ -4,6 +4,7 @@ use App\Http\Controllers\CalendarItemController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CategorySuggestionController;
 use App\Http\Controllers\EmojiSuggestionController;
+use App\Http\Controllers\FlagController;
 use App\Http\Controllers\LocationSearchController;
 use App\Http\Controllers\SubCategoryController;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->only(['create', 'store', 'edit', 'update', 'destroy'])
         ->middlewareFor(['edit', 'update'], 'can:update,sub_category')
         ->middlewareFor('destroy', 'can:delete,sub_category');
+
+    Route::resource('flags', FlagController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->middlewareFor(['edit', 'update'], 'can:update,flag')
+        ->middlewareFor('destroy', 'can:delete,flag');
 });
 
 require __DIR__.'/settings.php';
