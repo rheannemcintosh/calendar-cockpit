@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
  * the last day. A calendar item that runs past midnight is on each day it
  * covers.
  *
- * @phpstan-type MonthItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startTime: string, continued: bool}
+ * @phpstan-type MonthItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startTime: string, continued: bool, minutes: int}
  * @phpstan-type MonthDay array{date: string, dayOfMonth: int, label: string, inMonth: bool, items: list<MonthItem>}
  */
 class CalendarItemMonth
@@ -63,6 +63,9 @@ class CalendarItemMonth
                             ...CalendarItemTimeline::item($calendarItem),
                             'startTime' => $calendarItem->starts_at->format('H:i'),
                             'continued' => $calendarItem->starts_at < $date,
+                            // How long it is on this day, for its details.
+                            'minutes' => CalendarItemDay::minuteOfDay($date, $calendarItem->ends_at, roundUp: true)
+                                - CalendarItemDay::minuteOfDay($date, $calendarItem->starts_at),
                         ];
                     }
                 }

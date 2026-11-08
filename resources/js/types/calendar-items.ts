@@ -60,6 +60,8 @@ export type MonthItem = TimelineItem & {
     // As HH:MM.
     startTime: string;
     continued: boolean;
+    // How long it is on this day.
+    minutes: number;
 };
 
 // A day of the month view's grid, which runs from the Sunday on or before the

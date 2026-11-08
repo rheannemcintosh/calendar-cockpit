@@ -137,12 +137,16 @@ test('a calendar item that runs past midnight is on each day it covers', functio
             ->where('weeks.3.1.items', [])
             ->where('weeks.3.2.items.0.title', 'Retreat')
             ->where('weeks.3.2.items.0.continued', false)
+            ->where('weeks.3.2.items.0.minutes', 120)
             ->where('weeks.3.3.items.0.title', 'Retreat')
+            ->where('weeks.3.3.items.0.minutes', 1440)
             ->where('weeks.3.3.items.0.continued', true)
             ->where('weeks.3.3.items.0.startTime', '22:00')
             ->where('weeks.3.3.items.1.title', 'Breakfast')
+            ->where('weeks.3.3.items.1.minutes', 60)
             ->where('weeks.3.4.items.0.title', 'Retreat')
             ->where('weeks.3.4.items.0.continued', true)
+            ->where('weeks.3.4.items.0.minutes', 120)
             ->where('weeks.3.5.items', []));
 });
 
