@@ -6,6 +6,7 @@ use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Http\Requests\StoreCalendarItemRequest;
 use App\Models\Category;
+use App\Models\Flag;
 use App\Models\SubCategory;
 use App\Support\CalendarItemDay;
 use App\Support\CalendarItemTimeline;
@@ -13,6 +14,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -38,7 +40,7 @@ class CalendarItemController extends Controller
 
         $calendarItems = $request->user()->calendarItems()
             ->where('starts_at', '>=', $from)
-            ->with('subCategory.category')
+            ->with(['subCategory.category', 'flags'])
             ->orderBy('starts_at')
             ->orderBy('id')
             ->get();
@@ -67,7 +69,7 @@ class CalendarItemController extends Controller
         $calendarItems = $request->user()->calendarItems()
             ->where('starts_at', '<', $day->addDay())
             ->where('ends_at', '>', $day)
-            ->with('subCategory.category')
+            ->with(['subCategory.category', 'flags'])
             ->orderBy('starts_at')
             ->orderBy('id')
             ->get();
@@ -86,8 +88,9 @@ class CalendarItemController extends Controller
     /**
      * Show the form with the user's categories that have sub-categories, and
      * the sub-categories in each one with its default time type, both in
-     * alphabetical order, every time type and firmness to choose from, and
-     * whether a location can be searched for, which needs a Mapbox token.
+     * alphabetical order, every time type and firmness to choose from, the
+     * user's flags in the order they are shown, and whether a location can be
+     * searched for, which needs a Mapbox token.
      */
     public function create(Request $request): Response
     {
@@ -112,13 +115,22 @@ class CalendarItemController extends Controller
             ]),
             'timeTypes' => TimeType::options(),
             'firmnesses' => Firmness::options(),
+            'flags' => $request->user()->flags()->orderBy('id')->get()->map(fn (Flag $flag): array => [
+                'id' => $flag->id,
+                'name' => $flag->name,
+                'icon' => $flag->icon->value,
+            ]),
             'locationSearch' => filled(config('services.mapbox.token')),
         ]);
     }
 
     public function store(StoreCalendarItemRequest $request): RedirectResponse
     {
-        $request->user()->calendarItems()->create($request->calendarItemAttributes());
+        DB::transaction(function () use ($request): void {
+            $request->user()->calendarItems()
+                ->create($request->calendarItemAttributes())
+                ->flags()->attach($request->flagIds());
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Calendar item created.')]);
 

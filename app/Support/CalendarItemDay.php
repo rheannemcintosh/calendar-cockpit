@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Enums\Firmness;
+use App\Enums\FlagIcon;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use Carbon\CarbonInterface;
@@ -15,7 +16,7 @@ use Illuminate\Support\Collection;
  * Each one goes in the leftmost column that is free when it starts, and every
  * item in a group of overlapping items has the same number of columns.
  *
- * @phpstan-type DayItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startMinute: int, endMinute: int, column: int, columns: int}
+ * @phpstan-type DayItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<array{name: string, icon: value-of<FlagIcon>}>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startMinute: int, endMinute: int, column: int, columns: int}
  */
 class CalendarItemDay
 {

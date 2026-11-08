@@ -3,8 +3,10 @@
 namespace App\Support;
 
 use App\Enums\Firmness;
+use App\Enums\FlagIcon;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
+use App\Models\Flag;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -18,7 +20,8 @@ use Illuminate\Support\Collection;
  * @phpstan-type TimelineCategory array{name: string, colour: string}
  * @phpstan-type TimelineSubCategory array{emoji: string, name: string}
  * @phpstan-type TimelineLocation array{name: string, address: string|null, mapsUrl: string}
- * @phpstan-type TimelineItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null, location: TimelineLocation|null}
+ * @phpstan-type TimelineFlag array{name: string, icon: value-of<FlagIcon>}
+ * @phpstan-type TimelineItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<TimelineFlag>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null, location: TimelineLocation|null}
  * @phpstan-type TimelineDay array{date: string, label: string, items: list<TimelineItem>}
  * @phpstan-type TimelineWeek array{key: string, number: int, range: string, days: list<TimelineDay>}
  * @phpstan-type TimelineYear array{year: int, weeks: list<TimelineWeek>}
@@ -27,7 +30,7 @@ class CalendarItemTimeline
 {
     /**
      * Group calendar items, which must already be in start order, into years, weeks and days.
-     * Eager load their sub-categories and categories so each one is not fetched separately.
+     * Eager load their sub-categories, categories and flags so each one is not fetched separately.
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<TimelineYear>
@@ -72,7 +75,8 @@ class CalendarItemTimeline
 
     /**
      * A calendar item as the calendar items list and day view show it. Eager
-     * load its sub-category and category so they are not fetched separately.
+     * load its sub-category, category and flags so they are not fetched
+     * separately.
      *
      * @return TimelineItem
      */
@@ -84,6 +88,10 @@ class CalendarItemTimeline
             'time' => static::timeRange($calendarItem->starts_at, $calendarItem->ends_at),
             'timeType' => $calendarItem->time_type->value,
             'firmness' => $calendarItem->firmness->value,
+            'flags' => array_values(array_map(fn (Flag $flag): array => [
+                'name' => $flag->name,
+                'icon' => $flag->icon->value,
+            ], $calendarItem->flags->all())),
             'category' => $calendarItem->subCategory ? [
                 'name' => $calendarItem->subCategory->category->name,
                 'colour' => $calendarItem->subCategory->category->colour,

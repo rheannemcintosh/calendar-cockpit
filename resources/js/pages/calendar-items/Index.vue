@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { CalendarPlus, ExternalLink, History, MapPin, Plus } from '@lucide/vue';
 import { nextTick, ref } from 'vue';
 import CalendarItemTime from '@/components/CalendarItemTime.vue';
+import FlagIcons from '@/components/FlagIcons.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -283,7 +284,16 @@ const appear =
                                         class="mr-1.5"
                                         aria-hidden="true"
                                         >{{ item.subCategory.emoji }}</span
-                                    >{{ item.title }}
+                                    >{{ item.title
+                                    }}<FlagIcons
+                                        :flags="item.flags"
+                                        class="ml-1.5 align-[-0.125em]"
+                                        :title="
+                                            item.flags
+                                                .map((flag) => flag.name)
+                                                .join(', ')
+                                        "
+                                    />
                                 </span>
                                 <span
                                     v-if="

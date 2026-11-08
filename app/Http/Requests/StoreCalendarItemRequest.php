@@ -33,6 +33,14 @@ class StoreCalendarItemRequest extends FormRequest
             ],
             'time_type' => ['required', Rule::enum(TimeType::class)],
             'firmness' => ['required', Rule::enum(Firmness::class)],
+            // Any number of the user's own flags, including none.
+            'flag_ids' => ['nullable', 'array'],
+            'flag_ids.*' => [
+                'bail',
+                'integer',
+                'distinct',
+                Rule::exists('flags', 'id')->where('user_id', $this->user()->id),
+            ],
             // A location is optional. When one is chosen it comes from a
             // location search, so it always has a name and a point on the map.
             // Without a name, the rest of the location is ignored.
@@ -60,6 +68,7 @@ class StoreCalendarItemRequest extends FormRequest
             'time_type.enum' => __('Please choose a time type again.'),
             'firmness.required' => __('Please choose how firm it is.'),
             'firmness.enum' => __('Please choose how firm it is again.'),
+            'flag_ids.*' => __('Please choose the flags again.'),
             'location_name.*' => __('Please choose the location again.'),
             'location_address.*' => __('Please choose the location again.'),
             'location_latitude.*' => __('Please choose the location again.'),
@@ -107,5 +116,15 @@ class StoreCalendarItemRequest extends FormRequest
             'location_latitude' => $hasLocation ? $this->float('location_latitude') : null,
             'location_longitude' => $hasLocation ? $this->float('location_longitude') : null,
         ];
+    }
+
+    /**
+     * The ids of the flags chosen for the calendar item, which may be none.
+     *
+     * @return list<int>
+     */
+    public function flagIds(): array
+    {
+        return array_values(array_map('intval', $this->array('flag_ids')));
     }
 }

@@ -36,6 +36,18 @@ class User extends Authenticatable implements PasskeyUser
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
+     * Every new user starts with the default flags.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (User $user): void {
+            foreach (Flag::DEFAULTS as $flag) {
+                $user->flags()->create($flag);
+            }
+        });
+    }
+
+    /**
      * @return HasMany<CalendarItem, $this>
      */
     public function calendarItems(): HasMany
@@ -49,6 +61,14 @@ class User extends Authenticatable implements PasskeyUser
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class);
+    }
+
+    /**
+     * @return HasMany<Flag, $this>
+     */
+    public function flags(): HasMany
+    {
+        return $this->hasMany(Flag::class);
     }
 
     /**
