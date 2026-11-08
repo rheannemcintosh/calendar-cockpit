@@ -11,6 +11,7 @@ import {
 import { useIntervalFn } from '@vueuse/core';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import CalendarItemTime from '@/components/CalendarItemTime.vue';
+import FlagIcons from '@/components/FlagIcons.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +20,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { firmnessFill, secondaryText, titleText } from '@/lib/firmness';
+import { flagIcons } from '@/lib/flags';
 import { create, day, index } from '@/routes/calendar-items';
 import type { DayItem, FirmnessOption, TimeTypeOption } from '@/types';
 
@@ -62,6 +64,10 @@ function spokenFirmness(item: DayItem): string {
     return item.firmness === 'confirmed'
         ? ''
         : `, ${firmnesses[item.firmness].label.toLowerCase()}`;
+}
+
+function spokenFlags(item: DayItem): string {
+    return item.flags.map((flag) => `, ${flag.name}`).join('');
 }
 
 // Each minute of the day is this many pixels tall, so a 10-minute calendar
@@ -279,7 +285,7 @@ watch(
                                     <span
                                         v-if="minutes(item) < SHORT_MINUTES"
                                         class="sr-only"
-                                        >{{ item.title
+                                        >{{ item.title }}{{ spokenFlags(item)
                                         }}{{ spokenFirmness(item) }},
                                         {{ item.time }}</span
                                     >
@@ -298,7 +304,10 @@ watch(
                                                     item.subCategory.emoji
                                                 }}</span
                                             >{{ item.title
-                                            }}<span
+                                            }}<FlagIcons
+                                                :flags="item.flags"
+                                                class="ml-1 align-[-0.125em]"
+                                            /><span
                                                 v-if="
                                                     item.firmness !==
                                                     'confirmed'
@@ -395,6 +404,24 @@ watch(
                                 >
                                     {{ timeTypes[item.timeType].label }}:
                                     {{ timeTypes[item.timeType].hint }}
+                                </span>
+                                <span
+                                    v-if="item.flags.length"
+                                    class="flex flex-wrap items-center gap-x-2.5 gap-y-1"
+                                    data-test="flags"
+                                >
+                                    <span
+                                        v-for="flag in item.flags"
+                                        :key="flag.name"
+                                        class="flex items-center gap-1"
+                                    >
+                                        <component
+                                            :is="flagIcons[flag.icon]"
+                                            class="size-3 shrink-0"
+                                            aria-hidden="true"
+                                        />
+                                        {{ flag.name }}
+                                    </span>
                                 </span>
                                 <span
                                     v-if="item.firmness !== 'confirmed'"

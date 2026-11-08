@@ -1,6 +1,7 @@
 // The shape of App\Support\CalendarItemTimeline::group(), passed to the calendar items list.
 
 import type { FirmnessValue } from './firmness';
+import type { ItemFlag } from './flags';
 import type { TimeTypeValue } from './time-types';
 
 // A calendar item's category and sub-category are both null when it is uncategorised.
@@ -10,6 +11,8 @@ export type TimelineItem = {
     time: string;
     timeType: TimeTypeValue;
     firmness: FirmnessValue;
+    // In the order the user's flags are in. Empty when it has none.
+    flags: ItemFlag[];
     category: { name: string; colour: string } | null;
     subCategory: { emoji: string; name: string } | null;
     // Null when the calendar item has no location. Not every place has an address.

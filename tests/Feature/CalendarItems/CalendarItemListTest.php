@@ -48,7 +48,23 @@ test('calendar items are grouped by year, week and day', function () {
             ->where('years.0.weeks.0.days.0.items.0.title', 'Dentist')
             ->where('years.0.weeks.0.days.0.items.0.time', '09:00–10:30')
             ->where('years.0.weeks.0.days.0.items.0.timeType', 'exact')
-            ->where('years.0.weeks.0.days.0.items.0.firmness', 'confirmed'));
+            ->where('years.0.weeks.0.days.0.items.0.firmness', 'confirmed')
+            ->where('years.0.weeks.0.days.0.items.0.flags', []));
+});
+
+test('calendar items show their flags in the order of the user\'s flags', function () {
+    $user = User::factory()->create();
+    [$prePaid, , $important] = $user->flags()->orderBy('id')->get()->all();
+    CalendarItem::factory()->for($user)->between('2026-10-20 07:30', '2026-10-20 08:00')->create()
+        ->flags()->attach([$important->id, $prePaid->id]);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.flags', [
+                ['name' => 'Pre-Paid', 'icon' => 'pound-sterling'],
+                ['name' => 'Important', 'icon' => 'star'],
+            ]));
 });
 
 test('calendar items show how firm they are', function (string $firmness) {
