@@ -35,6 +35,10 @@ const mainNavItems: NavItem[] = [
                 href: calendarItems.day(),
             },
             {
+                title: 'Week view',
+                href: calendarItems.week(),
+            },
+            {
                 title: 'New calendar item',
                 href: calendarItems.create(),
             },
