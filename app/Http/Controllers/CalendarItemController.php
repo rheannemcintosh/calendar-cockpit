@@ -7,6 +7,7 @@ use App\Http\Requests\StoreCalendarItemRequest;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Support\CalendarItemDay;
+use App\Support\CalendarItemMonth;
 use App\Support\CalendarItemTimeline;
 use App\Support\CalendarItemWeek;
 use Carbon\CarbonImmutable;
@@ -119,6 +120,43 @@ class CalendarItemController extends Controller
     }
 
     /**
+     * Show the user's calendar items in one month, on a grid of its weeks from
+     * Sunday to Saturday, each day with its calendar items in start order. The
+     * month is this month unless a month (YYYY-MM) or a day in another month
+     * (YYYY-MM-DD) is given. A day given is kept so other views open on it,
+     * and a month alone opens on its 1st.
+     */
+    public function month(Request $request, ?string $date = null): Response
+    {
+        $day = match (true) {
+            $date === null => CarbonImmutable::today(),
+            strlen($date) === 7 => self::monthFrom($date),
+            default => self::dayFrom($date),
+        };
+
+        $gridStart = CalendarItemMonth::gridStart($day);
+        $gridEnd = CalendarItemMonth::gridEnd($day);
+
+        $calendarItems = $request->user()->calendarItems()
+            ->where('starts_at', '<', $gridEnd->addDay())
+            ->where('ends_at', '>', $gridStart)
+            ->with('subCategory.category')
+            ->orderBy('starts_at')
+            ->orderBy('id')
+            ->get();
+
+        return Inertia::render('calendar-items/Month', [
+            'date' => $day->toDateString(),
+            'month' => $day->format('Y-m'),
+            'label' => $day->format('F Y'),
+            'previousDate' => $day->subMonthNoOverflow()->toDateString(),
+            'nextDate' => $day->addMonthNoOverflow()->toDateString(),
+            'weeks' => CalendarItemMonth::weeks($calendarItems, $day),
+            'timeTypes' => TimeType::options(),
+        ]);
+    }
+
+    /**
      * Show the form with the user's categories that have sub-categories, and
      * the sub-categories in each one with its default time type, both in
      * alphabetical order, every time type to choose from, and whether a
@@ -167,6 +205,18 @@ class CalendarItemController extends Controller
         $day = CarbonImmutable::createFromFormat('!Y-m-d', $date);
 
         abort_if($day === null || $day->toDateString() !== $date, 404);
+
+        return $day;
+    }
+
+    /**
+     * The 1st of the month a YYYY-MM month names, or not found when it is not a real month.
+     */
+    private static function monthFrom(string $month): CarbonImmutable
+    {
+        $day = CarbonImmutable::createFromFormat('!Y-m', $month);
+
+        abort_if($day === null || $day->format('Y-m') !== $month, 404);
 
         return $day;
     }
