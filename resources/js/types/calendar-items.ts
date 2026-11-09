@@ -43,3 +43,38 @@ export type DayItem = TimelineItem & {
     column: number;
     columns: number;
 };
+
+// A day of the week view, from App\Support\CalendarItemWeek::days().
+export type WeekDay = {
+    // As YYYY-MM-DD.
+    date: string;
+    // Short, e.g. "Sun".
+    weekday: string;
+    dayOfMonth: number;
+    // In full, e.g. "Sunday 18 October 2026".
+    label: string;
+    items: DayItem[];
+};
+
+// A calendar item on a day of the month view, from App\Support\CalendarItemMonth::weeks().
+// `continued` is true on the days after the one it starts on.
+export type MonthItem = TimelineItem & {
+    // As HH:MM.
+    startTime: string;
+    continued: boolean;
+    // How long it is on this day.
+    minutes: number;
+};
+
+// A day of the month view's grid, which runs from the Sunday on or before the
+// 1st to the Saturday on or after the last day.
+export type MonthDay = {
+    // As YYYY-MM-DD.
+    date: string;
+    dayOfMonth: number;
+    // In full, e.g. "Sunday 18 October 2026".
+    label: string;
+    // False for the days of the months before and after.
+    inMonth: boolean;
+    items: MonthItem[];
+};

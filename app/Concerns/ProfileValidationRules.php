@@ -32,6 +32,17 @@ trait ProfileValidationRules
     }
 
     /**
+     * Get the validation rules used to validate user timezones. Older names
+     * for timezones are allowed, since some browsers still give them.
+     *
+     * @return array<int, ValidationRule|array<mixed>|string>
+     */
+    protected function timezoneRules(): array
+    {
+        return ['required', 'string', 'timezone:all_with_bc'];
+    }
+
+    /**
      * Get the validation rules used to validate user emails.
      *
      * @return array<int, ValidationRule|array<mixed>|string>
