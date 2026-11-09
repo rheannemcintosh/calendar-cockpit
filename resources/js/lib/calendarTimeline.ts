@@ -59,3 +59,17 @@ export function categoryColours(
         borderLeftColor: category.colour,
     };
 }
+
+// A length of time for a calendar item's details, e.g. "1 hr 30 min".
+export function duration(minutes: number): string {
+    const hoursPart = Math.floor(minutes / 60);
+    const minutesPart = minutes % 60;
+
+    if (!hoursPart) {
+        return `${minutesPart} min`;
+    }
+
+    return minutesPart
+        ? `${hoursPart} hr ${minutesPart} min`
+        : `${hoursPart} hr`;
+}

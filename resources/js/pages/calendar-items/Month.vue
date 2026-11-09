@@ -2,13 +2,19 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
 import { computed } from 'vue';
+import CalendarItemDetails from '@/components/CalendarItemDetails.vue';
 import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useUserNow } from '@/composables/useUserNow';
-import { categoryColours } from '@/lib/calendarTimeline';
+import { categoryColours, duration } from '@/lib/calendarTimeline';
 import { create, day, index, month } from '@/routes/calendar-items';
-import type { MonthDay, MonthItem, TimeTypeOption } from '@/types';
+import type { MonthDay, TimeTypeOption } from '@/types';
 
 defineOptions({
     layout: {
@@ -41,10 +47,6 @@ const props = defineProps<{
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// A day shows this many calendar items. When it has more, the last of them
-// makes way for how many more there are, which opens the day view.
-const MAX_ITEMS = 3;
-
 const { today } = useUserNow();
 
 const isEmpty = computed(() =>
@@ -53,32 +55,12 @@ const isEmpty = computed(() =>
     ),
 );
 
-const timeTypeLabels = computed(
+const timeTypeOptions = computed(
     () =>
         Object.fromEntries(
-            props.timeTypes.map((timeType) => [timeType.value, timeType.label]),
-        ) as Record<string, string>,
+            props.timeTypes.map((timeType) => [timeType.value, timeType]),
+        ) as Record<string, TimeTypeOption>,
 );
-
-function shown(monthDay: MonthDay): MonthItem[] {
-    return monthDay.items.length > MAX_ITEMS
-        ? monthDay.items.slice(0, MAX_ITEMS - 1)
-        : monthDay.items;
-}
-
-function details(item: MonthItem): string {
-    return [
-        item.subCategory
-            ? `${item.subCategory.emoji} ${item.subCategory.name}: ${item.title}`
-            : item.title,
-        item.timeType === 'exact'
-            ? item.time
-            : `${item.time} (${timeTypeLabels.value[item.timeType]})`,
-        item.location?.name,
-    ]
-        .filter(Boolean)
-        .join('\n');
-}
 
 function itemCount(monthDay: MonthDay): string {
     const count = monthDay.items.length;
@@ -160,17 +142,15 @@ function itemCount(monthDay: MonthDay): string {
                     class="grid grid-cols-7 not-last:border-b"
                     data-test="month-week"
                 >
-                    <Link
+                    <div
                         v-for="monthDay in week"
                         :key="monthDay.date"
-                        :href="day(monthDay.date)"
                         :class="[
-                            'focus-visible:ring-ring flex min-h-28 min-w-0 cursor-pointer flex-col gap-1 p-1.5 outline-none not-first:border-l focus-visible:ring-2 focus-visible:ring-inset',
+                            'flex h-28 min-w-0 flex-col gap-1.5 overflow-hidden p-1.5 not-first:border-l',
                             monthDay.date === today
-                                ? 'bg-primary/5 hover:bg-primary/10'
-                                : monthDay.inMonth
-                                  ? 'hover:bg-muted/60'
-                                  : 'bg-muted/40 text-muted-foreground hover:bg-muted/70',
+                                ? 'bg-primary/5'
+                                : !monthDay.inMonth &&
+                                  'bg-muted/40 text-muted-foreground',
                         ]"
                         :aria-current="
                             monthDay.date === today ? 'date' : undefined
@@ -179,75 +159,69 @@ function itemCount(monthDay: MonthDay): string {
                         :data-in-month="monthDay.inMonth"
                         data-test="month-day"
                     >
-                        <span class="sr-only"
-                            >{{ monthDay.label }},
-                            {{ itemCount(monthDay) }}</span
-                        >
-                        <span
+                        <Link
+                            :href="day(monthDay.date)"
                             :class="[
-                                'flex size-7 items-center justify-center self-start rounded-full text-sm font-semibold tabular-nums',
-                                monthDay.date === today &&
-                                    'bg-primary text-primary-foreground',
+                                'focus-visible:ring-ring flex size-7 shrink-0 items-center justify-center self-start rounded-full text-sm font-semibold tabular-nums outline-none focus-visible:ring-2',
+                                monthDay.date === today
+                                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                    : 'hover:bg-muted',
                             ]"
-                            aria-hidden="true"
-                            >{{ monthDay.dayOfMonth }}</span
+                            :aria-label="`${monthDay.label}, ${itemCount(monthDay)}`"
+                            data-test="month-day-link"
+                            >{{ monthDay.dayOfMonth }}</Link
                         >
 
                         <ul
                             v-if="monthDay.items.length"
-                            class="flex flex-col gap-0.5"
+                            class="flex flex-wrap content-start gap-1"
+                            :aria-label="`Calendar items on ${monthDay.label}`"
                         >
-                            <li
-                                v-for="item in shown(monthDay)"
+                            <Tooltip
+                                v-for="item in monthDay.items"
                                 :key="item.id"
-                                :class="[
-                                    'flex min-w-0 items-center gap-1 rounded-sm border border-l-4 px-1 text-xs leading-5',
-                                    !item.category &&
-                                        'bg-muted border-l-muted-foreground/40',
-                                    item.timeType === 'block'
-                                        ? 'border-foreground/40 border-dashed'
-                                        : 'border-black/10 dark:border-white/20',
-                                    !monthDay.inMonth && 'opacity-60',
-                                ]"
-                                :style="categoryColours(item.category)"
-                                :title="details(item)"
-                                :data-time-type="item.timeType"
-                                data-test="month-item"
+                                :delay-duration="150"
                             >
-                                <span
-                                    class="text-muted-foreground shrink-0 tabular-nums"
-                                    data-test="month-item-time"
-                                    >{{
-                                        item.continued
-                                            ? 'Cont.'
-                                            : `${item.timeType === 'approximate' ? '~' : ''}${item.startTime}`
-                                    }}</span
+                                <TooltipTrigger as-child>
+                                    <li
+                                        tabindex="0"
+                                        :class="[
+                                            'focus-visible:ring-ring h-3.5 w-6 shrink-0 rounded-sm border border-l-4 outline-none focus-visible:ring-2',
+                                            !item.category &&
+                                                'bg-muted border-l-muted-foreground/40',
+                                            item.timeType === 'block'
+                                                ? 'border-foreground/40 border-dashed'
+                                                : 'border-black/10 dark:border-white/20',
+                                            !monthDay.inMonth && 'opacity-60',
+                                        ]"
+                                        :style="categoryColours(item.category)"
+                                        :data-time-type="item.timeType"
+                                        data-test="month-item"
+                                    >
+                                        <span class="sr-only"
+                                            >{{ item.title }},
+                                            {{ item.time }}</span
+                                        >
+                                    </li>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="top"
+                                    align="start"
+                                    :collision-padding="8"
+                                    class="flex max-w-64 flex-col gap-1 py-2"
+                                    data-test="month-item-details"
                                 >
-                                <span class="truncate font-medium">
-                                    <span
-                                        v-if="item.subCategory"
-                                        class="mr-0.5"
-                                        aria-hidden="true"
-                                        >{{ item.subCategory.emoji }}</span
-                                    >{{ item.title }}
-                                </span>
-                            </li>
-                            <li
-                                v-if="
-                                    monthDay.items.length >
-                                    shown(monthDay).length
-                                "
-                                class="text-muted-foreground px-1 text-xs leading-5 font-medium hover:underline"
-                                data-test="month-day-more"
-                            >
-                                +{{
-                                    monthDay.items.length -
-                                    shown(monthDay).length
-                                }}
-                                more
-                            </li>
+                                    <CalendarItemDetails
+                                        :item="item"
+                                        :time-type="
+                                            timeTypeOptions[item.timeType]
+                                        "
+                                        :duration="duration(item.minutes)"
+                                    />
+                                </TooltipContent>
+                            </Tooltip>
                         </ul>
-                    </Link>
+                    </div>
                 </div>
             </div>
         </div>
