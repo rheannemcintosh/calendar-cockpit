@@ -11,18 +11,31 @@ export function hourLabel(hour: number): string {
     return `${String(hour).padStart(2, '0')}:00`;
 }
 
-// Calendar item times are the times the user typed in, so the line for
-// now uses this device's clock and only shows on today's date here.
-export function localDate(moment: Date): string {
-    return [
-        moment.getFullYear(),
-        String(moment.getMonth() + 1).padStart(2, '0'),
-        String(moment.getDate()).padStart(2, '0'),
-    ].join('-');
-}
+// Calendar item times are the times the user typed in, so the line for now
+// uses the date and time it is in the user's timezone, and only shows on
+// today's date there.
+export function wallClock(
+    moment: Date,
+    timeZone: string,
+): { date: string; minute: number } {
+    const parts = Object.fromEntries(
+        new Intl.DateTimeFormat('en-GB', {
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23',
+        })
+            .formatToParts(moment)
+            .map((part) => [part.type, part.value]),
+    );
 
-export function minuteOfDay(moment: Date): number {
-    return moment.getHours() * 60 + moment.getMinutes();
+    return {
+        date: `${parts.year}-${parts.month}-${parts.day}`,
+        minute: Number(parts.hour) * 60 + Number(parts.minute),
+    };
 }
 
 // Where to start a timeline scrolled to: a little before now, or the first

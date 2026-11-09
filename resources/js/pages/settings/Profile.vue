@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { Form, Head, usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import TimezonePicker from '@/components/TimezonePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { browserTimezone } from '@/lib/timezone';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 
@@ -23,8 +25,16 @@ defineOptions({
     },
 });
 
+defineProps<{
+    // Every timezone that can be chosen, in alphabetical order.
+    timezones: string[];
+}>();
+
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+
+// Until the user has a timezone, offer the one this browser is in.
+const timezone = ref(user.value.timezone ?? browserTimezone());
 </script>
 
 <template>
@@ -36,7 +46,7 @@ const user = computed(() => page.props.auth.user);
         <Heading
             variant="small"
             title="Profile"
-            description="Update your name and email address"
+            description="Update your name, email address and timezone"
         />
 
         <Form
@@ -71,6 +81,22 @@ const user = computed(() => page.props.auth.user);
                     placeholder="Email address"
                 />
                 <InputError class="mt-2" :message="errors.email" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="timezone">Timezone</Label>
+                <TimezonePicker
+                    id="timezone"
+                    v-model="timezone"
+                    class="mt-1"
+                    name="timezone"
+                    :timezones="timezones"
+                    :invalid="Boolean(errors.timezone)"
+                />
+                <p class="text-muted-foreground text-sm">
+                    Today in your calendar is worked out in this timezone.
+                </p>
+                <InputError class="mt-2" :message="errors.timezone" />
             </div>
 
             <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">

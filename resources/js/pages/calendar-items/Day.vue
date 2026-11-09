@@ -1,19 +1,14 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
-import { useIntervalFn } from '@vueuse/core';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import CalendarDayColumn from '@/components/CalendarDayColumn.vue';
 import CalendarHourGutter from '@/components/CalendarHourGutter.vue';
 import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
-import {
-    DAY_HEIGHT,
-    localDate,
-    minuteOfDay,
-    scrollTopFor,
-} from '@/lib/calendarTimeline';
+import { useUserNow } from '@/composables/useUserNow';
+import { DAY_HEIGHT, scrollTopFor } from '@/lib/calendarTimeline';
 import { create, day, index } from '@/routes/calendar-items';
 import type { DayItem, TimeTypeOption } from '@/types';
 
@@ -43,11 +38,10 @@ const props = defineProps<{
     timeTypes: TimeTypeOption[];
 }>();
 
-const now = ref(new Date());
-useIntervalFn(() => (now.value = new Date()), 60_000);
+const { today, nowMinute: minuteNow } = useUserNow();
 
 const nowMinute = computed(() =>
-    localDate(now.value) === props.date ? minuteOfDay(now.value) : null,
+    today.value === props.date ? minuteNow.value : null,
 );
 
 // Start the timeline scrolled to now on today, or to the first calendar

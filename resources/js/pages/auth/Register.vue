@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { browserTimezone } from '@/lib/timezone';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
@@ -31,6 +32,8 @@ defineOptions({
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
     >
+        <input type="hidden" name="timezone" :value="browserTimezone()" />
+
         <div class="grid gap-6">
             <div class="grid gap-2">
                 <Label for="name">Name</Label>
