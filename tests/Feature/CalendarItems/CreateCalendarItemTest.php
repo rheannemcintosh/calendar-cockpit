@@ -394,3 +394,27 @@ test('a calendar item cannot be given a location that is not a place on the map'
     'an address longer than 255 characters' => ['location_address', str_repeat('a', 256)],
     'a name that is a list' => ['location_name', ['Smile Dental Practice']],
 ]);
+
+test('a calendar item is not saved when a location is typed but not chosen', function (array $location) {
+    $this->actingAs(User::factory()->create())
+        ->from(route('calendar-items.create'))
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, ...$location, 'location_search' => 'Smile Dent'])
+        ->assertRedirect(route('calendar-items.create'))
+        ->assertSessionHasErrors(['location_search' => 'Please choose a place from the list, or clear the field.']);
+
+    expect(CalendarItem::count())->toBe(0);
+})->with([
+    'with no location chosen' => [NO_LOCATION],
+    'after changing a chosen location' => [CHOSEN_LOCATION],
+]);
+
+test('a calendar item is saved when nothing is left typed in the location search', function (array $location) {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, ...$location, 'location_search' => ''])
+        ->assertSessionHasNoErrors();
+
+    expect(CalendarItem::count())->toBe(1);
+})->with([
+    'with no location chosen' => [NO_LOCATION],
+    'with a chosen location' => [CHOSEN_LOCATION],
+]);

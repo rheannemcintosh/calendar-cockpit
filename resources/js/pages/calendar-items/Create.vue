@@ -73,10 +73,11 @@ const timeTypeWarning = computed(() => {
     return `${subCategory.name} is usually ${label}`;
 });
 
-// The location is chosen as a whole, so a problem with any part of it is
-// shown once, under the location.
+// The location is chosen as a whole, so a problem with any part of it, or
+// text typed without choosing a match, is shown once, under the location.
 function locationError(errors: Record<string, string>): string | undefined {
     return (
+        errors.location_search ??
         errors.location_name ??
         errors.location_address ??
         errors.location_latitude ??
