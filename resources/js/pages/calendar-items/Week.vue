@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useUserNow } from '@/composables/useUserNow';
 import { DAY_HEIGHT, scrollTopFor } from '@/lib/calendarTimeline';
 import { create, day, index, week } from '@/routes/calendar-items';
-import type { TimeTypeOption, WeekDay } from '@/types';
+import type { FirmnessOption, TimeTypeOption, WeekDay } from '@/types';
 
 defineOptions({
     layout: {
@@ -38,6 +38,7 @@ const props = defineProps<{
     // Sunday to Saturday.
     days: WeekDay[];
     timeTypes: TimeTypeOption[];
+    firmnesses: FirmnessOption[];
 }>();
 
 const { today, nowMinute } = useUserNow();
@@ -182,6 +183,7 @@ watch(
                         :key="weekDay.date"
                         :items="weekDay.items"
                         :time-types="timeTypes"
+                        :firmnesses="firmnesses"
                         :now-minute="weekDay.date === today ? nowMinute : null"
                         :class="weekDay.date === today && 'bg-primary/5'"
                         :data-date="weekDay.date"

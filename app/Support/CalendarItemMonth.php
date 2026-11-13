@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use Carbon\CarbonImmutable;
@@ -14,7 +15,7 @@ use Illuminate\Support\Collection;
  * the last day. A calendar item that runs past midnight is on each day it
  * covers.
  *
- * @phpstan-type MonthItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startTime: string, continued: bool, minutes: int}
+ * @phpstan-type MonthItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startTime: string, continued: bool, minutes: int}
  * @phpstan-type MonthDay array{date: string, dayOfMonth: int, label: string, inMonth: bool, items: list<MonthItem>}
  */
 class CalendarItemMonth

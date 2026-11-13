@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\Category;
@@ -25,7 +26,8 @@ test('the day view shows today when no day is given', function () {
             ->where('previousDate', '2026-10-19')
             ->where('nextDate', '2026-10-21')
             ->where('items', [])
-            ->where('timeTypes', TimeType::options()));
+            ->where('timeTypes', TimeType::options())
+            ->where('firmnesses', Firmness::options()));
 });
 
 test('the day view shows the day it is given', function () {
@@ -59,6 +61,7 @@ test('calendar items are placed to the minute they start and end', function () {
             ->where('items.0.title', 'Check-up')
             ->where('items.0.time', '09:07–10:43')
             ->where('items.0.timeType', 'approximate')
+            ->where('items.0.firmness', 'confirmed')
             ->where('items.0.startMinute', 9 * 60 + 7)
             ->where('items.0.endMinute', 10 * 60 + 43)
             ->where('items.0.category', ['name' => 'Health', 'colour' => '#16A34A'])
@@ -66,6 +69,15 @@ test('calendar items are placed to the minute they start and end', function () {
             ->where('items.0.column', 0)
             ->where('items.0.columns', 1));
 });
+
+test('calendar items on the day view show how firm they are', function (string $firmness) {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->{$firmness}()->between('2026-10-20 09:00', '2026-10-20 10:00')->create();
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.day'))
+        ->assertInertia(fn (Assert $page) => $page->where('items.0.firmness', $firmness));
+})->with(['tentative', 'idea']);
 
 test('only the day\'s own calendar items are shown, in start order', function () {
     $user = User::factory()->create();

@@ -2,19 +2,26 @@
 import { computed } from 'vue';
 import CalendarItemBlock from '@/components/CalendarItemBlock.vue';
 import { HOURS, PIXELS_PER_MINUTE } from '@/lib/calendarTimeline';
-import type { DayItem, TimeTypeOption } from '@/types';
+import type { DayItem, FirmnessOption, TimeTypeOption } from '@/types';
 
 // One day on a timeline: its hour lines, its calendar items as blocks placed
 // to the minute, and a line for now when `nowMinute` is given.
 const props = defineProps<{
     items: DayItem[];
     timeTypes: TimeTypeOption[];
+    firmnesses: FirmnessOption[];
     nowMinute?: number | null;
 }>();
 
 const timeTypes = computed(() =>
     Object.fromEntries(
         props.timeTypes.map((timeType) => [timeType.value, timeType]),
+    ),
+);
+
+const firmnesses = computed(() =>
+    Object.fromEntries(
+        props.firmnesses.map((firmness) => [firmness.value, firmness]),
     ),
 );
 </script>
@@ -35,6 +42,7 @@ const timeTypes = computed(() =>
                 :key="item.id"
                 :item="item"
                 :time-type="timeTypes[item.timeType]"
+                :firmness="firmnesses[item.firmness]"
             />
         </ol>
 

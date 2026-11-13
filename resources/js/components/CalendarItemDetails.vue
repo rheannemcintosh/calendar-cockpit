@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Clock, MapPin } from '@lucide/vue';
-import type { TimelineItem, TimeTypeOption } from '@/types';
+import type { FirmnessOption, TimelineItem, TimeTypeOption } from '@/types';
 
 // A calendar item's details, as shown in the hover of its block on the day,
 // week and month views.
 defineProps<{
     item: TimelineItem;
     timeType: TimeTypeOption;
+    // Shown when it isn't Confirmed, when the view knows the firmnesses.
+    firmness?: FirmnessOption;
     // How long it is on the day shown, e.g. "1 hr 30 min", when known.
     duration?: string;
 }>();
@@ -26,6 +28,13 @@ defineProps<{
     </span>
     <span v-if="item.timeType !== 'exact'" class="opacity-80">
         {{ timeType.label }}: {{ timeType.hint }}
+    </span>
+    <span
+        v-if="firmness && item.firmness !== 'confirmed'"
+        class="opacity-80"
+        data-test="firmness"
+    >
+        {{ firmness.label }}: {{ firmness.hint }}
     </span>
     <span v-if="item.location" class="flex items-start gap-1.5">
         <MapPin class="mt-0.5 size-3 shrink-0" aria-hidden="true" />

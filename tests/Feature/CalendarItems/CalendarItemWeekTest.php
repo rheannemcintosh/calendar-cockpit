@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\Category;
@@ -36,8 +37,18 @@ test('the week view shows this week, Sunday to Saturday, when no day is given', 
             ])
             ->where('days.6.date', '2026-10-24')
             ->where('days.6.weekday', 'Sat')
-            ->where('timeTypes', TimeType::options()));
+            ->where('timeTypes', TimeType::options())
+            ->where('firmnesses', Firmness::options()));
 });
+
+test('calendar items on the week view show how firm they are', function (string $firmness) {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->{$firmness}()->between('2026-10-20 09:00', '2026-10-20 10:00')->create();
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.week'))
+        ->assertInertia(fn (Assert $page) => $page->where('days.2.items.0.firmness', $firmness));
+})->with(['tentative', 'idea']);
 
 test('the week view shows the week of the day it is given and keeps that day', function (string $date, string $sunday) {
     $this->actingAs(User::factory()->create())

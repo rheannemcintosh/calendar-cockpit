@@ -10,16 +10,19 @@ import {
 } from '@/components/ui/tooltip';
 import {
     categoryColours,
+    DAY_TINT,
     duration,
     PIXELS_PER_MINUTE,
 } from '@/lib/calendarTimeline';
-import type { DayItem, TimeTypeOption } from '@/types';
+import { firmnessFill, secondaryText, titleText } from '@/lib/firmness';
+import type { DayItem, FirmnessOption, TimeTypeOption } from '@/types';
 
 // A calendar item as a block on a day's timeline, placed to the minute, with
 // its details in a hover.
 const props = defineProps<{
     item: DayItem;
     timeType: TimeTypeOption;
+    firmness: FirmnessOption;
 }>();
 
 // Below this length a block is too short for text, so it shows only its
@@ -45,7 +48,22 @@ const placement = computed(() => {
     };
 });
 
-const colours = computed(() => categoryColours(props.item.category));
+// How firm the calendar item is changes only the tint.
+const colours = computed(() => ({
+    ...categoryColours(props.item.category),
+    ...firmnessFill(
+        props.item.firmness,
+        props.item.category?.colour ?? null,
+        DAY_TINT,
+    ),
+}));
+
+// Confirmed is the default, so like Exact it isn't announced.
+const spokenFirmness = computed(() =>
+    props.item.firmness === 'confirmed'
+        ? ''
+        : `, ${props.firmness.label.toLowerCase()}`,
+);
 </script>
 
 <template>
@@ -65,22 +83,34 @@ const colours = computed(() => categoryColours(props.item.category));
                 ]"
                 :style="{ ...placement, ...colours }"
                 :data-time-type="item.timeType"
+                :data-firmness="item.firmness"
                 data-test="day-item"
             >
                 <span v-if="minutes < SHORT_MINUTES" class="sr-only"
-                    >{{ item.title }}, {{ item.time }}</span
+                    >{{ item.title }}{{ spokenFirmness }}, {{ item.time }}</span
                 >
                 <template v-else>
-                    <span class="truncate font-medium">
+                    <span
+                        :class="[
+                            'truncate font-medium',
+                            titleText(item.firmness),
+                        ]"
+                    >
                         <span
                             v-if="item.subCategory"
                             class="mr-1"
                             aria-hidden="true"
                             >{{ item.subCategory.emoji }}</span
-                        >{{ item.title }}
+                        >{{ item.title
+                        }}<span v-if="spokenFirmness" class="sr-only">{{
+                            spokenFirmness
+                        }}</span>
                     </span>
                     <span
-                        class="text-muted-foreground flex shrink-0 items-center gap-1 tabular-nums"
+                        :class="[
+                            'flex shrink-0 items-center gap-1 tabular-nums',
+                            secondaryText(item.firmness),
+                        ]"
                     >
                         <Clock
                             v-if="minutes >= STACKED_MINUTES"
@@ -98,7 +128,10 @@ const colours = computed(() => categoryColours(props.item.category));
                         :href="item.location.mapsUrl"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="text-muted-foreground hover:text-foreground flex max-w-full items-center gap-1 self-start underline-offset-4 hover:underline"
+                        :class="[
+                            'hover:text-foreground flex max-w-full items-center gap-1 self-start underline-offset-4 hover:underline',
+                            secondaryText(item.firmness),
+                        ]"
                         data-test="location"
                     >
                         <MapPin class="size-3 shrink-0" aria-hidden="true" />
@@ -120,6 +153,7 @@ const colours = computed(() => categoryColours(props.item.category));
             <CalendarItemDetails
                 :item="item"
                 :time-type="timeType"
+                :firmness="firmness"
                 :duration="itemDuration"
             />
         </TooltipContent>

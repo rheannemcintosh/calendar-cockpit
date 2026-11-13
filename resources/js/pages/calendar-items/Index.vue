@@ -7,8 +7,9 @@ import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { firmnessFill, secondaryText, titleText } from '@/lib/firmness';
 import { create, day as dayView, index } from '@/routes/calendar-items';
-import type { TimelineYear, TimeTypeOption } from '@/types';
+import type { FirmnessOption, TimelineYear, TimeTypeOption } from '@/types';
 
 defineOptions({
     layout: {
@@ -29,11 +30,20 @@ const props = defineProps<{
     // The day to load from to show earlier calendar items, or null when there are none.
     previousFrom: string | null;
     timeTypes: TimeTypeOption[];
+    firmnesses: FirmnessOption[];
 }>();
 
 const timeTypes = Object.fromEntries(
     props.timeTypes.map((timeType) => [timeType.value, timeType]),
 );
+
+const firmnesses = Object.fromEntries(
+    props.firmnesses.map((firmness) => [firmness.value, firmness]),
+);
+
+// A calendar item in the list has no fill of its own, so tentative and idea
+// ones are tinted as if it were this strong, in percent.
+const LIST_TINT = 20;
 
 const loading = ref(false);
 
@@ -233,8 +243,16 @@ const appear =
                         <li
                             v-for="item in day.items"
                             :key="item.id"
-                            class="relative flex flex-col gap-0.5 py-3 pr-4 pl-6 sm:flex-row sm:items-baseline sm:gap-4"
+                            class="relative flex flex-col gap-0.5 py-3 pr-4 pl-6 first:rounded-t-lg last:rounded-b-lg sm:flex-row sm:items-baseline sm:gap-4"
+                            :style="
+                                firmnessFill(
+                                    item.firmness,
+                                    item.category?.colour ?? null,
+                                    LIST_TINT,
+                                )
+                            "
                             :data-time-type="item.timeType"
+                            :data-firmness="item.firmness"
                         >
                             <!-- Any colour can be chosen, so the outline keeps the marker visible on either background. -->
                             <span
@@ -254,7 +272,10 @@ const appear =
                                 data-test="category-marker"
                             />
                             <span
-                                class="text-muted-foreground shrink-0 text-sm tabular-nums sm:w-44"
+                                :class="[
+                                    'shrink-0 text-sm tabular-nums sm:w-44',
+                                    secondaryText(item.firmness),
+                                ]"
                             >
                                 <CalendarItemTime
                                     :time="item.time"
@@ -262,7 +283,12 @@ const appear =
                                 />
                             </span>
                             <span class="flex min-w-0 flex-col gap-0.5">
-                                <span class="font-medium break-words">
+                                <span
+                                    :class="[
+                                        'font-medium break-words',
+                                        titleText(item.firmness),
+                                    ]"
+                                >
                                     <span
                                         v-if="item.subCategory"
                                         class="mr-1.5"
@@ -271,11 +297,37 @@ const appear =
                                     >{{ item.title }}
                                 </span>
                                 <span
-                                    v-if="item.category && item.subCategory"
-                                    class="text-muted-foreground text-sm break-words"
+                                    v-if="
+                                        (item.category && item.subCategory) ||
+                                        item.firmness !== 'confirmed'
+                                    "
+                                    :class="[
+                                        'text-sm break-words',
+                                        secondaryText(item.firmness),
+                                    ]"
                                 >
-                                    {{ item.category.name }} ·
-                                    {{ item.subCategory.name }}
+                                    <template
+                                        v-if="item.category && item.subCategory"
+                                    >
+                                        {{ item.category.name }} ·
+                                        {{ item.subCategory.name }}
+                                    </template>
+                                    <template
+                                        v-if="
+                                            item.category &&
+                                            item.subCategory &&
+                                            item.firmness !== 'confirmed'
+                                        "
+                                    >
+                                        ·
+                                    </template>
+                                    <span
+                                        v-if="item.firmness !== 'confirmed'"
+                                        data-test="firmness"
+                                        >{{
+                                            firmnesses[item.firmness].label
+                                        }}</span
+                                    >
                                 </span>
                                 <!-- A long name is cut short; hovering shows it in full with the address. -->
                                 <a
@@ -291,7 +343,10 @@ const appear =
                                             .filter(Boolean)
                                             .join(', ')
                                     "
-                                    class="text-muted-foreground hover:text-foreground flex max-w-full items-center gap-1.5 self-start text-sm underline-offset-4 hover:underline"
+                                    :class="[
+                                        'hover:text-foreground flex max-w-full items-center gap-1.5 self-start text-sm underline-offset-4 hover:underline',
+                                        secondaryText(item.firmness),
+                                    ]"
                                     data-test="location"
                                 >
                                     <MapPin

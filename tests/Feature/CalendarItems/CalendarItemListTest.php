@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\Category;
@@ -24,7 +25,8 @@ test('a user with no calendar items gets an empty list', function () {
             ->where('years', [])
             ->where('from', null)
             ->where('previousFrom', null)
-            ->where('timeTypes', TimeType::options()));
+            ->where('timeTypes', TimeType::options())
+            ->where('firmnesses', Firmness::options()));
 });
 
 test('calendar items are grouped by year, week and day', function () {
@@ -46,8 +48,19 @@ test('calendar items are grouped by year, week and day', function () {
             ->has('years.0.weeks.0.days.0.items', 1)
             ->where('years.0.weeks.0.days.0.items.0.title', 'Dentist')
             ->where('years.0.weeks.0.days.0.items.0.time', '09:00–10:30')
-            ->where('years.0.weeks.0.days.0.items.0.timeType', 'exact'));
+            ->where('years.0.weeks.0.days.0.items.0.timeType', 'exact')
+            ->where('years.0.weeks.0.days.0.items.0.firmness', 'confirmed'));
 });
+
+test('calendar items show how firm they are', function (string $firmness) {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->{$firmness}()->between('2026-10-20 07:30', '2026-10-20 08:00')->create();
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('years.0.weeks.0.days.0.items.0.firmness', $firmness));
+})->with(['tentative', 'idea']);
 
 test('calendar items show their time type next to their time, which stays as it is', function (string $timeType) {
     $user = User::factory()->create();

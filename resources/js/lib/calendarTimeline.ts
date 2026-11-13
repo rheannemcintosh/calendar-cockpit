@@ -44,6 +44,9 @@ export function scrollTopFor(minute: number | null | undefined): number {
     return Math.max(0, ((minute ?? 8 * 60) - 30) * PIXELS_PER_MINUTE);
 }
 
+// How strongly, in percent, a block is tinted with its category's colour.
+export const DAY_TINT = 22;
+
 // Any colour can be chosen for a category, so a calendar item is a tint of it
 // with the colour itself down the side, and the text stays in the page's own
 // colour. Uncategorised calendar items have none.
@@ -55,7 +58,7 @@ export function categoryColours(
     }
 
     return {
-        backgroundColor: `color-mix(in srgb, ${category.colour} 22%, var(--background))`,
+        backgroundColor: `color-mix(in srgb, ${category.colour} ${DAY_TINT}%, var(--background))`,
         borderLeftColor: category.colour,
     };
 }

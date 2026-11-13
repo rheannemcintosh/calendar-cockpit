@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Http\Requests\StoreCalendarItemRequest;
 use App\Models\Category;
@@ -58,6 +59,7 @@ class CalendarItemController extends Controller
             ] : null,
             'previousFrom' => $earliestPrevious?->toDateString(),
             'timeTypes' => TimeType::options(),
+            'firmnesses' => Firmness::options(),
         ]);
     }
 
@@ -84,6 +86,7 @@ class CalendarItemController extends Controller
             'nextDate' => $day->addDay()->toDateString(),
             'items' => CalendarItemDay::place($calendarItems, $day),
             'timeTypes' => TimeType::options(),
+            'firmnesses' => Firmness::options(),
         ]);
     }
 
@@ -116,6 +119,7 @@ class CalendarItemController extends Controller
             'nextDate' => $day->addWeek()->toDateString(),
             'days' => CalendarItemWeek::days($calendarItems, $weekStart),
             'timeTypes' => TimeType::options(),
+            'firmnesses' => Firmness::options(),
         ]);
     }
 
@@ -159,8 +163,8 @@ class CalendarItemController extends Controller
     /**
      * Show the form with the user's categories that have sub-categories, and
      * the sub-categories in each one with its default time type, both in
-     * alphabetical order, every time type to choose from, and whether a
-     * location can be searched for, which needs a Mapbox token.
+     * alphabetical order, every time type and firmness to choose from, and
+     * whether a location can be searched for, which needs a Mapbox token.
      */
     public function create(Request $request): Response
     {
@@ -184,6 +188,7 @@ class CalendarItemController extends Controller
                 ]),
             ]),
             'timeTypes' => TimeType::options(),
+            'firmnesses' => Firmness::options(),
             'locationSearch' => filled(config('services.mapbox.token')),
         ]);
     }

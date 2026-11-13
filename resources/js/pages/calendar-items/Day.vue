@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useUserNow } from '@/composables/useUserNow';
 import { DAY_HEIGHT, scrollTopFor } from '@/lib/calendarTimeline';
 import { create, day, index } from '@/routes/calendar-items';
-import type { DayItem, TimeTypeOption } from '@/types';
+import type { DayItem, FirmnessOption, TimeTypeOption } from '@/types';
 
 defineOptions({
     layout: {
@@ -36,6 +36,7 @@ const props = defineProps<{
     nextDate: string;
     items: DayItem[];
     timeTypes: TimeTypeOption[];
+    firmnesses: FirmnessOption[];
 }>();
 
 const { today, nowMinute: minuteNow } = useUserNow();
@@ -124,6 +125,7 @@ watch(
                 <CalendarDayColumn
                     :items="items"
                     :time-types="timeTypes"
+                    :firmnesses="firmnesses"
                     :now-minute="nowMinute"
                 />
             </div>
