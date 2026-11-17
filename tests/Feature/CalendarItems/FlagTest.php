@@ -40,6 +40,13 @@ test('a user who registers starts with the default flags', function () {
         ->toBe(['Pre-Paid', 'Non-Cancellable', 'Important']);
 });
 
+test('the seeded test user starts with the default flags', function () {
+    $this->seed();
+
+    expect(User::sole()->flags()->orderBy('id')->pluck('name')->all())
+        ->toBe(['Pre-Paid', 'Non-Cancellable', 'Important']);
+});
+
 test('existing users are given the default flags when flags are added', function () {
     $users = User::factory()->count(2)->create();
     $migration = require database_path('migrations/2026_11_08_000001_create_flags_table.php');
