@@ -3,6 +3,7 @@ import { Clock, MapPin } from '@lucide/vue';
 import { computed } from 'vue';
 import CalendarItemDetails from '@/components/CalendarItemDetails.vue';
 import CalendarItemTime from '@/components/CalendarItemTime.vue';
+import FlagIcons from '@/components/FlagIcons.vue';
 import {
     Tooltip,
     TooltipContent,
@@ -58,6 +59,10 @@ const colours = computed(() => ({
     ),
 }));
 
+const spokenFlags = computed(() =>
+    props.item.flags.map((flag) => `, ${flag.name}`).join(''),
+);
+
 // Confirmed is the default, so like Exact it isn't announced.
 const spokenFirmness = computed(() =>
     props.item.firmness === 'confirmed'
@@ -87,7 +92,8 @@ const spokenFirmness = computed(() =>
                 data-test="day-item"
             >
                 <span v-if="minutes < SHORT_MINUTES" class="sr-only"
-                    >{{ item.title }}{{ spokenFirmness }}, {{ item.time }}</span
+                    >{{ item.title }}{{ spokenFlags }}{{ spokenFirmness }},
+                    {{ item.time }}</span
                 >
                 <template v-else>
                     <span
@@ -102,7 +108,10 @@ const spokenFirmness = computed(() =>
                             aria-hidden="true"
                             >{{ item.subCategory.emoji }}</span
                         >{{ item.title
-                        }}<span v-if="spokenFirmness" class="sr-only">{{
+                        }}<FlagIcons
+                            :flags="item.flags"
+                            class="ml-1 align-[-0.125em]"
+                        /><span v-if="spokenFirmness" class="sr-only">{{
                             spokenFirmness
                         }}</span>
                     </span>

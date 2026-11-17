@@ -62,12 +62,27 @@ test('calendar items are placed to the minute they start and end', function () {
             ->where('items.0.time', '09:07–10:43')
             ->where('items.0.timeType', 'approximate')
             ->where('items.0.firmness', 'confirmed')
+            ->where('items.0.flags', [])
             ->where('items.0.startMinute', 9 * 60 + 7)
             ->where('items.0.endMinute', 10 * 60 + 43)
             ->where('items.0.category', ['name' => 'Health', 'colour' => '#16A34A'])
             ->where('items.0.subCategory', ['emoji' => '🦷', 'name' => 'Dentist'])
             ->where('items.0.column', 0)
             ->where('items.0.columns', 1));
+});
+
+test('calendar items on the day view show their flags in the order of the user\'s flags', function () {
+    $user = User::factory()->create();
+    [, $nonCancellable, $important] = $user->flags()->orderBy('id')->get()->all();
+    CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-20 10:00')->create()
+        ->flags()->attach([$important->id, $nonCancellable->id]);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.day'))
+        ->assertInertia(fn (Assert $page) => $page->where('items.0.flags', [
+            ['name' => 'Non-Cancellable', 'icon' => 'lock'],
+            ['name' => 'Important', 'icon' => 'star'],
+        ]));
 });
 
 test('calendar items on the day view show how firm they are', function (string $firmness) {

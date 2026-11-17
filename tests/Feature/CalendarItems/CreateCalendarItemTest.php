@@ -4,6 +4,7 @@ use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Models\CalendarItem;
 use App\Models\Category;
+use App\Models\Flag;
 use App\Models\SubCategory;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -82,6 +83,89 @@ test('the form offers every firmness in order', function () {
         ->get(route('calendar-items.create'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('firmnesses', Firmness::options()));
+});
+
+test('the form offers the user\'s own flags in order', function () {
+    $user = User::factory()->create();
+    User::factory()->create();
+    $flags = $user->flags()->orderBy('id')->get();
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.create'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('flags', [
+            ['id' => $flags[0]->id, 'name' => 'Pre-Paid', 'icon' => 'pound-sterling'],
+            ['id' => $flags[1]->id, 'name' => 'Non-Cancellable', 'icon' => 'lock'],
+            ['id' => $flags[2]->id, 'name' => 'Important', 'icon' => 'star'],
+        ]));
+});
+
+test('a calendar item is saved with the flags that were chosen', function () {
+    $user = User::factory()->create();
+    [$prePaid, $nonCancellable, $important] = $user->flags()->orderBy('id')->get()->all();
+
+    $this->actingAs($user)
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, 'flag_ids' => [$important->id, $prePaid->id]])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('calendar-items.index'));
+
+    expect(CalendarItem::sole()->flags->pluck('id')->all())->toBe([$prePaid->id, $important->id]);
+});
+
+test('a calendar item can be saved with every flag', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, 'flag_ids' => $user->flags()->pluck('id')->all()])
+        ->assertSessionHasNoErrors();
+
+    expect(CalendarItem::sole()->flags->pluck('name')->all())->toBe(['Pre-Paid', 'Non-Cancellable', 'Important']);
+});
+
+test('a calendar item has no flags when none are chosen', function (array $flags) {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, ...$flags])
+        ->assertSessionHasNoErrors();
+
+    expect(CalendarItem::sole()->flags)->toBeEmpty();
+})->with([
+    'not sent' => [[]],
+    'empty' => [['flag_ids' => []]],
+    'null' => [['flag_ids' => null]],
+]);
+
+test('a calendar item cannot be given a flag that is not the user\'s', function (string $case) {
+    $user = User::factory()->create();
+    $flagId = match ($case) {
+        'another user\'s' => Flag::factory()->create()->id,
+        'missing' => Flag::max('id') + 1,
+        'not a number' => 'important',
+    };
+
+    $this->actingAs($user)
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, 'flag_ids' => [$user->flags()->value('id'), $flagId]])
+        ->assertSessionHasErrors(['flag_ids.1' => 'Please choose the flags again.']);
+
+    expect(CalendarItem::count())->toBe(0);
+})->with(['another user\'s', 'missing', 'not a number']);
+
+test('a calendar item cannot be given the same flag twice', function () {
+    $user = User::factory()->create();
+    $flagId = $user->flags()->value('id');
+
+    $this->actingAs($user)
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, 'flag_ids' => [$flagId, $flagId]])
+        ->assertSessionHasErrors(['flag_ids.0' => 'Please choose the flags again.']);
+
+    expect(CalendarItem::count())->toBe(0);
+});
+
+test('the flags must be sent as a list', function () {
+    $this->actingAs(User::factory()->create())
+        ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, 'flag_ids' => 'important'])
+        ->assertSessionHasErrors('flag_ids');
+
+    expect(CalendarItem::count())->toBe(0);
 });
 
 test('the form only lists the user\'s own categories', function () {

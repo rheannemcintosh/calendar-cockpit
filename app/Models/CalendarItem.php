@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property int $id
@@ -57,6 +58,16 @@ class CalendarItem extends Model
     public function subCategory(): BelongsTo
     {
         return $this->belongsTo(SubCategory::class);
+    }
+
+    /**
+     * The calendar item's flags, always in the order the user's flags are in.
+     *
+     * @return BelongsToMany<Flag, $this>
+     */
+    public function flags(): BelongsToMany
+    {
+        return $this->belongsToMany(Flag::class)->orderBy('flags.id');
     }
 
     /**

@@ -4,6 +4,7 @@ import { TriangleAlert } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import CalendarItemController from '@/actions/App/Http/Controllers/CalendarItemController';
 import DatePicker from '@/components/DatePicker.vue';
+import FlagPicker from '@/components/FlagPicker.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import LocationPicker from '@/components/LocationPicker.vue';
@@ -19,6 +20,7 @@ import type {
     CategoryListItem,
     FirmnessOption,
     FirmnessValue,
+    FlagOption,
     TimeTypeOption,
     TimeTypeValue,
 } from '@/types';
@@ -45,6 +47,8 @@ const props = defineProps<{
     timeTypes: TimeTypeOption[];
     // Every firmness, in order, to choose from.
     firmnesses: FirmnessOption[];
+    // The user's flags, in the order they are shown, to choose any of.
+    flags: FlagOption[];
     // Whether a location can be searched for. It is off without a Mapbox token.
     locationSearch: boolean;
 }>();
@@ -52,6 +56,7 @@ const props = defineProps<{
 const subCategoryId = ref(0);
 const timeType = ref<TimeTypeValue>('exact');
 const firmness = ref<FirmnessValue>('confirmed');
+const flagIds = ref<number[]>([]);
 
 const chosenSubCategory = computed(() =>
     props.categories
@@ -81,6 +86,14 @@ const timeTypeWarning = computed(() => {
 
     return `${subCategory.name} is usually ${label}`;
 });
+
+// The flags are submitted one by one, so a problem with any of them is shown
+// once, under the flags.
+function flagError(errors: Record<string, string>): string | undefined {
+    return Object.entries(errors).find(([key]) =>
+        key.startsWith('flag_ids'),
+    )?.[1];
+}
 
 // The location is chosen as a whole, so a problem with any part of it is
 // shown once, under the location.
@@ -205,6 +218,17 @@ function locationError(errors: Record<string, string>): string | undefined {
                     :invalid="!!errors.firmness"
                 />
                 <InputError :message="errors.firmness" />
+            </div>
+
+            <div v-if="props.flags.length" class="grid gap-2">
+                <FlagPicker
+                    v-model="flagIds"
+                    name="flag_ids"
+                    legend="Flags"
+                    :options="props.flags"
+                    :invalid="!!flagError(errors)"
+                />
+                <InputError :message="flagError(errors)" />
             </div>
 
             <div v-if="props.locationSearch" class="grid gap-2">

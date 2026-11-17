@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Clock, MapPin } from '@lucide/vue';
+import { flagIcons } from '@/lib/flags';
 import type { FirmnessOption, TimelineItem, TimeTypeOption } from '@/types';
 
 // A calendar item's details, as shown in the hover of its block on the day,
@@ -28,6 +29,24 @@ defineProps<{
     </span>
     <span v-if="item.timeType !== 'exact'" class="opacity-80">
         {{ timeType.label }}: {{ timeType.hint }}
+    </span>
+    <span
+        v-if="item.flags.length"
+        class="flex flex-wrap items-center gap-x-2.5 gap-y-1"
+        data-test="flags"
+    >
+        <span
+            v-for="flag in item.flags"
+            :key="flag.name"
+            class="flex items-center gap-1"
+        >
+            <component
+                :is="flagIcons[flag.icon]"
+                class="size-3 shrink-0"
+                aria-hidden="true"
+            />
+            {{ flag.name }}
+        </span>
     </span>
     <span
         v-if="firmness && item.firmness !== 'confirmed'"
