@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, LoaderCircle } from '@lucide/vue';
+import { ArrowLeft, LoaderCircle, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import SubCategoryController from '@/actions/App/Http/Controllers/SubCategoryController';
 import EmojiPicker from '@/components/EmojiPicker.vue';
@@ -52,7 +52,33 @@ const categoryId = ref(props.categoryId?.toString() ?? '');
 const emoji = ref('');
 const defaultTimeType = ref<TimeTypeValue>('exact');
 
-const { loading: suggestingCategory } = useCategorySuggestion(name, categoryId);
+const {
+    loading: suggestingCategory,
+    hint: categoryHint,
+    acceptHint: acceptCategoryHint,
+    dismissHint: dismissCategoryHint,
+} = useCategorySuggestion(name, categoryId);
+
+const hintedCategory = computed(() =>
+    props.categories.find(
+        (category) => category.id.toString() === categoryHint.value,
+    ),
+);
+
+// The hint's buttons go away once used, so focus returns to the category.
+function focusCategory(): void {
+    document.getElementById('category_id')?.focus();
+}
+
+function acceptHintedCategory(): void {
+    acceptCategoryHint();
+    focusCategory();
+}
+
+function dismissHintedCategory(): void {
+    dismissCategoryHint();
+    focusCategory();
+}
 
 const {
     loading: suggestingEmoji,
@@ -164,6 +190,45 @@ const chosenCategory = computed(() =>
                         </SelectItem>
                     </SelectContent>
                 </Select>
+                <div
+                    v-if="hintedCategory"
+                    class="bg-muted/50 flex w-fit max-w-full items-center rounded-md border text-sm"
+                    data-test="category-suggestion-hint"
+                    @keydown.esc.prevent.stop="dismissHintedCategory"
+                >
+                    <button
+                        type="button"
+                        class="hover:bg-accent focus-visible:ring-ring/50 flex h-8 min-w-0 cursor-pointer items-center gap-2 rounded-l-md px-2 outline-none focus-visible:ring-[3px]"
+                        data-test="accept-category-suggestion"
+                        @click="acceptHintedCategory"
+                    >
+                        <span
+                            class="size-3 shrink-0 rounded-full border border-black/10 dark:border-white/20"
+                            :style="{ backgroundColor: hintedCategory.colour }"
+                            aria-hidden="true"
+                        />
+                        <span class="truncate">
+                            Put it in {{ hintedCategory.name }} instead?
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        aria-label="Dismiss suggested category"
+                        title="Dismiss"
+                        class="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring/50 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-r-md outline-none focus-visible:ring-[3px]"
+                        data-test="dismiss-category-suggestion"
+                        @click="dismissHintedCategory"
+                    >
+                        <X class="size-4" />
+                    </button>
+                </div>
+                <p role="status" class="sr-only">
+                    {{
+                        hintedCategory
+                            ? `Suggested category: ${hintedCategory.name}. Put it there instead, or press Escape to dismiss it.`
+                            : ''
+                    }}
+                </p>
                 <InputError :message="errors.category_id" />
             </div>
 

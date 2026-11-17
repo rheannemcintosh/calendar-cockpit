@@ -18,6 +18,8 @@ declare module '@inertiajs/core' {
             name: string;
             tagline: string;
             auth: Auth;
+            // The user's timezone, or the app's, that today is worked out in.
+            timezone: string;
             sidebarOpen: boolean;
             emojiSuggestionsEnabled: boolean;
             categorySuggestionsEnabled: boolean;

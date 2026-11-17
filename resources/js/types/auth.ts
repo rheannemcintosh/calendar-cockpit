@@ -5,6 +5,8 @@ export type User = {
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
+    // An IANA timezone, or null until their browser has set one.
+    timezone: string | null;
     created_at: string;
     updated_at: string;
     [key: string]: unknown;
