@@ -13,9 +13,19 @@ test('the flags table has the expected columns', function () {
         ->and(Schema::hasColumns('calendar_item_flag', ['calendar_item_id', 'flag_id']))->toBeTrue();
 });
 
-test('the flag icons are pound sterling, lock and star', function () {
-    expect(array_map(fn (FlagIcon $icon) => $icon->value, FlagIcon::cases()))
+test('the flag icons start with pound sterling, lock and star, the icons of the default flags', function () {
+    expect(array_slice(array_map(fn (FlagIcon $icon) => $icon->value, FlagIcon::cases()), 0, 3))
         ->toBe(['pound-sterling', 'lock', 'star']);
+});
+
+test('the database accepts every flag icon and nothing else', function () {
+    $user = User::factory()->create();
+
+    foreach (FlagIcon::cases() as $icon) {
+        $user->flags()->create(['name' => "Flag {$icon->value}", 'icon' => $icon]);
+    }
+
+    expect($user->flags()->count())->toBe(count(FlagIcon::cases()) + 3);
 });
 
 test('a new user starts with the Pre-Paid, Non-Cancellable and Important flags in that order', function () {
