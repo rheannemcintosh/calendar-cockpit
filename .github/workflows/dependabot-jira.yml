@@ -3,7 +3,8 @@ name: dependabot-jira
 # Creates a Dependency Update work item in Jira for every pull request Dependabot
 # opens, listing the packages it updates, then renames the pull request to start with
 # the work item's key so GitHub for Jira links the two. Dependabot's branch names
-# can't be changed to the key, so the title is the only link.
+# can't be changed to the key, so the title is the only link. Last, it labels the pull
+# request with that year's Dependabot epic, like every other pull request's epic label.
 #
 # It runs only when the pull request is opened, so a rebase or a new commit on it
 # never creates a second work item.
@@ -19,7 +20,8 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write # rename the pull request
+  pull-requests: write # rename and label the pull request
+  issues: write # create the year's epic label if it doesn't exist yet
 
 env:
   JIRA_PROJECT: CC
@@ -164,3 +166,48 @@ jobs:
           KEY: ${{ steps.create.outputs.key }}
           SUMMARY: ${{ steps.create.outputs.summary }}
         run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --title "$KEY | $SUMMARY"
+
+      # Every pull request is labelled with its epic as "KEY | Summary". Dependency
+      # Updates sit under that year's "Dependabot Updates for YYYY" epic, so this finds
+      # it in Jira by name. If there isn't one yet, the run finishes with a notice and
+      # the label can be added by hand once the epic exists.
+      - name: Label the pull request with its epic
+        if: steps.create.outputs.key != ''
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+        run: |
+          epic_summary="Dependabot Updates for $(date -u -d "$PR_CREATED_AT" +%Y)"
+
+          query="$(jq -n --arg project "$JIRA_PROJECT" --arg summary "$epic_summary" '{
+            jql: "project = \($project) AND issuetype = Epic AND summary ~ \"\($summary)\"",
+            fields: ["summary"],
+            maxResults: 10
+          }')"
+
+          response="$(curl -sS -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -X POST "${JIRA_BASE_URL%/}/rest/api/3/search/jql" \
+            -d "$query")"
+
+          # The search matches words, not the whole summary, so pick the exact match.
+          epic_key="$(echo "$response" | jq -r --arg summary "$epic_summary" \
+            '[.issues[]? | select(.fields.summary == $summary) | .key][0] // empty')"
+
+          if [ -z "$epic_key" ]; then
+            echo "::notice title=No epic label added::There is no \"$epic_summary\" epic in $JIRA_PROJECT, so the pull request wasn't labelled with one."
+            exit 0
+          fi
+
+          label="$epic_key | $epic_summary"
+
+          # The first pull request of a new year needs its epic's label creating.
+          if ! gh label list --repo "$GITHUB_REPOSITORY" --search "$epic_key" --json name --jq '.[].name' | grep -qxF "$label"; then
+            gh label create "$label" --repo "$GITHUB_REPOSITORY"
+          fi
+
+          gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label "$label"
