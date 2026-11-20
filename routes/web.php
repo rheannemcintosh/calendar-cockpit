@@ -6,6 +6,7 @@ use App\Http\Controllers\CategorySuggestionController;
 use App\Http\Controllers\EmojiSuggestionController;
 use App\Http\Controllers\FlagController;
 use App\Http\Controllers\LocationSearchController;
+use App\Http\Controllers\StarterCategoryController;
 use App\Http\Controllers\SubCategoryController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('locations/search', LocationSearchController::class)
         ->middleware('throttle:60,1')
         ->name('locations.search');
+
+    Route::post('categories/starter', StarterCategoryController::class)
+        ->name('categories.starter');
 
     Route::resource('categories', CategoryController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])

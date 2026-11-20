@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { ChevronRight, Pencil, Plus, Tags, Trash2 } from '@lucide/vue';
+import {
+    ChevronRight,
+    Pencil,
+    Plus,
+    Sparkles,
+    Tags,
+    Trash2,
+} from '@lucide/vue';
 import { ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -18,7 +25,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { create, destroy, edit, index } from '@/routes/categories';
+import { create, destroy, edit, index, starter } from '@/routes/categories';
 import subCategories from '@/routes/sub-categories';
 import type { ManagedCategory, ManagedSubCategory } from '@/types';
 
@@ -122,15 +129,33 @@ function closeDeleteDialog(open: boolean): void {
                 <p class="font-medium">You have no categories yet</p>
                 <p class="text-muted-foreground text-sm">
                     Create your first category to start sorting your calendar
-                    items.
+                    items, or add a starter set of categories and sub-categories
+                    that you can change later.
                 </p>
             </div>
-            <Button as-child>
-                <Link :href="create()">
-                    <Plus />
-                    Create a category
-                </Link>
-            </Button>
+            <div class="flex flex-wrap justify-center gap-2">
+                <Button as-child>
+                    <Link :href="create()">
+                        <Plus />
+                        Create a category
+                    </Link>
+                </Button>
+                <Form
+                    v-bind="starter.form()"
+                    :options="{ preserveScroll: true }"
+                    v-slot="{ processing }"
+                >
+                    <Button
+                        type="submit"
+                        variant="outline"
+                        :disabled="processing"
+                        data-test="add-starter-categories-button"
+                    >
+                        <Sparkles />
+                        Add starter categories
+                    </Button>
+                </Form>
+            </div>
         </div>
 
         <ul v-else class="space-y-3">
