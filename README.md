@@ -149,6 +149,8 @@ Every pull request runs the full test suite in [GitHub Actions](https://github.c
 
 The app runs in Docker through [Laravel Sail](https://laravel.com/docs/13.x/sail), which provides PHP 8.4, Node, Composer and a SQL Server 2022 container.
 
+The Sail image in `docker/8.4` installs PHP from Ondřej Surý's [Launchpad PPA](https://launchpad.net/~ondrej/+archive/ubuntu/php), not from `packages.sury.org` as the upstream Sail Dockerfile does. Both come from the same maintainer, but sury.org was slower to publish PHP 8.4.28 for Apple Silicon, and the app needs at least that version, so on a Mac the image could not install the app's dependencies. The image picks up whatever 8.4 release the PPA has when it is built, so run `./vendor/bin/sail build --no-cache` after a PHP security release. Re-publishing the Sail files with `sail:publish` brings back the upstream Dockerfile and undoes this change.
+
 ### Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/).
