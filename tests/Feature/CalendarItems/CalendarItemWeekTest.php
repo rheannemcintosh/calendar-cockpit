@@ -138,7 +138,7 @@ test('a calendar item that runs past midnight is on each day it covers', functio
         ->assertInertia(fn (Assert $page) => $page
             ->where('days.1.items', [])
             ->where('days.2.items.0.title', 'Retreat')
-            ->where('days.2.items.0.time', '22:00–02:00')
+            ->where('days.2.items.0.time', '22:00 – Thu 02:00')
             ->where('days.2.items.0.startMinute', 22 * 60)
             ->where('days.2.items.0.endMinute', 1440)
             ->where('days.3.items.0.title', 'Retreat')

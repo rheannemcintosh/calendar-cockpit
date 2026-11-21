@@ -121,7 +121,7 @@ test('a calendar item that runs past midnight is cut off at the end of the day',
     $this->actingAs($user)
         ->get(route('calendar-items.day'))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('items.0.time', '22:00–02:00')
+            ->where('items.0.time', '22:00 – Wed 02:00')
             ->where('items.0.startMinute', 22 * 60)
             ->where('items.0.endMinute', 1440));
 

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { parseDate } from '@internationalized/date';
+import type { DateValue } from '@internationalized/date';
 import { CalendarDays, ChevronLeft, ChevronRight } from '@lucide/vue';
 import {
     DatePickerCalendar,
@@ -19,20 +21,30 @@ import {
     DatePickerRoot,
     DatePickerTrigger,
 } from 'reka-ui';
+import { computed } from 'vue';
 import { cn } from '@/lib/utils';
 
 // A date field with a calendar whose weeks run Sunday to Saturday, to
 // match the calendar items list. The value is submitted through a hidden
-// input named `name`, as YYYY-MM-DD.
+// input named `name`, as YYYY-MM-DD. It can also be bound with v-model, as
+// YYYY-MM-DD, or undefined while no full date is chosen.
 defineProps<{
     id: string;
     name: string;
     invalid?: boolean;
 }>();
+
+const model = defineModel<string | undefined>();
+
+const value = computed({
+    get: () => (model.value ? parseDate(model.value) : undefined),
+    set: (date: DateValue | undefined) => (model.value = date?.toString()),
+});
 </script>
 
 <template>
     <DatePickerRoot
+        v-model="value"
         :id="id"
         :name="name"
         granularity="day"

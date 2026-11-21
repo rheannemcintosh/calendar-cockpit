@@ -21,10 +21,13 @@ class StoreCalendarItemRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'date' => ['required', 'date_format:Y-m-d'],
+            // The end date is the start date unless a later one is chosen.
+            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date'],
             'all_day' => ['nullable', 'boolean'],
-            // An all-day calendar item has a date but no times or time type.
+            // An all-day calendar item has dates but no times or time type.
+            // An end time earlier than the start time is fine on a later end date.
             'start_time' => [Rule::excludeIf($this->allDay()), 'required', 'date_format:H:i,H:i:s'],
-            'end_time' => [Rule::excludeIf($this->allDay()), 'required', 'date_format:H:i,H:i:s', 'after:start_time'],
+            'end_time' => [Rule::excludeIf($this->allDay()), 'required', 'date_format:H:i,H:i:s', Rule::when($this->endsOnStartDate(), 'after:start_time')],
             'sub_category_id' => [
                 'bail',
                 'nullable',
@@ -61,10 +64,12 @@ class StoreCalendarItemRequest extends FormRequest
         return [
             'title.required' => __('Please enter a title.'),
             'date.required' => __('Please choose a date.'),
+            'end_date.date_format' => __('Please choose an end date again.'),
+            'end_date.after_or_equal' => __('The end must be after the start.'),
             'all_day.boolean' => __('Please choose whether it is all day again.'),
             'start_time.required' => __('Please choose a start time.'),
             'end_time.required' => __('Please choose an end time.'),
-            'end_time.after' => __('The end time must be after the start time.'),
+            'end_time.after' => __('The end must be after the start.'),
             'sub_category_id.integer' => __('Please choose a category again.'),
             'sub_category_id.exists' => __('Please choose a category again.'),
             'time_type.required' => __('Please choose a time type.'),
@@ -87,6 +92,7 @@ class StoreCalendarItemRequest extends FormRequest
         return [
             'start_time' => __('start time'),
             'end_time' => __('end time'),
+            'end_date' => __('end date'),
         ];
     }
 
@@ -95,8 +101,9 @@ class StoreCalendarItemRequest extends FormRequest
      * stored with. Only the sub-category is stored, since it sets the category.
      * The time type is overridden when it differs from the sub-category's
      * default, which is worked out here rather than trusted from the form.
-     * An all-day calendar item runs from the date's midnight to the next and
-     * keeps the default time type, which it doesn't show, never overridden.
+     * A timed calendar item ends at the end time on the end date. An all-day
+     * calendar item runs from the start date's midnight to the midnight after
+     * the end date, covering both, and keeps the default time type, which it doesn't show, never overridden.
      * Every part of the location is null when no location is chosen.
      *
      * @return array{title: string, starts_at: CarbonImmutable, ends_at: CarbonImmutable, all_day: bool, sub_category_id: int|null, time_type: TimeType, time_type_overridden: bool, firmness: Firmness, location_name: string|null, location_address: string|null, location_latitude: float|null, location_longitude: float|null}
@@ -109,11 +116,13 @@ class StoreCalendarItemRequest extends FormRequest
         $timeType = $allDay ? TimeType::Exact : ($this->enum('time_type', TimeType::class) ?? TimeType::Exact);
         $hasLocation = $this->filled('location_name');
         $day = CarbonImmutable::createFromFormat('!Y-m-d', $date->toString());
+        $endDate = $this->filled('end_date') ? $this->string('end_date') : $date;
+        $endDay = CarbonImmutable::createFromFormat('!Y-m-d', $endDate->toString());
 
         return [
             'title' => $this->string('title')->toString(),
             'starts_at' => $allDay ? $day : CarbonImmutable::parse("{$date} {$this->string('start_time')}"),
-            'ends_at' => $allDay ? $day->addDay() : CarbonImmutable::parse("{$date} {$this->string('end_time')}"),
+            'ends_at' => $allDay ? $endDay->addDay() : CarbonImmutable::parse("{$endDate} {$this->string('end_time')}"),
             'all_day' => $allDay,
             'sub_category_id' => $subCategory?->id,
             'time_type' => $timeType,
@@ -124,6 +133,15 @@ class StoreCalendarItemRequest extends FormRequest
             'location_latitude' => $hasLocation ? $this->float('location_latitude') : null,
             'location_longitude' => $hasLocation ? $this->float('location_longitude') : null,
         ];
+    }
+
+    /**
+     * Whether the calendar item ends on the day it starts, so its end time
+     * must be after its start time.
+     */
+    public function endsOnStartDate(): bool
+    {
+        return ! $this->filled('end_date') || $this->input('end_date') === $this->input('date');
     }
 
     /**
