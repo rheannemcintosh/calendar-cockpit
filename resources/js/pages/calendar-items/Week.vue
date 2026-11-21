@@ -177,7 +177,7 @@ watch(
                     </div>
                     <div
                         v-if="hasAllDay"
-                        class="flex border-t"
+                        class="flex max-h-24 overflow-y-auto border-t"
                         data-test="all-day-row"
                     >
                         <span
