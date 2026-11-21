@@ -116,3 +116,24 @@ export type EditableCalendarItem = {
 
 // The calendar views a calendar item can be edited from, and returned to.
 export type CalendarView = 'list' | 'day' | 'week' | 'month';
+
+// A field that changed in an entry of a calendar item's history, from
+// App\Support\CalendarItemHistory::of(), by the name the app uses for it. A
+// sub-category shows its name. Old or new is null when it had no value.
+export type CalendarItemHistoryChange = {
+    field: string;
+    label: string;
+    old: string | null;
+    new: string | null;
+};
+
+// A change made to a calendar item, or it being created, which lists no
+// changes. When it was made is in the user's timezone, e.g. "21 Nov 2026,
+// 14:05", and as ISO 8601 in `datetime`.
+export type CalendarItemHistoryEntry = {
+    key: string;
+    event: 'created' | 'updated';
+    at: string;
+    datetime: string;
+    changes: CalendarItemHistoryChange[];
+};
