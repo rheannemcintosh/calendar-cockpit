@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * @property int $id
@@ -36,6 +38,8 @@ class CalendarItem extends Model
     /** @use HasFactory<CalendarItemFactory> */
     use HasFactory;
 
+    use LogsActivity;
+
     /**
      * @var array<string, mixed>
      */
@@ -45,6 +49,18 @@ class CalendarItem extends Model
         'firmness' => Firmness::Confirmed->value,
         'all_day' => false,
     ];
+
+    /**
+     * Log every change to the calendar item's own fields, leaving out the timestamps.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('calendar_item')
+            ->logOnly(['title', 'starts_at', 'ends_at', 'all_day', 'sub_category_id', 'time_type', 'time_type_overridden', 'firmness', 'location_name', 'location_address', 'location_latitude', 'location_longitude'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 
     /**
      * @return BelongsTo<User, $this>

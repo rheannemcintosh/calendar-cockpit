@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * @property int $id
@@ -27,12 +29,26 @@ class SubCategory extends Model
     /** @use HasFactory<SubCategoryFactory> */
     use HasFactory;
 
+    use LogsActivity;
+
     /**
      * @var array<string, mixed>
      */
     protected $attributes = [
         'default_time_type' => TimeType::Exact->value,
     ];
+
+    /**
+     * Log every change to the sub category's own fields, leaving out the timestamps.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('sub_category')
+            ->logOnly(['category_id', 'emoji', 'name', 'default_time_type'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 
     /**
      * @return BelongsTo<Category, $this>
