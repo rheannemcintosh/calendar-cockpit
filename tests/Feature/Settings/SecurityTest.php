@@ -5,8 +5,10 @@ namespace Tests\Feature\Settings;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
+use Laravel\Passkeys\Passkey as BasePasskey;
 use Tests\TestCase;
 
 class SecurityTest extends TestCase
@@ -78,6 +80,33 @@ class SecurityTest extends TestCase
             );
     }
 
+    public function test_user_can_remove_their_own_passkey()
+    {
+        $user = User::factory()->create();
+        $passkey = $this->createPasskeyFor($user);
+
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->from(route('security.edit'))
+            ->delete(route('passkey.destroy', $passkey))
+            ->assertRedirect(route('security.edit'));
+
+        $this->assertModelMissing($passkey);
+    }
+
+    public function test_user_cannot_remove_another_users_passkey()
+    {
+        $user = User::factory()->create();
+        $passkey = $this->createPasskeyFor(User::factory()->create());
+
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->delete(route('passkey.destroy', $passkey))
+            ->assertForbidden();
+
+        $this->assertModelExists($passkey);
+    }
+
     public function test_password_can_be_updated()
     {
         $user = User::factory()->create();
@@ -114,5 +143,14 @@ class SecurityTest extends TestCase
         $response
             ->assertSessionHasErrors('current_password')
             ->assertRedirect(route('security.edit'));
+    }
+
+    private function createPasskeyFor(User $user): BasePasskey
+    {
+        return $user->passkeys()->create([
+            'name' => 'Test passkey',
+            'credential_id' => Str::random(32),
+            'credential' => ['aaguid' => '00000000-0000-0000-0000-000000000000'],
+        ]);
     }
 }
