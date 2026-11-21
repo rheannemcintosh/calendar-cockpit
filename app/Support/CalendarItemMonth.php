@@ -40,12 +40,13 @@ class CalendarItemMonth
      * Lay calendar items, which must already be in start order, out on the
      * weeks of the month the given day is in. Each day has its all-day
      * calendar items first, then its timed ones in start order, and says
-     * whether each one started on an earlier day.
+     * whether each one started on an earlier day. When each one was created
+     * and last updated is shown in the given timezone.
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<list<MonthDay>>
      */
-    public static function weeks(Collection $calendarItems, CarbonInterface $day): array
+    public static function weeks(Collection $calendarItems, CarbonInterface $day, string $timezone): array
     {
         $month = CarbonImmutable::instance($day)->startOfDay();
         $gridEnd = static::gridEnd($month);
@@ -64,7 +65,7 @@ class CalendarItemMonth
 
                 foreach ($dayItems as $calendarItem) {
                     $items[] = [
-                        ...CalendarItemTimeline::item($calendarItem),
+                        ...CalendarItemTimeline::item($calendarItem, $timezone),
                         'startTime' => $calendarItem->starts_at->format('H:i'),
                         'continued' => $calendarItem->starts_at < $date,
                         // How long it is on this day, for its details.

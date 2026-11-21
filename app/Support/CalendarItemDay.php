@@ -28,12 +28,13 @@ class CalendarItemDay
     /**
      * Place the timed calendar items, which must already be in start order, on
      * the given day. A part of an item that falls outside the day is cut off.
-     * All-day calendar items are left out, for allDay().
+     * All-day calendar items are left out, for allDay(). When each one was
+     * created and last updated is shown in the given timezone.
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<DayItem>
      */
-    public static function place(Collection $calendarItems, CarbonInterface $day): array
+    public static function place(Collection $calendarItems, CarbonInterface $day, string $timezone): array
     {
         $dayStart = $day->copy()->startOfDay();
         $calendarItems = $calendarItems->reject(fn (CalendarItem $calendarItem): bool => $calendarItem->all_day)->values();
@@ -51,7 +52,7 @@ class CalendarItemDay
         $items = [];
 
         foreach ($calendarItems as $index => $calendarItem) {
-            $item = CalendarItemTimeline::item($calendarItem);
+            $item = CalendarItemTimeline::item($calendarItem, $timezone);
 
             $items[] = [
                 ...$item,
@@ -67,18 +68,19 @@ class CalendarItemDay
 
     /**
      * The all-day calendar items, in the order they are given, for the row
-     * above the timeline.
+     * above the timeline. When each one was created and last updated is
+     * shown in the given timezone.
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<TimelineItem>
      */
-    public static function allDay(Collection $calendarItems): array
+    public static function allDay(Collection $calendarItems, string $timezone): array
     {
         $items = [];
 
         foreach ($calendarItems as $calendarItem) {
             if ($calendarItem->all_day) {
-                $items[] = CalendarItemTimeline::item($calendarItem);
+                $items[] = CalendarItemTimeline::item($calendarItem, $timezone);
             }
         }
 

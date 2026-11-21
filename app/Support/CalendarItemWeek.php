@@ -22,12 +22,13 @@ class CalendarItemWeek
 {
     /**
      * Place calendar items, which must already be in start order, on the days
-     * of the week that starts on the given Sunday.
+     * of the week that starts on the given Sunday. When each one was created
+     * and last updated is shown in the given timezone.
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<WeekDay>
      */
-    public static function days(Collection $calendarItems, CarbonInterface $weekStart): array
+    public static function days(Collection $calendarItems, CarbonInterface $weekStart, string $timezone): array
     {
         $weekStart = CarbonImmutable::instance($weekStart)->startOfDay();
         $days = [];
@@ -42,8 +43,8 @@ class CalendarItemWeek
                 'weekday' => $day->format('D'),
                 'dayOfMonth' => $day->day,
                 'label' => $day->format('l j F Y'),
-                'allDayItems' => CalendarItemDay::allDay($dayItems),
-                'items' => CalendarItemDay::place($dayItems, $day),
+                'allDayItems' => CalendarItemDay::allDay($dayItems, $timezone),
+                'items' => CalendarItemDay::place($dayItems, $day, $timezone),
             ];
         }
 

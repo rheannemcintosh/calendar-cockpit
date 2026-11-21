@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
 use App\Models\SubCategory;
+use App\Support\Timestamps;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,10 +64,15 @@ class CategoryController extends Controller
         return to_route('categories.index');
     }
 
-    public function edit(Category $category): Response
+    /**
+     * Show the form with the category's current name and colour, and when it
+     * was created and last updated in the user's timezone.
+     */
+    public function edit(Request $request, Category $category): Response
     {
         return Inertia::render('categories/Edit', [
             'category' => $category->only(['id', 'name', 'colour']),
+            'timestamps' => Timestamps::of($category, $request->user()->localTimezone()),
         ]);
     }
 
