@@ -3,8 +3,9 @@ name: dependabot-jira
 # Creates a Dependency Update work item in Jira for every pull request Dependabot
 # opens, listing the packages it updates, then renames the pull request to start with
 # the work item's key so GitHub for Jira links the two. Dependabot's branch names
-# can't be changed to the key, so the title is the only link. Last, it labels the pull
-# request with that year's Dependabot epic, like every other pull request's epic label.
+# can't be changed to the key, so the title is the only link. The work item goes under
+# that year's Dependabot epic, and the pull request is labelled with the same epic,
+# like every other pull request's epic label.
 #
 # It runs only when the pull request is opened, so a rebase or a new commit on it
 # never creates a second work item.
@@ -61,6 +62,44 @@ jobs:
             echo "::notice title=Jira sign-in not set up::No Dependency Update was created, because these Dependabot secrets are not set: ${missing// /, }."
           fi
 
+      # Dependency Updates sit under that year's "Dependabot Updates for YYYY" epic,
+      # so this finds it in Jira by name, once, for both the create and the label. If
+      # there isn't one yet, the Dependency Update is created without an epic and the
+      # run finishes with a notice, so it can be moved and labelled by hand.
+      - name: Find the year's Dependabot epic
+        id: epic
+        if: steps.jira.outputs.ready == 'true'
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+        run: |
+          epic_summary="Dependabot Updates for $(date -u -d "$PR_CREATED_AT" +%Y)"
+
+          query="$(jq -n --arg project "$JIRA_PROJECT" --arg summary "$epic_summary" '{
+            jql: "project = \($project) AND issuetype = Epic AND summary ~ \"\($summary)\"",
+            fields: ["summary"],
+            maxResults: 10
+          }')"
+
+          response="$(curl -sS -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -X POST "${JIRA_BASE_URL%/}/rest/api/3/search/jql" \
+            -d "$query")"
+
+          # The search matches words, not the whole summary, so pick the exact match.
+          epic_key="$(echo "$response" | jq -r --arg summary "$epic_summary" \
+            '[.issues[]? | select(.fields.summary == $summary) | .key][0] // empty')"
+
+          if [ -z "$epic_key" ]; then
+            echo "::notice title=No epic::There is no \"$epic_summary\" epic in $JIRA_PROJECT, so the Dependency Update has no epic and the pull request wasn't labelled with one."
+            exit 0
+          fi
+
+          echo "key=$epic_key" >> "$GITHUB_OUTPUT"
+          echo "summary=$epic_summary" >> "$GITHUB_OUTPUT"
+
       # Everything from the pull request reaches the script through env, never
       # straight into it, so a package name can't run as shell.
       - name: Create the Dependency Update
@@ -76,6 +115,7 @@ jobs:
           ECOSYSTEM: ${{ steps.meta.outputs.package-ecosystem }}
           GROUP: ${{ steps.meta.outputs.dependency-group }}
           DEPENDENCIES: ${{ steps.meta.outputs.updated-dependencies-json }}
+          EPIC_KEY: ${{ steps.epic.outputs.key }}
         run: |
           case "$ECOSYSTEM" in
             composer) ecosystem="Composer" ;;
@@ -104,6 +144,7 @@ jobs:
             --arg ecosystem "$ecosystem" \
             --arg group "$GROUP" \
             --arg app "$app" \
+            --arg epic "$EPIC_KEY" \
             --argjson labels "$labels" \
             --argjson deps "$DEPENDENCIES" '
             def text($t): { type: "text", text: $t };
@@ -141,7 +182,10 @@ jobs:
                     )
                   }])
                 }
-              }')"
+              }
+            # Only set the parent when the epic was found, so a missing epic never
+            # fails the create.
+            | if $epic != "" then .fields.parent = { key: $epic } else . end')"
 
           response="$(curl -sS -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
             -H 'Content-Type: application/json' \
@@ -167,46 +211,20 @@ jobs:
           SUMMARY: ${{ steps.create.outputs.summary }}
         run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --title "$KEY | $SUMMARY"
 
-      # Every pull request is labelled with its epic as "KEY | Summary". Dependency
-      # Updates sit under that year's "Dependabot Updates for YYYY" epic, so this finds
-      # it in Jira by name. If there isn't one yet, the run finishes with a notice and
-      # the label can be added by hand once the epic exists.
+      # Every pull request is labelled with its epic as "KEY | Summary", using the
+      # epic found above.
       - name: Label the pull request with its epic
-        if: steps.create.outputs.key != ''
+        if: steps.create.outputs.key != '' && steps.epic.outputs.key != ''
         env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+          EPIC_KEY: ${{ steps.epic.outputs.key }}
+          EPIC_SUMMARY: ${{ steps.epic.outputs.summary }}
         run: |
-          epic_summary="Dependabot Updates for $(date -u -d "$PR_CREATED_AT" +%Y)"
-
-          query="$(jq -n --arg project "$JIRA_PROJECT" --arg summary "$epic_summary" '{
-            jql: "project = \($project) AND issuetype = Epic AND summary ~ \"\($summary)\"",
-            fields: ["summary"],
-            maxResults: 10
-          }')"
-
-          response="$(curl -sS -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
-            -H 'Content-Type: application/json' \
-            -X POST "${JIRA_BASE_URL%/}/rest/api/3/search/jql" \
-            -d "$query")"
-
-          # The search matches words, not the whole summary, so pick the exact match.
-          epic_key="$(echo "$response" | jq -r --arg summary "$epic_summary" \
-            '[.issues[]? | select(.fields.summary == $summary) | .key][0] // empty')"
-
-          if [ -z "$epic_key" ]; then
-            echo "::notice title=No epic label added::There is no \"$epic_summary\" epic in $JIRA_PROJECT, so the pull request wasn't labelled with one."
-            exit 0
-          fi
-
-          label="$epic_key | $epic_summary"
+          label="$EPIC_KEY | $EPIC_SUMMARY"
 
           # The first pull request of a new year needs its epic's label creating.
-          if ! gh label list --repo "$GITHUB_REPOSITORY" --search "$epic_key" --json name --jq '.[].name' | grep -qxF "$label"; then
+          if ! gh label list --repo "$GITHUB_REPOSITORY" --search "$EPIC_KEY" --json name --jq '.[].name' | grep -qxF "$label"; then
             gh label create "$label" --repo "$GITHUB_REPOSITORY"
           fi
 
