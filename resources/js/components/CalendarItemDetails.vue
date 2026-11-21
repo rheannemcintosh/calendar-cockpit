@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Clock, MapPin } from '@lucide/vue';
+import CreatedUpdated from '@/components/CreatedUpdated.vue';
 import { flagIcons } from '@/lib/flags';
 import type { FirmnessOption, TimelineItem, TimeTypeOption } from '@/types';
 
@@ -65,4 +66,5 @@ defineProps<{
             }}</span>
         </span>
     </span>
+    <CreatedUpdated :timestamps="item.timestamps" class="opacity-80" />
 </template>

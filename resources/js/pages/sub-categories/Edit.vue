@@ -4,6 +4,7 @@ import { ArrowLeft } from '@lucide/vue';
 import { ref } from 'vue';
 import SubCategoryController from '@/actions/App/Http/Controllers/SubCategoryController';
 import EmojiPicker from '@/components/EmojiPicker.vue';
+import CreatedUpdated from '@/components/CreatedUpdated.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import ChoicePicker from '@/components/ChoicePicker.vue';
@@ -15,6 +16,7 @@ import categories from '@/routes/categories';
 import type {
     CategoryOption,
     EditableSubCategory,
+    Timestamps,
     TimeTypeOption,
 } from '@/types';
 
@@ -42,6 +44,8 @@ const props = defineProps<{
     category: CategoryOption;
     // Every time type, in order, to choose the default from.
     timeTypes: TimeTypeOption[];
+    // When it was created and last updated.
+    timestamps: Timestamps;
 }>();
 
 const name = ref(props.subCategory.name);
@@ -73,6 +77,10 @@ const {
             title="Edit sub-category"
             description="Change its name, emoji or default time type. Calendar items in it show a new emoji or name too"
         />
+
+        <p class="text-muted-foreground -mt-6 mb-8 text-sm">
+            <CreatedUpdated :timestamps="props.timestamps" />
+        </p>
 
         <Form
             v-bind="SubCategoryController.update.form(props.subCategory.id)"

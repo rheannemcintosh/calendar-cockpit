@@ -56,7 +56,7 @@ class CalendarItemController extends Controller
             ?? $previous()->orderBy('starts_at')->first()?->starts_at;
 
         return Inertia::render('calendar-items/Index', [
-            'years' => CalendarItemTimeline::group($calendarItems),
+            'years' => CalendarItemTimeline::group($calendarItems, $request->user()->localTimezone()),
             'from' => $request->filled('from') ? [
                 'date' => $from->toDateString(),
                 'label' => $from->format('l j F Y'),
@@ -88,8 +88,8 @@ class CalendarItemController extends Controller
             'label' => $day->format('l j F Y'),
             'previousDate' => $day->subDay()->toDateString(),
             'nextDate' => $day->addDay()->toDateString(),
-            'allDayItems' => CalendarItemDay::allDay($calendarItems),
-            'items' => CalendarItemDay::place($calendarItems, $day),
+            'allDayItems' => CalendarItemDay::allDay($calendarItems, $request->user()->localTimezone()),
+            'items' => CalendarItemDay::place($calendarItems, $day, $request->user()->localTimezone()),
             'timeTypes' => TimeType::options(),
             'firmnesses' => Firmness::options(),
         ]);
@@ -122,7 +122,7 @@ class CalendarItemController extends Controller
             'weekNumber' => CalendarItemTimeline::weekNumber($weekStart),
             'previousDate' => $day->subWeek()->toDateString(),
             'nextDate' => $day->addWeek()->toDateString(),
-            'days' => CalendarItemWeek::days($calendarItems, $weekStart),
+            'days' => CalendarItemWeek::days($calendarItems, $weekStart, $request->user()->localTimezone()),
             'timeTypes' => TimeType::options(),
             'firmnesses' => Firmness::options(),
         ]);
@@ -160,7 +160,7 @@ class CalendarItemController extends Controller
             'label' => $day->format('F Y'),
             'previousDate' => $day->subMonthNoOverflow()->toDateString(),
             'nextDate' => $day->addMonthNoOverflow()->toDateString(),
-            'weeks' => CalendarItemMonth::weeks($calendarItems, $day),
+            'weeks' => CalendarItemMonth::weeks($calendarItems, $day, $request->user()->localTimezone()),
             'timeTypes' => TimeType::options(),
         ]);
     }
