@@ -174,7 +174,7 @@ function itemCount(monthDay: MonthDay): string {
 
                         <ul
                             v-if="monthDay.items.length"
-                            class="flex flex-wrap content-start gap-1"
+                            class="flex min-h-0 min-w-0 flex-wrap content-start gap-1 overflow-y-auto"
                             :aria-label="`Calendar items on ${monthDay.label}`"
                         >
                             <Tooltip
@@ -186,7 +186,10 @@ function itemCount(monthDay: MonthDay): string {
                                     <li
                                         tabindex="0"
                                         :class="[
-                                            'focus-visible:ring-ring h-3.5 w-6 shrink-0 rounded-sm border border-l-4 outline-none focus-visible:ring-2',
+                                            'focus-visible:ring-ring shrink-0 rounded-sm border border-l-4 outline-none focus-visible:ring-2',
+                                            item.allDay
+                                                ? 'w-full truncate px-1 text-[0.6875rem] leading-4 font-medium'
+                                                : 'h-3.5 w-6',
                                             !item.category &&
                                                 'bg-muted border-l-muted-foreground/40',
                                             item.timeType === 'block'
@@ -195,10 +198,28 @@ function itemCount(monthDay: MonthDay): string {
                                             !monthDay.inMonth && 'opacity-60',
                                         ]"
                                         :style="categoryColours(item.category)"
-                                        :data-time-type="item.timeType"
+                                        :data-time-type="
+                                            item.allDay
+                                                ? undefined
+                                                : item.timeType
+                                        "
+                                        :data-all-day="item.allDay || undefined"
                                         data-test="month-item"
                                     >
-                                        <span class="sr-only"
+                                        <template v-if="item.allDay"
+                                            ><span
+                                                v-if="item.subCategory"
+                                                class="mr-1"
+                                                aria-hidden="true"
+                                                >{{
+                                                    item.subCategory.emoji
+                                                }}</span
+                                            >{{ item.title
+                                            }}<span class="sr-only"
+                                                >, {{ item.time }}</span
+                                            ></template
+                                        >
+                                        <span v-else class="sr-only"
                                             >{{ item.title }},
                                             {{ item.time }}</span
                                         >

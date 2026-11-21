@@ -21,8 +21,10 @@ class StoreCalendarItemRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'date' => ['required', 'date_format:Y-m-d'],
-            'start_time' => ['required', 'date_format:H:i,H:i:s'],
-            'end_time' => ['required', 'date_format:H:i,H:i:s', 'after:start_time'],
+            'all_day' => ['nullable', 'boolean'],
+            // An all-day calendar item has a date but no times or time type.
+            'start_time' => [Rule::excludeIf($this->allDay()), 'required', 'date_format:H:i,H:i:s'],
+            'end_time' => [Rule::excludeIf($this->allDay()), 'required', 'date_format:H:i,H:i:s', 'after:start_time'],
             'sub_category_id' => [
                 'bail',
                 'nullable',
@@ -31,7 +33,7 @@ class StoreCalendarItemRequest extends FormRequest
                     fn (Builder $query) => $query->whereIn('category_id', $this->user()->categories()->select('id')),
                 ),
             ],
-            'time_type' => ['required', Rule::enum(TimeType::class)],
+            'time_type' => [Rule::excludeIf($this->allDay()), 'required', Rule::enum(TimeType::class)],
             'firmness' => ['required', Rule::enum(Firmness::class)],
             // Any number of the user's own flags, including none.
             'flag_ids' => ['nullable', 'array'],
@@ -59,6 +61,7 @@ class StoreCalendarItemRequest extends FormRequest
         return [
             'title.required' => __('Please enter a title.'),
             'date.required' => __('Please choose a date.'),
+            'all_day.boolean' => __('Please choose whether it is all day again.'),
             'start_time.required' => __('Please choose a start time.'),
             'end_time.required' => __('Please choose an end time.'),
             'end_time.after' => __('The end time must be after the start time.'),
@@ -92,30 +95,43 @@ class StoreCalendarItemRequest extends FormRequest
      * stored with. Only the sub-category is stored, since it sets the category.
      * The time type is overridden when it differs from the sub-category's
      * default, which is worked out here rather than trusted from the form.
+     * An all-day calendar item runs from the date's midnight to the next and
+     * keeps the default time type, which it doesn't show, never overridden.
      * Every part of the location is null when no location is chosen.
      *
-     * @return array{title: string, starts_at: CarbonImmutable, ends_at: CarbonImmutable, sub_category_id: int|null, time_type: TimeType, time_type_overridden: bool, firmness: Firmness, location_name: string|null, location_address: string|null, location_latitude: float|null, location_longitude: float|null}
+     * @return array{title: string, starts_at: CarbonImmutable, ends_at: CarbonImmutable, all_day: bool, sub_category_id: int|null, time_type: TimeType, time_type_overridden: bool, firmness: Firmness, location_name: string|null, location_address: string|null, location_latitude: float|null, location_longitude: float|null}
      */
     public function calendarItemAttributes(): array
     {
         $date = $this->string('date');
+        $allDay = $this->allDay();
         $subCategory = $this->filled('sub_category_id') ? SubCategory::findOrFail($this->integer('sub_category_id')) : null;
-        $timeType = $this->enum('time_type', TimeType::class) ?? TimeType::Exact;
+        $timeType = $allDay ? TimeType::Exact : ($this->enum('time_type', TimeType::class) ?? TimeType::Exact);
         $hasLocation = $this->filled('location_name');
+        $day = CarbonImmutable::createFromFormat('!Y-m-d', $date->toString());
 
         return [
             'title' => $this->string('title')->toString(),
-            'starts_at' => CarbonImmutable::parse("{$date} {$this->string('start_time')}"),
-            'ends_at' => CarbonImmutable::parse("{$date} {$this->string('end_time')}"),
+            'starts_at' => $allDay ? $day : CarbonImmutable::parse("{$date} {$this->string('start_time')}"),
+            'ends_at' => $allDay ? $day->addDay() : CarbonImmutable::parse("{$date} {$this->string('end_time')}"),
+            'all_day' => $allDay,
             'sub_category_id' => $subCategory?->id,
             'time_type' => $timeType,
-            'time_type_overridden' => $subCategory !== null && $subCategory->default_time_type !== $timeType,
+            'time_type_overridden' => ! $allDay && $subCategory !== null && $subCategory->default_time_type !== $timeType,
             'firmness' => $this->enum('firmness', Firmness::class) ?? Firmness::Confirmed,
             'location_name' => $hasLocation ? $this->string('location_name')->toString() : null,
             'location_address' => $hasLocation && $this->filled('location_address') ? $this->string('location_address')->toString() : null,
             'location_latitude' => $hasLocation ? $this->float('location_latitude') : null,
             'location_longitude' => $hasLocation ? $this->float('location_longitude') : null,
         ];
+    }
+
+    /**
+     * Whether the calendar item is all day, which it isn't unless asked for.
+     */
+    public function allDay(): bool
+    {
+        return $this->boolean('all_day');
     }
 
     /**

@@ -15,16 +15,20 @@ use Illuminate\Support\Collection;
  * Calendar items that overlap share the width of the timeline side by side.
  * Each one goes in the leftmost column that is free when it starts, and every
  * item in a group of overlapping items has the same number of columns.
+ * All-day calendar items aren't at a time, so they go above the timeline.
  *
- * @phpstan-type DayItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<array{name: string, icon: value-of<FlagIcon>}>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startMinute: int, endMinute: int, column: int, columns: int}
+ * @phpstan-import-type TimelineItem from CalendarItemTimeline
+ *
+ * @phpstan-type DayItem array{id: int, title: string, allDay: bool, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<array{name: string, icon: value-of<FlagIcon>}>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startMinute: int, endMinute: int, column: int, columns: int}
  */
 class CalendarItemDay
 {
     public const MINUTES_IN_DAY = 1440;
 
     /**
-     * Place calendar items, which must already be in start order, on the given
-     * day. A part of an item that falls outside the day is cut off.
+     * Place the timed calendar items, which must already be in start order, on
+     * the given day. A part of an item that falls outside the day is cut off.
+     * All-day calendar items are left out, for allDay().
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<DayItem>
@@ -32,7 +36,7 @@ class CalendarItemDay
     public static function place(Collection $calendarItems, CarbonInterface $day): array
     {
         $dayStart = $day->copy()->startOfDay();
-        $calendarItems = $calendarItems->values();
+        $calendarItems = $calendarItems->reject(fn (CalendarItem $calendarItem): bool => $calendarItem->all_day)->values();
 
         $minutes = [];
 
@@ -56,6 +60,26 @@ class CalendarItemDay
                 'column' => $columns[$index][0],
                 'columns' => $columns[$index][1],
             ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * The all-day calendar items, in the order they are given, for the row
+     * above the timeline.
+     *
+     * @param  Collection<int, CalendarItem>  $calendarItems
+     * @return list<TimelineItem>
+     */
+    public static function allDay(Collection $calendarItems): array
+    {
+        $items = [];
+
+        foreach ($calendarItems as $calendarItem) {
+            if ($calendarItem->all_day) {
+                $items[] = CalendarItemTimeline::item($calendarItem);
+            }
         }
 
         return $items;

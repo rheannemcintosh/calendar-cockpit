@@ -12,6 +12,7 @@ import SubCategoryPicker from '@/components/SubCategoryPicker.vue';
 import TimePicker from '@/components/TimePicker.vue';
 import ChoicePicker from '@/components/ChoicePicker.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { create, index } from '@/routes/calendar-items';
@@ -53,6 +54,7 @@ const props = defineProps<{
     locationSearch: boolean;
 }>();
 
+const allDay = ref(false);
 const subCategoryId = ref(0);
 const timeType = ref<TimeTypeValue>('exact');
 const firmness = ref<FirmnessValue>('confirmed');
@@ -113,7 +115,7 @@ function locationError(errors: Record<string, string>): string | undefined {
     <div class="mx-auto w-full max-w-3xl p-4">
         <Heading
             title="New calendar item"
-            description="Give it a title, then choose the day and when it starts and ends"
+            description="Give it a title, then choose the day and when it starts and ends, or make it all day"
         />
 
         <Form
@@ -139,7 +141,29 @@ function locationError(errors: Record<string, string>): string | undefined {
                 <InputError :message="errors.date" />
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid gap-2">
+                <Label for="all_day" class="cursor-pointer font-normal">
+                    <Checkbox
+                        id="all_day"
+                        :model-value="allDay"
+                        class="cursor-pointer"
+                        :aria-invalid="errors.all_day ? true : undefined"
+                        data-test="all-day-checkbox"
+                        @update:model-value="
+                            (value) => (allDay = value === true)
+                        "
+                    />
+                    All day
+                    <span class="text-muted-foreground">
+                        (no start or end time)
+                    </span>
+                </Label>
+                <input type="hidden" name="all_day" :value="allDay ? 1 : 0" />
+                <InputError :message="errors.all_day" />
+            </div>
+
+            <!-- An all-day calendar item has only a date, so it has no times or time type. -->
+            <div v-show="!allDay" class="grid gap-4 sm:grid-cols-2">
                 <div class="grid gap-2">
                     <Label for="start_time">Start time</Label>
                     <TimePicker
@@ -189,7 +213,7 @@ function locationError(errors: Record<string, string>): string | undefined {
                 </p>
             </div>
 
-            <div class="grid gap-2">
+            <div v-if="!allDay" class="grid gap-2">
                 <ChoicePicker
                     v-model="timeType"
                     name="time_type"

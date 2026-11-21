@@ -8,6 +8,9 @@ import type { TimeTypeValue } from './time-types';
 export type TimelineItem = {
     id: number;
     title: string;
+    // All day on its date, with no times. Its time is then "All day", and its
+    // time type, which is always exact, isn't shown.
+    allDay: boolean;
     time: string;
     timeType: TimeTypeValue;
     firmness: FirmnessValue;
@@ -56,6 +59,8 @@ export type WeekDay = {
     dayOfMonth: number;
     // In full, e.g. "Sunday 18 October 2026".
     label: string;
+    // Shown in a row above the timeline, not in it.
+    allDayItems: TimelineItem[];
     items: DayItem[];
 };
 

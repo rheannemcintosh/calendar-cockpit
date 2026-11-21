@@ -252,7 +252,10 @@ const appear =
                                     LIST_TINT,
                                 )
                             "
-                            :data-time-type="item.timeType"
+                            :data-time-type="
+                                item.allDay ? undefined : item.timeType
+                            "
+                            :data-all-day="item.allDay || undefined"
                             :data-firmness="item.firmness"
                         >
                             <!-- Any colour can be chosen, so the outline keeps the marker visible on either background. -->
@@ -278,7 +281,12 @@ const appear =
                                     secondaryText(item.firmness),
                                 ]"
                             >
+                                <!-- A time type doesn't apply without times, so an all-day calendar item has no pill. -->
+                                <span v-if="item.allDay" data-test="all-day">{{
+                                    item.time
+                                }}</span>
                                 <CalendarItemTime
+                                    v-else
                                     :time="item.time"
                                     :time-type="timeTypes[item.timeType]"
                                 />
