@@ -174,7 +174,7 @@ function itemCount(monthDay: MonthDay): string {
 
                         <ul
                             v-if="monthDay.items.length"
-                            class="flex min-w-0 flex-wrap content-start gap-1"
+                            class="flex min-h-0 min-w-0 flex-wrap content-start gap-1 overflow-y-auto"
                             :aria-label="`Calendar items on ${monthDay.label}`"
                         >
                             <Tooltip
