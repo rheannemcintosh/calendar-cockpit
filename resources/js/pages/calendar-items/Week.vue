@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import CalendarAllDayCell from '@/components/CalendarAllDayCell.vue';
 import CalendarDayColumn from '@/components/CalendarDayColumn.vue';
 import CalendarHourGutter from '@/components/CalendarHourGutter.vue';
 import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
@@ -43,7 +44,11 @@ const props = defineProps<{
 
 const { today, nowMinute } = useUserNow();
 
-const isEmpty = computed(() => props.days.every((d) => !d.items.length));
+const isEmpty = computed(() =>
+    props.days.every((d) => !d.items.length && !d.allDayItems.length),
+);
+
+const hasAllDay = computed(() => props.days.some((d) => d.allDayItems.length));
 
 // Start the timeline scrolled to now when the week has today in it, or to
 // the earliest calendar item of the week, or to the morning.
@@ -134,43 +139,61 @@ watch(
             data-test="week-timeline"
         >
             <div class="min-w-[56rem]">
-                <div
-                    class="bg-background sticky top-0 z-20 flex border-b"
-                    data-test="week-days"
-                >
-                    <div class="w-14 shrink-0" aria-hidden="true" />
-                    <Link
-                        v-for="weekDay in days"
-                        :key="weekDay.date"
-                        :href="day(weekDay.date)"
-                        :class="[
-                            'hover:bg-muted focus-visible:ring-ring flex flex-1 cursor-pointer flex-col items-center gap-0.5 border-l py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset',
-                            weekDay.date === today && 'bg-primary/5',
-                        ]"
-                        :aria-label="weekDay.label"
-                        :aria-current="
-                            weekDay.date === today ? 'date' : undefined
-                        "
-                        data-test="week-day-link"
+                <div class="bg-background sticky top-0 z-20 border-b">
+                    <div class="flex" data-test="week-days">
+                        <div class="w-14 shrink-0" aria-hidden="true" />
+                        <Link
+                            v-for="weekDay in days"
+                            :key="weekDay.date"
+                            :href="day(weekDay.date)"
+                            :class="[
+                                'hover:bg-muted focus-visible:ring-ring flex flex-1 cursor-pointer flex-col items-center gap-0.5 border-l py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset',
+                                weekDay.date === today && 'bg-primary/5',
+                            ]"
+                            :aria-label="weekDay.label"
+                            :aria-current="
+                                weekDay.date === today ? 'date' : undefined
+                            "
+                            data-test="week-day-link"
+                        >
+                            <span
+                                :class="[
+                                    'text-xs font-medium uppercase',
+                                    weekDay.date === today
+                                        ? 'text-primary'
+                                        : 'text-muted-foreground',
+                                ]"
+                                >{{ weekDay.weekday }}</span
+                            >
+                            <span
+                                :class="[
+                                    'flex size-8 items-center justify-center rounded-full text-base font-semibold tabular-nums',
+                                    weekDay.date === today &&
+                                        'bg-primary text-primary-foreground',
+                                ]"
+                                >{{ weekDay.dayOfMonth }}</span
+                            >
+                        </Link>
+                    </div>
+                    <div
+                        v-if="hasAllDay"
+                        class="flex max-h-24 overflow-y-auto border-t"
+                        data-test="all-day-row"
                     >
                         <span
-                            :class="[
-                                'text-xs font-medium uppercase',
-                                weekDay.date === today
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground',
-                            ]"
-                            >{{ weekDay.weekday }}</span
+                            class="text-muted-foreground w-14 shrink-0 py-1.5 pr-2 text-right text-xs"
+                            >All day</span
                         >
-                        <span
-                            :class="[
-                                'flex size-8 items-center justify-center rounded-full text-base font-semibold tabular-nums',
-                                weekDay.date === today &&
-                                    'bg-primary text-primary-foreground',
-                            ]"
-                            >{{ weekDay.dayOfMonth }}</span
-                        >
-                    </Link>
+                        <CalendarAllDayCell
+                            v-for="weekDay in days"
+                            :key="weekDay.date"
+                            :items="weekDay.allDayItems"
+                            :time-types="timeTypes"
+                            :firmnesses="firmnesses"
+                            :class="weekDay.date === today && 'bg-primary/5'"
+                            :data-date="weekDay.date"
+                        />
+                    </div>
                 </div>
 
                 <div

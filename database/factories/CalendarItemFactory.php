@@ -39,6 +39,18 @@ class CalendarItemFactory extends Factory
         ]);
     }
 
+    /**
+     * All day on the given date, from its midnight to the next.
+     */
+    public function allDay(string $date): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'starts_at' => Carbon::parse($date)->startOfDay(),
+            'ends_at' => Carbon::parse($date)->startOfDay()->addDay(),
+            'all_day' => true,
+        ]);
+    }
+
     public function window(): static
     {
         return $this->state(fn (array $attributes) => ['time_type' => TimeType::Window]);

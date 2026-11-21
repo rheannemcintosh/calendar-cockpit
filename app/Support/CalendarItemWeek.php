@@ -10,11 +10,13 @@ use Illuminate\Support\Collection;
 /**
  * Places a week's calendar items on a timeline of each of its days, Sunday to
  * Saturday, to the minute. A calendar item that runs past midnight is on each
- * day it covers, cut off at the edges of each one.
+ * day it covers, cut off at the edges of each one. All-day calendar items
+ * are on their day, in a row above the timeline.
  *
  * @phpstan-import-type DayItem from CalendarItemDay
+ * @phpstan-import-type TimelineItem from CalendarItemTimeline
  *
- * @phpstan-type WeekDay array{date: string, weekday: string, dayOfMonth: int, label: string, items: list<DayItem>}
+ * @phpstan-type WeekDay array{date: string, weekday: string, dayOfMonth: int, label: string, allDayItems: list<TimelineItem>, items: list<DayItem>}
  */
 class CalendarItemWeek
 {
@@ -34,17 +36,15 @@ class CalendarItemWeek
         for ($offset = 0; $offset < 7; $offset++) {
             $day = $weekStart->addDays($offset);
             $next = $day->addDay();
+            $dayItems = $calendarItems->filter(fn (CalendarItem $calendarItem): bool => $calendarItem->starts_at < $next && $calendarItem->ends_at > $day);
 
             $days[] = [
                 'date' => $day->toDateString(),
                 'weekday' => $day->format('D'),
                 'dayOfMonth' => $day->day,
                 'label' => $day->format('l j F Y'),
-                'items' => CalendarItemDay::place(
-                    $calendarItems->filter(fn (CalendarItem $calendarItem): bool => $calendarItem->starts_at < $next && $calendarItem->ends_at > $day),
-                    $day,
-                    $timezone,
-                ),
+                'allDayItems' => CalendarItemDay::allDay($dayItems, $timezone),
+                'items' => CalendarItemDay::place($dayItems, $day, $timezone),
             ];
         }
 

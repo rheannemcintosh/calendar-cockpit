@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
  * the last day. A calendar item that runs past midnight is on each day it
  * covers.
  *
- * @phpstan-type MonthItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startTime: string, continued: bool, minutes: int}
+ * @phpstan-type MonthItem array{id: int, title: string, allDay: bool, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, category: array{name: string, colour: string}|null, subCategory: array{emoji: string, name: string}|null, location: array{name: string, address: string|null, mapsUrl: string}|null, startTime: string, continued: bool, minutes: int}
  * @phpstan-type MonthDay array{date: string, dayOfMonth: int, label: string, inMonth: bool, items: list<MonthItem>}
  */
 class CalendarItemMonth
@@ -38,9 +38,10 @@ class CalendarItemMonth
 
     /**
      * Lay calendar items, which must already be in start order, out on the
-     * weeks of the month the given day is in. Each day has its calendar items
-     * in start order, and says whether each one started on an earlier day.
-     * When each one was created and last updated is shown in the given timezone.
+     * weeks of the month the given day is in. Each day has its all-day
+     * calendar items first, then its timed ones in start order, and says
+     * whether each one started on an earlier day. When each one was created
+     * and last updated is shown in the given timezone.
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<list<MonthDay>>
@@ -57,19 +58,20 @@ class CalendarItemMonth
             for ($offset = 0; $offset < 7; $offset++) {
                 $date = $weekStart->addDays($offset);
                 $next = $date->addDay();
+                $dayItems = $calendarItems
+                    ->filter(fn (CalendarItem $calendarItem): bool => $calendarItem->starts_at < $next && $calendarItem->ends_at > $date)
+                    ->sortBy(fn (CalendarItem $calendarItem): int => $calendarItem->all_day ? 0 : 1);
                 $items = [];
 
-                foreach ($calendarItems as $calendarItem) {
-                    if ($calendarItem->starts_at < $next && $calendarItem->ends_at > $date) {
-                        $items[] = [
-                            ...CalendarItemTimeline::item($calendarItem, $timezone),
-                            'startTime' => $calendarItem->starts_at->format('H:i'),
-                            'continued' => $calendarItem->starts_at < $date,
-                            // How long it is on this day, for its details.
-                            'minutes' => CalendarItemDay::minuteOfDay($date, $calendarItem->ends_at, roundUp: true)
-                                - CalendarItemDay::minuteOfDay($date, $calendarItem->starts_at),
-                        ];
-                    }
+                foreach ($dayItems as $calendarItem) {
+                    $items[] = [
+                        ...CalendarItemTimeline::item($calendarItem, $timezone),
+                        'startTime' => $calendarItem->starts_at->format('H:i'),
+                        'continued' => $calendarItem->starts_at < $date,
+                        // How long it is on this day, for its details.
+                        'minutes' => CalendarItemDay::minuteOfDay($date, $calendarItem->ends_at, roundUp: true)
+                            - CalendarItemDay::minuteOfDay($date, $calendarItem->starts_at),
+                    ];
                 }
 
                 $week[] = [

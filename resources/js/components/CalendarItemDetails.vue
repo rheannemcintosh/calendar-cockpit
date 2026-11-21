@@ -11,7 +11,8 @@ defineProps<{
     timeType: TimeTypeOption;
     // Shown when it isn't Confirmed, when the view knows the firmnesses.
     firmness?: FirmnessOption;
-    // How long it is on the day shown, e.g. "1 hr 30 min", when known.
+    // How long it is on the day shown, e.g. "1 hr 30 min", when known. An
+    // all-day calendar item's time is "All day", so it has no duration.
     duration?: string;
 }>();
 </script>
@@ -26,9 +27,9 @@ defineProps<{
     <span class="flex items-center gap-1.5 tabular-nums">
         <Clock class="size-3 shrink-0" aria-hidden="true" />
         {{ item.timeType === 'approximate' ? '~' : '' }}{{ item.time
-        }}<template v-if="duration"> · {{ duration }}</template>
+        }}<template v-if="duration && !item.allDay"> · {{ duration }}</template>
     </span>
-    <span v-if="item.timeType !== 'exact'" class="opacity-80">
+    <span v-if="!item.allDay && item.timeType !== 'exact'" class="opacity-80">
         {{ timeType.label }}: {{ timeType.hint }}
     </span>
     <span

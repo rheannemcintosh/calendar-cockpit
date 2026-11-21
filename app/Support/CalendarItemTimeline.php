@@ -23,7 +23,7 @@ use Illuminate\Support\Collection;
  * @phpstan-type TimelineSubCategory array{emoji: string, name: string}
  * @phpstan-type TimelineLocation array{name: string, address: string|null, mapsUrl: string}
  * @phpstan-type TimelineFlag array{name: string, icon: value-of<FlagIcon>}
- * @phpstan-type TimelineItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<TimelineFlag>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null, location: TimelineLocation|null, timestamps: TimestampLabels}
+ * @phpstan-type TimelineItem array{id: int, title: string, allDay: bool, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<TimelineFlag>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null, location: TimelineLocation|null, timestamps: TimestampLabels}
  * @phpstan-type TimelineDay array{date: string, label: string, items: list<TimelineItem>}
  * @phpstan-type TimelineWeek array{key: string, number: int, range: string, days: list<TimelineDay>}
  * @phpstan-type TimelineYear array{year: int, weeks: list<TimelineWeek>}
@@ -79,8 +79,8 @@ class CalendarItemTimeline
     /**
      * A calendar item as the calendar items list and day view show it. Eager
      * load its sub-category, category and flags so they are not fetched
-     * separately. When it was created and last updated is shown in the given
-     * timezone.
+     * separately. An all-day calendar item's time is "All day". When it was
+     * created and last updated is shown in the given timezone.
      *
      * @return TimelineItem
      */
@@ -89,7 +89,8 @@ class CalendarItemTimeline
         return [
             'id' => $calendarItem->id,
             'title' => $calendarItem->title,
-            'time' => static::timeRange($calendarItem->starts_at, $calendarItem->ends_at),
+            'allDay' => $calendarItem->all_day,
+            'time' => $calendarItem->all_day ? __('All day') : static::timeRange($calendarItem->starts_at, $calendarItem->ends_at),
             'timeType' => $calendarItem->time_type->value,
             'firmness' => $calendarItem->firmness->value,
             'flags' => array_values(array_map(fn (Flag $flag): array => [
