@@ -276,4 +276,25 @@ const locationError = computed(
         />
         <InputError :message="locationError" />
     </div>
+
+    <!-- Without location search the location can't be changed, so keep the
+    calendar item's current one. -->
+    <template v-else-if="item?.location">
+        <input type="hidden" name="location_name" :value="item.location.name" />
+        <input
+            type="hidden"
+            name="location_address"
+            :value="item.location.address"
+        />
+        <input
+            type="hidden"
+            name="location_latitude"
+            :value="item.location.latitude"
+        />
+        <input
+            type="hidden"
+            name="location_longitude"
+            :value="item.location.longitude"
+        />
+    </template>
 </template>
