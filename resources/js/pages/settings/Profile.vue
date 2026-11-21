@@ -3,6 +3,7 @@ import { Form, Head, usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import CreatedUpdated from '@/components/CreatedUpdated.vue';
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -13,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { browserTimezone } from '@/lib/timezone';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
+import type { Timestamps } from '@/types';
 
 defineOptions({
     layout: {
@@ -25,9 +27,11 @@ defineOptions({
     },
 });
 
-defineProps<{
+const props = defineProps<{
     // Every timezone that can be chosen, in alphabetical order.
     timezones: string[];
+    // When the account was created and last updated.
+    timestamps: Timestamps;
 }>();
 
 const page = usePage();
@@ -48,6 +52,10 @@ const timezone = ref(user.value.timezone ?? browserTimezone());
             title="Profile"
             description="Update your name, email address and timezone"
         />
+
+        <p class="text-muted-foreground -mt-4 text-sm">
+            <CreatedUpdated :timestamps="props.timestamps" />
+        </p>
 
         <Form
             v-bind="ProfileController.update.form()"

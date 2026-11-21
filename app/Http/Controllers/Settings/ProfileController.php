@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Support\Timestamps;
 use App\Support\Timezone;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +17,8 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
-     * Show the user's profile settings page.
+     * Show the user's profile settings page, with when their account was
+     * created and last updated in their timezone.
      */
     public function edit(Request $request): Response
     {
@@ -24,6 +26,7 @@ class ProfileController extends Controller
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'timezones' => Timezone::options($request->user()->timezone),
+            'timestamps' => Timestamps::of($request->user(), $request->user()->localTimezone()),
         ]);
     }
 
