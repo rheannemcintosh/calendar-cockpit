@@ -278,7 +278,7 @@ test('a calendar item needs a date, a start time and an end time', function () {
 test('the end time must be after the start time', function (string $endTime) {
     $this->actingAs(User::factory()->create())
         ->post(route('calendar-items.store'), [...VALID_CALENDAR_ITEM, 'end_time' => $endTime])
-        ->assertSessionHasErrors(['end_time' => 'The end time must be after the start time.']);
+        ->assertSessionHasErrors(['end_time' => 'The end must be after the start.']);
 
     expect(CalendarItem::count())->toBe(0);
 })->with([

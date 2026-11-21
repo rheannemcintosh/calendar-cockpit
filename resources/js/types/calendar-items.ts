@@ -9,9 +9,11 @@ import type { Timestamps } from './timestamps';
 export type TimelineItem = {
     id: number;
     title: string;
-    // All day on its date, with no times. Its time is then "All day", and its
+    // All day on its dates, with no times. Its time is then "All day", and its
     // time type, which is always exact, isn't shown.
     allDay: boolean;
+    // E.g. "09:00–10:30" or "All day". One that ends on a later day also
+    // gives its end day, e.g. "15:00 – Mon 16:00" or "All day until Mon".
     time: string;
     timeType: TimeTypeValue;
     firmness: FirmnessValue;

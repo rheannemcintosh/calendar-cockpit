@@ -40,13 +40,14 @@ class CalendarItemFactory extends Factory
     }
 
     /**
-     * All day on the given date, from its midnight to the next.
+     * All day from the given date to the end date, or the same date when none
+     * is given, from the start date's midnight to the midnight after the end date.
      */
-    public function allDay(string $date): static
+    public function allDay(string $date, ?string $endDate = null): static
     {
         return $this->state(fn (array $attributes) => [
             'starts_at' => Carbon::parse($date)->startOfDay(),
-            'ends_at' => Carbon::parse($date)->startOfDay()->addDay(),
+            'ends_at' => Carbon::parse($endDate ?? $date)->startOfDay()->addDay(),
             'all_day' => true,
         ]);
     }

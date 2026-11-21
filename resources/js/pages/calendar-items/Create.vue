@@ -55,6 +55,16 @@ const props = defineProps<{
 }>();
 
 const allDay = ref(false);
+const startDate = ref<string>();
+const endDate = ref<string>();
+
+// The end date starts as the start date, and keeps following it until a
+// different end date is chosen, so a same-day item only needs one date.
+watch(startDate, (start, previous) => {
+    if (!endDate.value || endDate.value === previous) {
+        endDate.value = start;
+    }
+});
 const subCategoryId = ref(0);
 const timeType = ref<TimeTypeValue>('exact');
 const firmness = ref<FirmnessValue>('confirmed');
@@ -115,7 +125,7 @@ function locationError(errors: Record<string, string>): string | undefined {
     <div class="mx-auto w-full max-w-3xl p-4">
         <Heading
             title="New calendar item"
-            description="Give it a title, then choose the day and when it starts and ends, or make it all day"
+            description="Give it a title, then choose when it starts and ends, or make it all day"
         />
 
         <Form
@@ -133,12 +143,6 @@ function locationError(errors: Record<string, string>): string | undefined {
                     :aria-invalid="errors.title ? true : undefined"
                 />
                 <InputError :message="errors.title" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="date">Date</Label>
-                <DatePicker id="date" name="date" :invalid="!!errors.date" />
-                <InputError :message="errors.date" />
             </div>
 
             <div class="grid gap-2">
@@ -162,9 +166,20 @@ function locationError(errors: Record<string, string>): string | undefined {
                 <InputError :message="errors.all_day" />
             </div>
 
-            <!-- An all-day calendar item has only a date, so it has no times or time type. -->
-            <div v-show="!allDay" class="grid gap-4 sm:grid-cols-2">
-                <div class="grid gap-2">
+            <!-- An all-day calendar item has only dates, so it has no times or time type. -->
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="grid content-start gap-2">
+                    <Label for="date">Start date</Label>
+                    <DatePicker
+                        id="date"
+                        v-model="startDate"
+                        name="date"
+                        :invalid="!!errors.date"
+                    />
+                    <InputError :message="errors.date" />
+                </div>
+
+                <div v-show="!allDay" class="grid content-start gap-2">
                     <Label for="start_time">Start time</Label>
                     <TimePicker
                         id="start_time"
@@ -174,7 +189,18 @@ function locationError(errors: Record<string, string>): string | undefined {
                     <InputError :message="errors.start_time" />
                 </div>
 
-                <div class="grid gap-2">
+                <div class="grid content-start gap-2">
+                    <Label for="end_date">End date</Label>
+                    <DatePicker
+                        id="end_date"
+                        v-model="endDate"
+                        name="end_date"
+                        :invalid="!!errors.end_date"
+                    />
+                    <InputError :message="errors.end_date" />
+                </div>
+
+                <div v-show="!allDay" class="grid content-start gap-2">
                     <Label for="end_time">End time</Label>
                     <TimePicker
                         id="end_time"
