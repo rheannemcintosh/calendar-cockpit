@@ -3,6 +3,7 @@
 import type { FirmnessValue } from './firmness';
 import type { ItemFlag } from './flags';
 import type { TimeTypeValue } from './time-types';
+import type { Timestamps } from './timestamps';
 
 // A calendar item's category and sub-category are both null when it is uncategorised.
 export type TimelineItem = {
@@ -17,6 +18,7 @@ export type TimelineItem = {
     subCategory: { emoji: string; name: string } | null;
     // Null when the calendar item has no location. Not every place has an address.
     location: { name: string; address: string | null; mapsUrl: string } | null;
+    timestamps: Timestamps;
 };
 
 export type TimelineDay = {

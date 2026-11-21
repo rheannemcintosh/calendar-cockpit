@@ -24,12 +24,13 @@ class CalendarItemDay
 
     /**
      * Place calendar items, which must already be in start order, on the given
-     * day. A part of an item that falls outside the day is cut off.
+     * day. A part of an item that falls outside the day is cut off. When each
+     * one was created and last updated is shown in the given timezone.
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<DayItem>
      */
-    public static function place(Collection $calendarItems, CarbonInterface $day): array
+    public static function place(Collection $calendarItems, CarbonInterface $day, string $timezone): array
     {
         $dayStart = $day->copy()->startOfDay();
         $calendarItems = $calendarItems->values();
@@ -47,7 +48,7 @@ class CalendarItemDay
         $items = [];
 
         foreach ($calendarItems as $index => $calendarItem) {
-            $item = CalendarItemTimeline::item($calendarItem);
+            $item = CalendarItemTimeline::item($calendarItem, $timezone);
 
             $items[] = [
                 ...$item,

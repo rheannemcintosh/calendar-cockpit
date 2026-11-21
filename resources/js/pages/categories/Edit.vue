@@ -4,10 +4,11 @@ import { ArrowLeft } from '@lucide/vue';
 import { ref } from 'vue';
 import CategoryController from '@/actions/App/Http/Controllers/CategoryController';
 import CategoryFormFields from '@/components/CategoryFormFields.vue';
+import CreatedUpdated from '@/components/CreatedUpdated.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { index } from '@/routes/categories';
-import type { CategoryOption } from '@/types';
+import type { CategoryOption, Timestamps } from '@/types';
 
 defineOptions({
     layout: {
@@ -29,6 +30,8 @@ defineOptions({
 const props = defineProps<{
     // The category being changed, as it is now.
     category: CategoryOption;
+    // When it was created and last updated.
+    timestamps: Timestamps;
 }>();
 
 const name = ref(props.category.name);
@@ -52,6 +55,10 @@ const colour = ref(props.category.colour);
             title="Edit category"
             description="Change its name or colour. Calendar items in it show the change too"
         />
+
+        <p class="text-muted-foreground -mt-6 mb-8 text-sm">
+            <CreatedUpdated :timestamps="props.timestamps" />
+        </p>
 
         <Form
             v-bind="CategoryController.update.form(props.category.id)"

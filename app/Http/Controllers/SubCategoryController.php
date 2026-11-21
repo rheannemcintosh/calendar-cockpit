@@ -6,6 +6,7 @@ use App\Enums\TimeType;
 use App\Http\Requests\StoreSubCategoryRequest;
 use App\Http\Requests\UpdateSubCategoryRequest;
 use App\Models\SubCategory;
+use App\Support\Timestamps;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -42,9 +43,10 @@ class SubCategoryController extends Controller
 
     /**
      * Show the form with the sub-category's current emoji, name and default
-     * time type, and the category it is in, which cannot be changed.
+     * time type, the category it is in, which cannot be changed, and when it
+     * was created and last updated in the user's timezone.
      */
-    public function edit(SubCategory $subCategory): Response
+    public function edit(Request $request, SubCategory $subCategory): Response
     {
         return Inertia::render('sub-categories/Edit', [
             'subCategory' => [
@@ -55,6 +57,7 @@ class SubCategoryController extends Controller
             ],
             'category' => $subCategory->category->only(['id', 'name', 'colour']),
             'timeTypes' => TimeType::options(),
+            'timestamps' => Timestamps::of($subCategory, $request->user()->localTimezone()),
         ]);
     }
 

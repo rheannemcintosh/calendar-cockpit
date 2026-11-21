@@ -17,11 +17,13 @@ use Illuminate\Support\Collection;
  * Weeks run Sunday to Saturday. Week 1 is the week that contains 1 January,
  * so a week that crosses New Year belongs to the new year.
  *
+ * @phpstan-import-type TimestampLabels from Timestamps
+ *
  * @phpstan-type TimelineCategory array{name: string, colour: string}
  * @phpstan-type TimelineSubCategory array{emoji: string, name: string}
  * @phpstan-type TimelineLocation array{name: string, address: string|null, mapsUrl: string}
  * @phpstan-type TimelineFlag array{name: string, icon: value-of<FlagIcon>}
- * @phpstan-type TimelineItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<TimelineFlag>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null, location: TimelineLocation|null}
+ * @phpstan-type TimelineItem array{id: int, title: string, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<TimelineFlag>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null, location: TimelineLocation|null, timestamps: TimestampLabels}
  * @phpstan-type TimelineDay array{date: string, label: string, items: list<TimelineItem>}
  * @phpstan-type TimelineWeek array{key: string, number: int, range: string, days: list<TimelineDay>}
  * @phpstan-type TimelineYear array{year: int, weeks: list<TimelineWeek>}
@@ -31,11 +33,12 @@ class CalendarItemTimeline
     /**
      * Group calendar items, which must already be in start order, into years, weeks and days.
      * Eager load their sub-categories, categories and flags so each one is not fetched separately.
+     * When each one was created and last updated is shown in the given timezone.
      *
      * @param  Collection<int, CalendarItem>  $calendarItems
      * @return list<TimelineYear>
      */
-    public static function group(Collection $calendarItems): array
+    public static function group(Collection $calendarItems, string $timezone): array
     {
         $years = [];
 
@@ -61,7 +64,7 @@ class CalendarItemTimeline
                 'items' => [],
             ];
 
-            $years[$year]['weeks'][$weekKey]['days'][$dayKey]['items'][] = static::item($calendarItem);
+            $years[$year]['weeks'][$weekKey]['days'][$dayKey]['items'][] = static::item($calendarItem, $timezone);
         }
 
         return array_values(array_map(fn (array $year) => [
@@ -76,11 +79,12 @@ class CalendarItemTimeline
     /**
      * A calendar item as the calendar items list and day view show it. Eager
      * load its sub-category, category and flags so they are not fetched
-     * separately.
+     * separately. When it was created and last updated is shown in the given
+     * timezone.
      *
      * @return TimelineItem
      */
-    public static function item(CalendarItem $calendarItem): array
+    public static function item(CalendarItem $calendarItem, string $timezone): array
     {
         return [
             'id' => $calendarItem->id,
@@ -105,6 +109,7 @@ class CalendarItemTimeline
                 'address' => $calendarItem->location_address,
                 'mapsUrl' => static::mapsUrl($calendarItem->location_latitude, $calendarItem->location_longitude),
             ] : null,
+            'timestamps' => Timestamps::of($calendarItem, $timezone),
         ];
     }
 
