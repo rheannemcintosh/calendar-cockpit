@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { CalendarPlus, ExternalLink, History, MapPin, Plus } from '@lucide/vue';
+import {
+    CalendarPlus,
+    ExternalLink,
+    History,
+    MapPin,
+    Pencil,
+    Plus,
+} from '@lucide/vue';
 import { nextTick, ref } from 'vue';
 import CalendarItemTime from '@/components/CalendarItemTime.vue';
 import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
@@ -8,6 +15,7 @@ import FlagIcons from '@/components/FlagIcons.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { useEditCalendarItem } from '@/composables/useEditCalendarItem';
 import { firmnessFill, secondaryText, titleText } from '@/lib/firmness';
 import { create, day as dayView, index } from '@/routes/calendar-items';
 import type { FirmnessOption, TimelineYear, TimeTypeOption } from '@/types';
@@ -33,6 +41,8 @@ const props = defineProps<{
     timeTypes: TimeTypeOption[];
     firmnesses: FirmnessOption[];
 }>();
+
+const { editUrl } = useEditCalendarItem();
 
 const timeTypes = Object.fromEntries(
     props.timeTypes.map((timeType) => [timeType.value, timeType]),
@@ -244,7 +254,7 @@ const appear =
                         <li
                             v-for="item in day.items"
                             :key="item.id"
-                            class="relative flex flex-col gap-0.5 py-3 pr-4 pl-6 first:rounded-t-lg last:rounded-b-lg sm:flex-row sm:items-baseline sm:gap-4"
+                            class="relative flex flex-col gap-0.5 py-3 pr-14 pl-6 first:rounded-t-lg last:rounded-b-lg sm:flex-row sm:items-baseline sm:gap-4 sm:pr-2"
                             :style="
                                 firmnessFill(
                                     item.firmness,
@@ -383,6 +393,21 @@ const appear =
                                     />
                                 </a>
                             </span>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                as-child
+                                class="absolute top-2 right-2 shrink-0 sm:static sm:ml-auto sm:self-center"
+                            >
+                                <Link
+                                    :href="editUrl(item.id)"
+                                    :aria-label="`Edit ${item.title}`"
+                                    data-test="edit-calendar-item-link"
+                                >
+                                    <Pencil />
+                                    <span class="hidden sm:inline">Edit</span>
+                                </Link>
+                            </Button>
                         </li>
                     </ul>
                 </div>

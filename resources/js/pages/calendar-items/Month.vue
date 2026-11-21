@@ -11,6 +11,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useEditCalendarItem } from '@/composables/useEditCalendarItem';
 import { useUserNow } from '@/composables/useUserNow';
 import { categoryColours, duration } from '@/lib/calendarTimeline';
 import { create, day, index, month } from '@/routes/calendar-items';
@@ -48,6 +49,9 @@ const props = defineProps<{
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const { today } = useUserNow();
+
+// Clicking a calendar item, or pressing Enter on it, opens its edit page.
+const { openEdit } = useEditCalendarItem();
 
 const isEmpty = computed(() =>
     props.weeks.every((week) =>
@@ -186,7 +190,7 @@ function itemCount(monthDay: MonthDay): string {
                                     <li
                                         tabindex="0"
                                         :class="[
-                                            'focus-visible:ring-ring shrink-0 rounded-sm border border-l-4 outline-none focus-visible:ring-2',
+                                            'focus-visible:ring-ring shrink-0 cursor-pointer rounded-sm border border-l-4 outline-none focus-visible:ring-2',
                                             item.allDay
                                                 ? 'w-full truncate px-1 text-[0.6875rem] leading-4 font-medium'
                                                 : 'h-3.5 w-6',
@@ -205,6 +209,8 @@ function itemCount(monthDay: MonthDay): string {
                                         "
                                         :data-all-day="item.allDay || undefined"
                                         data-test="month-item"
+                                        @click="openEdit(item.id)"
+                                        @keydown.enter.self="openEdit(item.id)"
                                     >
                                         <template v-if="item.allDay"
                                             ><span

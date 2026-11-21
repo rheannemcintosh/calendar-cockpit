@@ -1,29 +1,15 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
-import { TriangleAlert } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { Form, Head } from '@inertiajs/vue3';
 import CalendarItemController from '@/actions/App/Http/Controllers/CalendarItemController';
-import DatePicker from '@/components/DatePicker.vue';
-import FlagPicker from '@/components/FlagPicker.vue';
+import CalendarItemFormFields from '@/components/CalendarItemFormFields.vue';
 import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
-import LocationPicker from '@/components/LocationPicker.vue';
-import SubCategoryPicker from '@/components/SubCategoryPicker.vue';
-import TimePicker from '@/components/TimePicker.vue';
-import ChoicePicker from '@/components/ChoicePicker.vue';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { create, index } from '@/routes/calendar-items';
-import categories from '@/routes/categories';
 import type {
     CategoryListItem,
     FirmnessOption,
-    FirmnessValue,
     FlagOption,
     TimeTypeOption,
-    TimeTypeValue,
 } from '@/types';
 
 defineOptions({
@@ -53,70 +39,6 @@ const props = defineProps<{
     // Whether a location can be searched for. It is off without a Mapbox token.
     locationSearch: boolean;
 }>();
-
-const allDay = ref(false);
-const startDate = ref<string>();
-const endDate = ref<string>();
-
-// The end date starts as the start date, and keeps following it until a
-// different end date is chosen, so a same-day item only needs one date.
-watch(startDate, (start, previous) => {
-    if (!endDate.value || endDate.value === previous) {
-        endDate.value = start;
-    }
-});
-const subCategoryId = ref(0);
-const timeType = ref<TimeTypeValue>('exact');
-const firmness = ref<FirmnessValue>('confirmed');
-const flagIds = ref<number[]>([]);
-
-const chosenSubCategory = computed(() =>
-    props.categories
-        .flatMap((category) => category.subCategories)
-        .find((subCategory) => subCategory.id === subCategoryId.value),
-);
-
-// Choosing a sub-category always starts the time type from its default.
-watch(chosenSubCategory, (subCategory) => {
-    if (subCategory) {
-        timeType.value = subCategory.defaultTimeType;
-    }
-});
-
-// A reminder, not an error, when the time type is not the sub-category's
-// default. The calendar item can still be created.
-const timeTypeWarning = computed(() => {
-    const subCategory = chosenSubCategory.value;
-
-    if (!subCategory || subCategory.defaultTimeType === timeType.value) {
-        return undefined;
-    }
-
-    const label = props.timeTypes.find(
-        (option) => option.value === subCategory.defaultTimeType,
-    )?.label;
-
-    return `${subCategory.name} is usually ${label}`;
-});
-
-// The flags are submitted one by one, so a problem with any of them is shown
-// once, under the flags.
-function flagError(errors: Record<string, string>): string | undefined {
-    return Object.entries(errors).find(([key]) =>
-        key.startsWith('flag_ids'),
-    )?.[1];
-}
-
-// The location is chosen as a whole, so a problem with any part of it is
-// shown once, under the location.
-function locationError(errors: Record<string, string>): string | undefined {
-    return (
-        errors.location_name ??
-        errors.location_address ??
-        errors.location_latitude ??
-        errors.location_longitude
-    );
-}
 </script>
 
 <template>
@@ -133,167 +55,14 @@ function locationError(errors: Record<string, string>): string | undefined {
             class="space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid gap-2">
-                <Label for="title">Title</Label>
-                <Input
-                    id="title"
-                    name="title"
-                    maxlength="255"
-                    placeholder="What is happening?"
-                    :aria-invalid="errors.title ? true : undefined"
-                />
-                <InputError :message="errors.title" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="all_day" class="cursor-pointer font-normal">
-                    <Checkbox
-                        id="all_day"
-                        :model-value="allDay"
-                        class="cursor-pointer"
-                        :aria-invalid="errors.all_day ? true : undefined"
-                        data-test="all-day-checkbox"
-                        @update:model-value="
-                            (value) => (allDay = value === true)
-                        "
-                    />
-                    All day
-                    <span class="text-muted-foreground">
-                        (no start or end time)
-                    </span>
-                </Label>
-                <input type="hidden" name="all_day" :value="allDay ? 1 : 0" />
-                <InputError :message="errors.all_day" />
-            </div>
-
-            <!-- An all-day calendar item has only dates, so it has no times or time type. -->
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div class="grid content-start gap-2">
-                    <Label for="date">Start date</Label>
-                    <DatePicker
-                        id="date"
-                        v-model="startDate"
-                        name="date"
-                        :invalid="!!errors.date"
-                    />
-                    <InputError :message="errors.date" />
-                </div>
-
-                <div v-show="!allDay" class="grid content-start gap-2">
-                    <Label for="start_time">Start time</Label>
-                    <TimePicker
-                        id="start_time"
-                        name="start_time"
-                        :invalid="!!errors.start_time"
-                    />
-                    <InputError :message="errors.start_time" />
-                </div>
-
-                <div class="grid content-start gap-2">
-                    <Label for="end_date">End date</Label>
-                    <DatePicker
-                        id="end_date"
-                        v-model="endDate"
-                        name="end_date"
-                        :invalid="!!errors.end_date"
-                    />
-                    <InputError :message="errors.end_date" />
-                </div>
-
-                <div v-show="!allDay" class="grid content-start gap-2">
-                    <Label for="end_time">End time</Label>
-                    <TimePicker
-                        id="end_time"
-                        name="end_time"
-                        :invalid="!!errors.end_time"
-                    />
-                    <InputError :message="errors.end_time" />
-                </div>
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="sub_category_id">Category</Label>
-                <template v-if="props.categories.length > 0">
-                    <SubCategoryPicker
-                        id="sub_category_id"
-                        v-model="subCategoryId"
-                        name="sub_category_id"
-                        :categories="props.categories"
-                        :invalid="!!errors.sub_category_id"
-                    />
-                    <InputError :message="errors.sub_category_id" />
-                </template>
-                <p
-                    v-else
-                    class="text-muted-foreground text-sm"
-                    data-test="no-sub-categories"
-                >
-                    Add a sub-category to one of your categories to sort
-                    calendar items.
-                    <Link
-                        :href="categories.index()"
-                        class="text-foreground underline underline-offset-4"
-                    >
-                        Set up your categories
-                    </Link>
-                </p>
-            </div>
-
-            <div v-if="!allDay" class="grid gap-2">
-                <ChoicePicker
-                    v-model="timeType"
-                    name="time_type"
-                    legend="Time type"
-                    :options="props.timeTypes"
-                    :invalid="!!errors.time_type"
-                />
-                <p
-                    v-if="timeTypeWarning"
-                    class="flex items-center gap-1.5 text-sm text-amber-700 dark:text-amber-400"
-                    role="status"
-                    data-test="time-type-warning"
-                >
-                    <TriangleAlert class="size-4 shrink-0" aria-hidden="true" />
-                    {{ timeTypeWarning }}
-                </p>
-                <InputError :message="errors.time_type" />
-            </div>
-
-            <div class="grid gap-2">
-                <ChoicePicker
-                    v-model="firmness"
-                    name="firmness"
-                    legend="Firmness"
-                    :options="props.firmnesses"
-                    :invalid="!!errors.firmness"
-                />
-                <InputError :message="errors.firmness" />
-            </div>
-
-            <div v-if="props.flags.length" class="grid gap-2">
-                <FlagPicker
-                    v-model="flagIds"
-                    name="flag_ids"
-                    legend="Flags"
-                    :options="props.flags"
-                    :invalid="!!flagError(errors)"
-                />
-                <InputError :message="flagError(errors)" />
-            </div>
-
-            <div v-if="props.locationSearch" class="grid gap-2">
-                <Label for="location">
-                    Location
-                    <span class="text-muted-foreground font-normal">
-                        (optional)
-                    </span>
-                </Label>
-                <LocationPicker
-                    id="location"
-                    :invalid="!!locationError(errors)"
-                />
-                <InputError :message="locationError(errors)" />
-            </div>
+            <CalendarItemFormFields
+                :categories="props.categories"
+                :time-types="props.timeTypes"
+                :firmnesses="props.firmnesses"
+                :flags="props.flags"
+                :location-search="props.locationSearch"
+                :errors="errors"
+            />
 
             <Button
                 :disabled="processing"

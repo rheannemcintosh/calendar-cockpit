@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Time } from '@internationalized/date';
+import { parseTime, Time } from '@internationalized/date';
 import { Clock } from '@lucide/vue';
 import type { TimeValue } from 'reka-ui';
 import {
@@ -10,19 +10,23 @@ import {
     TimeFieldInput,
     TimeFieldRoot,
 } from 'reka-ui';
-import { nextTick, ref, watch } from 'vue';
+import { nextTick, ref, shallowRef, watch } from 'vue';
 import { cn } from '@/lib/utils';
 
 // A 24-hour time field. Type any time to the minute, or pick one from a
 // list in 15-minute steps. The value is submitted through a hidden input
-// named `name`, as HH:mm:ss.
-defineProps<{
+// named `name`, as HH:mm:ss. It starts empty unless a `defaultValue`, as
+// HH:mm, is given.
+const props = defineProps<{
     id: string;
     name: string;
     invalid?: boolean;
+    defaultValue?: string | null;
 }>();
 
-const value = ref<TimeValue>();
+const value = shallowRef<TimeValue | undefined>(
+    props.defaultValue ? parseTime(props.defaultValue) : undefined,
+);
 const open = ref(false);
 const list = ref<HTMLElement>();
 
