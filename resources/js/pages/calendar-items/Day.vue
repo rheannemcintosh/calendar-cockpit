@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import CalendarAllDayCell from '@/components/CalendarAllDayCell.vue';
 import CalendarDayColumn from '@/components/CalendarDayColumn.vue';
 import CalendarHourGutter from '@/components/CalendarHourGutter.vue';
 import CalendarViewSwitcher from '@/components/CalendarViewSwitcher.vue';
@@ -10,7 +11,12 @@ import { Button } from '@/components/ui/button';
 import { useUserNow } from '@/composables/useUserNow';
 import { DAY_HEIGHT, scrollTopFor } from '@/lib/calendarTimeline';
 import { create, day, index } from '@/routes/calendar-items';
-import type { DayItem, FirmnessOption, TimeTypeOption } from '@/types';
+import type {
+    DayItem,
+    FirmnessOption,
+    TimelineItem,
+    TimeTypeOption,
+} from '@/types';
 
 defineOptions({
     layout: {
@@ -34,6 +40,8 @@ const props = defineProps<{
     label: string;
     previousDate: string;
     nextDate: string;
+    // Shown in a row above the timeline, not in it.
+    allDayItems: TimelineItem[];
     items: DayItem[];
     timeTypes: TimeTypeOption[];
     firmnesses: FirmnessOption[];
@@ -107,7 +115,7 @@ watch(
         </div>
 
         <div
-            v-if="!items.length"
+            v-if="!items.length && !allDayItems.length"
             class="text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-4 text-sm"
             data-test="empty-day"
         >
@@ -115,19 +123,39 @@ watch(
             Nothing planned for this day.
         </div>
 
-        <div
-            ref="timeline"
-            class="max-h-[70vh] overflow-y-auto rounded-lg border"
-            data-test="day-timeline"
-        >
-            <div class="relative flex" :style="{ height: `${DAY_HEIGHT}px` }">
-                <CalendarHourGutter />
-                <CalendarDayColumn
-                    :items="items"
+        <div class="overflow-hidden rounded-lg border">
+            <div
+                v-if="allDayItems.length"
+                class="flex border-b"
+                data-test="all-day-row"
+            >
+                <span
+                    class="text-muted-foreground w-14 shrink-0 py-1.5 pr-2 text-right text-xs"
+                    >All day</span
+                >
+                <CalendarAllDayCell
+                    :items="allDayItems"
                     :time-types="timeTypes"
                     :firmnesses="firmnesses"
-                    :now-minute="nowMinute"
                 />
+            </div>
+            <div
+                ref="timeline"
+                class="max-h-[70vh] overflow-y-auto"
+                data-test="day-timeline"
+            >
+                <div
+                    class="relative flex"
+                    :style="{ height: `${DAY_HEIGHT}px` }"
+                >
+                    <CalendarHourGutter />
+                    <CalendarDayColumn
+                        :items="items"
+                        :time-types="timeTypes"
+                        :firmnesses="firmnesses"
+                        :now-minute="nowMinute"
+                    />
+                </div>
             </div>
         </div>
     </div>

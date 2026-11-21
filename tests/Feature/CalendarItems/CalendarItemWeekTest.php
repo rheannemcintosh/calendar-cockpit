@@ -33,6 +33,7 @@ test('the week view shows this week, Sunday to Saturday, when no day is given', 
                 'weekday' => 'Sun',
                 'dayOfMonth' => 18,
                 'label' => 'Sunday 18 October 2026',
+                'allDayItems' => [],
                 'items' => [],
             ])
             ->where('days.6.date', '2026-10-24')

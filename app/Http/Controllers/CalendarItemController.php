@@ -45,6 +45,8 @@ class CalendarItemController extends Controller
             ->where('starts_at', '>=', $from)
             ->with(['subCategory.category', 'flags'])
             ->orderBy('starts_at')
+            // An all-day calendar item starts at midnight, before a timed one that also does.
+            ->orderByDesc('all_day')
             ->orderBy('id')
             ->get();
 
@@ -86,6 +88,7 @@ class CalendarItemController extends Controller
             'label' => $day->format('l j F Y'),
             'previousDate' => $day->subDay()->toDateString(),
             'nextDate' => $day->addDay()->toDateString(),
+            'allDayItems' => CalendarItemDay::allDay($calendarItems),
             'items' => CalendarItemDay::place($calendarItems, $day),
             'timeTypes' => TimeType::options(),
             'firmnesses' => Firmness::options(),
