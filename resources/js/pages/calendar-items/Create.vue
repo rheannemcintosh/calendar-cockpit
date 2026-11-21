@@ -163,7 +163,7 @@ function locationError(errors: Record<string, string>): string | undefined {
             </div>
 
             <!-- An all-day calendar item has only a date, so it has no times or time type. -->
-            <div v-if="!allDay" class="grid gap-4 sm:grid-cols-2">
+            <div v-show="!allDay" class="grid gap-4 sm:grid-cols-2">
                 <div class="grid gap-2">
                     <Label for="start_time">Start time</Label>
                     <TimePicker
