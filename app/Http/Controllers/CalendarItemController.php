@@ -19,6 +19,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -79,13 +80,7 @@ class CalendarItemController extends Controller
     {
         $day = $date === null ? $request->user()->today() : self::dayFrom($date);
 
-        $calendarItems = $request->user()->calendarItems()
-            ->where('starts_at', '<', $day->addDay())
-            ->where('ends_at', '>', $day)
-            ->with(['subCategory.category', 'flags'])
-            ->orderBy('starts_at')
-            ->orderBy('id')
-            ->get();
+        $calendarItems = self::onTimeline($request, $day, $day->addDay());
 
         return Inertia::render('calendar-items/Day', [
             'date' => $day->toDateString(),
@@ -110,13 +105,7 @@ class CalendarItemController extends Controller
         $weekStart = CarbonImmutable::instance(CalendarItemTimeline::weekStart($day));
         $weekEnd = $weekStart->addDays(6);
 
-        $calendarItems = $request->user()->calendarItems()
-            ->where('starts_at', '<', $weekEnd->addDay())
-            ->where('ends_at', '>', $weekStart)
-            ->with(['subCategory.category', 'flags'])
-            ->orderBy('starts_at')
-            ->orderBy('id')
-            ->get();
+        $calendarItems = self::onTimeline($request, $weekStart, $weekEnd->addDay());
 
         $range = CalendarItemTimeline::weekRange($weekStart);
 
@@ -217,6 +206,8 @@ class CalendarItemController extends Controller
                 'endDate' => ($calendarItem->all_day ? $calendarItem->ends_at->subDay() : $calendarItem->ends_at)->toDateString(),
                 'startTime' => $calendarItem->all_day ? null : $calendarItem->starts_at->format('H:i'),
                 'endTime' => $calendarItem->all_day ? null : $calendarItem->ends_at->format('H:i'),
+                'minutesBefore' => $calendarItem->minutes_before,
+                'minutesAfter' => $calendarItem->minutes_after,
                 'subCategoryId' => $subCategory?->id,
                 // An all-day calendar item doesn't show its time type, so made
                 // timed again it starts from its sub-category's default.
@@ -287,6 +278,26 @@ class CalendarItemController extends Controller
             ]),
             'locationSearch' => filled(config('services.mapbox.token')),
         ];
+    }
+
+    /**
+     * The user's calendar items, in start order, that are on a timeline from
+     * one moment to another, either themselves or with the time before or
+     * after them, which can reach onto it from a day either side.
+     *
+     * @return Collection<int, CalendarItem>
+     */
+    private static function onTimeline(Request $request, CarbonImmutable $from, CarbonImmutable $until): Collection
+    {
+        return $request->user()->calendarItems()
+            ->where('starts_at', '<', $until->addMinutes(CalendarItem::MAX_EXTRA_MINUTES))
+            ->where('ends_at', '>', $from->subMinutes(CalendarItem::MAX_EXTRA_MINUTES))
+            ->with(['subCategory.category', 'flags'])
+            ->orderBy('starts_at')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (CalendarItem $calendarItem): bool => $calendarItem->startsWithTimeBefore() < $until && $calendarItem->endsWithTimeAfter() > $from)
+            ->values();
     }
 
     /**

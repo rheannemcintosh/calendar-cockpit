@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\Firmness;
 use App\Enums\TimeType;
+use App\Models\CalendarItem;
 use App\Models\SubCategory;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -28,6 +29,11 @@ class StoreCalendarItemRequest extends FormRequest
             // An end time earlier than the start time is fine on a later end date.
             'start_time' => [Rule::excludeIf($this->allDay()), 'required', 'date_format:H:i,H:i:s'],
             'end_time' => [Rule::excludeIf($this->allDay()), 'required', 'date_format:H:i,H:i:s', Rule::when($this->endsOnStartDate(), 'after:start_time')],
+            // Time before and after a calendar item, in minutes, without changing
+            // its own times. Left empty, there is none. An all-day calendar
+            // item has no times, so it can't have any.
+            'minutes_before' => [Rule::excludeIf($this->allDay()), 'nullable', 'integer', 'between:0,'.CalendarItem::MAX_EXTRA_MINUTES],
+            'minutes_after' => [Rule::excludeIf($this->allDay()), 'nullable', 'integer', 'between:0,'.CalendarItem::MAX_EXTRA_MINUTES],
             'sub_category_id' => [
                 'bail',
                 'nullable',
@@ -70,6 +76,8 @@ class StoreCalendarItemRequest extends FormRequest
             'start_time.required' => __('Please choose a start time.'),
             'end_time.required' => __('Please choose an end time.'),
             'end_time.after' => __('The end must be after the start.'),
+            'minutes_before.*' => __('Please enter the time before in whole minutes, up to 12 hours.'),
+            'minutes_after.*' => __('Please enter the time after in whole minutes, up to 12 hours.'),
             'sub_category_id.integer' => __('Please choose a category again.'),
             'sub_category_id.exists' => __('Please choose a category again.'),
             'time_type.required' => __('Please choose a time type.'),
@@ -104,9 +112,11 @@ class StoreCalendarItemRequest extends FormRequest
      * A timed calendar item ends at the end time on the end date. An all-day
      * calendar item runs from the start date's midnight to the midnight after
      * the end date, covering both, and keeps the default time type, which it doesn't show, never overridden.
+     * The time before and after it is none when left empty, and always none
+     * for an all-day calendar item.
      * Every part of the location is null when no location is chosen.
      *
-     * @return array{title: string, starts_at: CarbonImmutable, ends_at: CarbonImmutable, all_day: bool, sub_category_id: int|null, time_type: TimeType, time_type_overridden: bool, firmness: Firmness, location_name: string|null, location_address: string|null, location_latitude: float|null, location_longitude: float|null}
+     * @return array{title: string, starts_at: CarbonImmutable, ends_at: CarbonImmutable, all_day: bool, minutes_before: int, minutes_after: int, sub_category_id: int|null, time_type: TimeType, time_type_overridden: bool, firmness: Firmness, location_name: string|null, location_address: string|null, location_latitude: float|null, location_longitude: float|null}
      */
     public function calendarItemAttributes(): array
     {
@@ -124,6 +134,8 @@ class StoreCalendarItemRequest extends FormRequest
             'starts_at' => $allDay ? $day : CarbonImmutable::parse("{$date} {$this->string('start_time')}"),
             'ends_at' => $allDay ? $endDay->addDay() : CarbonImmutable::parse("{$endDate} {$this->string('end_time')}"),
             'all_day' => $allDay,
+            'minutes_before' => $allDay ? 0 : $this->integer('minutes_before'),
+            'minutes_after' => $allDay ? 0 : $this->integer('minutes_after'),
             'sub_category_id' => $subCategory?->id,
             'time_type' => $timeType,
             'time_type_overridden' => ! $allDay && $subCategory !== null && $subCategory->default_time_type !== $timeType,

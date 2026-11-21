@@ -23,7 +23,9 @@ use Illuminate\Support\Collection;
  * @phpstan-type TimelineSubCategory array{emoji: string, name: string}
  * @phpstan-type TimelineLocation array{name: string, address: string|null, mapsUrl: string}
  * @phpstan-type TimelineFlag array{name: string, icon: value-of<FlagIcon>}
- * @phpstan-type TimelineItem array{id: int, title: string, allDay: bool, time: string, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<TimelineFlag>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null, location: TimelineLocation|null, timestamps: TimestampLabels}
+ * @phpstan-type TimelineTimeBefore array{minutes: int, from: string}
+ * @phpstan-type TimelineTimeAfter array{minutes: int, until: string}
+ * @phpstan-type TimelineItem array{id: int, title: string, allDay: bool, time: string, timeBefore: TimelineTimeBefore|null, timeAfter: TimelineTimeAfter|null, timeType: value-of<TimeType>, firmness: value-of<Firmness>, flags: list<TimelineFlag>, category: TimelineCategory|null, subCategory: TimelineSubCategory|null, location: TimelineLocation|null, timestamps: TimestampLabels}
  * @phpstan-type TimelineDay array{date: string, label: string, items: list<TimelineItem>}
  * @phpstan-type TimelineWeek array{key: string, number: int, range: string, days: list<TimelineDay>}
  * @phpstan-type TimelineYear array{year: int, weeks: list<TimelineWeek>}
@@ -80,8 +82,10 @@ class CalendarItemTimeline
      * A calendar item as the calendar items list and day view show it. Eager
      * load its sub-category, category and flags so they are not fetched
      * separately. An all-day calendar item's time is "All day", and one that
-     * runs over several days also says the day it ends, see time(). When it
-     * was created and last updated is shown in the given timezone.
+     * runs over several days also says the day it ends, see time(). The time
+     * before and after it, when it has any, is given apart from its own times,
+     * with when that time starts and ends. When it was created and last
+     * updated is shown in the given timezone.
      *
      * @return TimelineItem
      */
@@ -92,6 +96,14 @@ class CalendarItemTimeline
             'title' => $calendarItem->title,
             'allDay' => $calendarItem->all_day,
             'time' => static::time($calendarItem),
+            'timeBefore' => $calendarItem->minutes_before > 0 ? [
+                'minutes' => $calendarItem->minutes_before,
+                'from' => $calendarItem->startsWithTimeBefore()->format('H:i'),
+            ] : null,
+            'timeAfter' => $calendarItem->minutes_after > 0 ? [
+                'minutes' => $calendarItem->minutes_after,
+                'until' => $calendarItem->endsWithTimeAfter()->format('H:i'),
+            ] : null,
             'timeType' => $calendarItem->time_type->value,
             'firmness' => $calendarItem->firmness->value,
             'flags' => array_values(array_map(fn (Flag $flag): array => [

@@ -16,6 +16,11 @@ export type TimelineItem = {
     // E.g. "09:00–10:30" or "All day". One that ends on a later day also
     // gives its end day, e.g. "15:00 – Mon 16:00" or "All day until Mon".
     time: string;
+    // Time added before and after the calendar item, for getting there or
+    // running over, apart from its own times. `from` and `until` are when
+    // that time starts and ends, as HH:MM. Null when it has none.
+    timeBefore: { minutes: number; from: string } | null;
+    timeAfter: { minutes: number; until: string } | null;
     timeType: TimeTypeValue;
     firmness: FirmnessValue;
     // In the order the user's flags are in. Empty when it has none.
@@ -48,9 +53,13 @@ export type TimelineYear = {
 // A calendar item placed on the day view by App\Support\CalendarItemDay::place().
 // Minutes count from midnight, 0 to 1440. Overlapping calendar items share the
 // width in `columns` columns, and this one is in column `column`, from 0.
+// Its time before runs from `beforeMinute` to `startMinute`, and its time
+// after from `endMinute` to `afterMinute`. Without any, they are the same.
 export type DayItem = TimelineItem & {
+    beforeMinute: number;
     startMinute: number;
     endMinute: number;
+    afterMinute: number;
     column: number;
     columns: number;
 };
@@ -103,6 +112,9 @@ export type EditableCalendarItem = {
     // As HH:MM, or null when it is all day.
     startTime: string | null;
     endTime: string | null;
+    // Time added before and after it, in minutes, 0 when it has none.
+    minutesBefore: number;
+    minutesAfter: number;
     // Null when it is uncategorised.
     subCategoryId: number | null;
     timeType: TimeTypeValue;
