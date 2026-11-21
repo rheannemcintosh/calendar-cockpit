@@ -76,7 +76,8 @@ class CalendarItemTimeline
     /**
      * A calendar item as the calendar items list and day view show it. Eager
      * load its sub-category, category and flags so they are not fetched
-     * separately. An all-day calendar item's time is "All day".
+     * separately. An all-day calendar item's time is "All day", and one that
+     * runs over several days also says the day it ends, see time().
      *
      * @return TimelineItem
      */
@@ -86,7 +87,7 @@ class CalendarItemTimeline
             'id' => $calendarItem->id,
             'title' => $calendarItem->title,
             'allDay' => $calendarItem->all_day,
-            'time' => $calendarItem->all_day ? __('All day') : static::timeRange($calendarItem->starts_at, $calendarItem->ends_at),
+            'time' => static::time($calendarItem),
             'timeType' => $calendarItem->time_type->value,
             'firmness' => $calendarItem->firmness->value,
             'flags' => array_values(array_map(fn (Flag $flag): array => [
@@ -164,6 +165,43 @@ class CalendarItemTimeline
             'api' => 1,
             'query' => $latitude.','.$longitude,
         ]);
+    }
+
+    /**
+     * When the calendar item is, e.g. "09:00–10:30" or "All day". One that
+     * ends on a later day also gives its end day, e.g. "15:00 – Mon 16:00" or
+     * "All day until Mon". A timed one ending at the next midnight doesn't.
+     */
+    public static function time(CalendarItem $calendarItem): string
+    {
+        $startDay = $calendarItem->starts_at->copy()->startOfDay();
+
+        if ($calendarItem->all_day) {
+            $endDay = $calendarItem->ends_at->copy()->subDay()->startOfDay();
+
+            return $endDay > $startDay
+                ? __('All day until :day', ['day' => static::endDay($startDay, $endDay)])
+                : __('All day');
+        }
+
+        if ($calendarItem->ends_at <= $startDay->copy()->addDay()) {
+            return static::timeRange($calendarItem->starts_at, $calendarItem->ends_at);
+        }
+
+        $endDay = $calendarItem->ends_at->copy()->startOfDay();
+
+        return $calendarItem->starts_at->format('H:i').' – '.static::endDay($startDay, $endDay).' '.$calendarItem->ends_at->format('H:i');
+    }
+
+    /**
+     * The day a calendar item ends, after the day it starts: its weekday, e.g.
+     * "Mon", when that is within the next six days, or with its date as well,
+     * e.g. "Mon 2 Nov", when it is further away and the weekday alone would be
+     * unclear.
+     */
+    public static function endDay(CarbonInterface $startDay, CarbonInterface $endDay): string
+    {
+        return $startDay->diffInDays($endDay) <= 6 ? $endDay->format('D') : $endDay->format('D j M');
     }
 
     /**
