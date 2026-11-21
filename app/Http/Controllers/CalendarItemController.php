@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CalendarView;
 use App\Enums\Firmness;
 use App\Enums\TimeType;
 use App\Http\Requests\StoreCalendarItemRequest;
+use App\Http\Requests\UpdateCalendarItemRequest;
+use App\Models\CalendarItem;
 use App\Models\Category;
 use App\Models\Flag;
 use App\Models\SubCategory;
@@ -17,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -174,6 +178,87 @@ class CalendarItemController extends Controller
      */
     public function create(Request $request): Response
     {
+        return Inertia::render('calendar-items/Create', self::formOptions($request));
+    }
+
+    public function store(StoreCalendarItemRequest $request): RedirectResponse
+    {
+        DB::transaction(function () use ($request): void {
+            $request->user()->calendarItems()
+                ->create($request->calendarItemAttributes())
+                ->flags()->attach($request->flagIds());
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Calendar item created.')]);
+
+        return to_route('calendar-items.index');
+    }
+
+    /**
+     * Show the same form as creating a calendar item, filled in with its
+     * current details, and the calendar view it was opened from, which saving
+     * or cancelling returns to.
+     */
+    public function edit(Request $request, CalendarItem $calendarItem): Response
+    {
+        $request->validate(['view' => ['nullable', Rule::enum(CalendarView::class)]]);
+
+        $view = $request->enum('view', CalendarView::class) ?? CalendarView::List;
+        $subCategory = $calendarItem->subCategory;
+
+        return Inertia::render('calendar-items/Edit', [
+            ...self::formOptions($request),
+            'calendarItem' => [
+                'id' => $calendarItem->id,
+                'title' => $calendarItem->title,
+                'allDay' => $calendarItem->all_day,
+                'date' => $calendarItem->starts_at->toDateString(),
+                // An all-day calendar item ends at the midnight after its last day.
+                'endDate' => ($calendarItem->all_day ? $calendarItem->ends_at->subDay() : $calendarItem->ends_at)->toDateString(),
+                'startTime' => $calendarItem->all_day ? null : $calendarItem->starts_at->format('H:i'),
+                'endTime' => $calendarItem->all_day ? null : $calendarItem->ends_at->format('H:i'),
+                'subCategoryId' => $subCategory?->id,
+                // An all-day calendar item doesn't show its time type, so made
+                // timed again it starts from its sub-category's default.
+                'timeType' => ($calendarItem->all_day ? $subCategory->default_time_type ?? TimeType::Exact : $calendarItem->time_type)->value,
+                'timeTypeOverridden' => $calendarItem->time_type_overridden,
+                'firmness' => $calendarItem->firmness->value,
+                'flagIds' => $calendarItem->flags()->pluck('flags.id')->map(fn (mixed $id): int => (int) $id)->values()->all(),
+                'location' => $calendarItem->location_name !== null ? [
+                    'name' => $calendarItem->location_name,
+                    'address' => $calendarItem->location_address ?? '',
+                    'latitude' => $calendarItem->location_latitude,
+                    'longitude' => $calendarItem->location_longitude,
+                ] : null,
+            ],
+            'view' => $view->value,
+            'backUrl' => $view->url($calendarItem->starts_at, $request->user()),
+        ]);
+    }
+
+    /**
+     * Save the calendar item's new details and flags, then return to the
+     * calendar view it was edited from, on the day it now starts.
+     */
+    public function update(UpdateCalendarItemRequest $request, CalendarItem $calendarItem): RedirectResponse
+    {
+        DB::transaction(function () use ($request, $calendarItem): void {
+            $calendarItem->update($request->calendarItemAttributes());
+            $calendarItem->flags()->sync($request->flagIds());
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Calendar item updated.')]);
+
+        return redirect($request->view()->url($calendarItem->starts_at, $request->user()));
+    }
+
+    /**
+     * What the create and edit forms offer to choose from.
+     *
+     * @return array<string, mixed>
+     */
+    private static function formOptions(Request $request): array
+    {
         $categories = $request->user()->categories()
             ->whereHas('subCategories')
             ->with(['subCategories' => fn (HasMany $query) => $query->orderByRaw('lower(name)')->orderBy('id')])
@@ -181,7 +266,7 @@ class CalendarItemController extends Controller
             ->orderBy('id')
             ->get();
 
-        return Inertia::render('calendar-items/Create', [
+        return [
             'categories' => $categories->map(fn (Category $category): array => [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -201,20 +286,7 @@ class CalendarItemController extends Controller
                 'icon' => $flag->icon->value,
             ]),
             'locationSearch' => filled(config('services.mapbox.token')),
-        ]);
-    }
-
-    public function store(StoreCalendarItemRequest $request): RedirectResponse
-    {
-        DB::transaction(function () use ($request): void {
-            $request->user()->calendarItems()
-                ->create($request->calendarItemAttributes())
-                ->flags()->attach($request->flagIds());
-        });
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Calendar item created.')]);
-
-        return to_route('calendar-items.index');
+        ];
     }
 
     /**

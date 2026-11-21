@@ -5,7 +5,7 @@ import { flagIcons } from '@/lib/flags';
 import type { FirmnessOption, TimelineItem, TimeTypeOption } from '@/types';
 
 // A calendar item's details, as shown in the hover of its block on the day,
-// week and month views.
+// week and month views. Clicking the block opens its edit page.
 defineProps<{
     item: TimelineItem;
     timeType: TimeTypeOption;
@@ -67,4 +67,5 @@ defineProps<{
         </span>
     </span>
     <CreatedUpdated :timestamps="item.timestamps" class="opacity-80" />
+    <span class="opacity-80" data-test="edit-hint">Click to edit</span>
 </template>

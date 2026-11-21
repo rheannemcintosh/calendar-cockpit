@@ -9,6 +9,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useEditCalendarItem } from '@/composables/useEditCalendarItem';
 import {
     categoryColours,
     DAY_TINT,
@@ -69,6 +70,9 @@ const spokenFirmness = computed(() =>
         ? ''
         : `, ${props.firmness.label.toLowerCase()}`,
 );
+
+// Clicking the calendar item, or pressing Enter on it, opens its edit page.
+const { openEdit } = useEditCalendarItem();
 </script>
 
 <template>
@@ -77,7 +81,7 @@ const spokenFirmness = computed(() =>
             <li
                 tabindex="0"
                 :class="[
-                    'focus-visible:ring-ring absolute flex overflow-hidden rounded-md border border-l-4 px-2 text-xs leading-4 outline-none focus-visible:ring-2',
+                    'focus-visible:ring-ring absolute flex cursor-pointer overflow-hidden rounded-md border border-l-4 px-2 text-xs leading-4 outline-none focus-visible:ring-2',
                     !item.category && 'bg-muted border-l-muted-foreground/40',
                     item.timeType === 'block'
                         ? 'border-foreground/40 border-dashed'
@@ -90,6 +94,8 @@ const spokenFirmness = computed(() =>
                 :data-time-type="item.timeType"
                 :data-firmness="item.firmness"
                 data-test="day-item"
+                @click="openEdit(item.id)"
+                @keydown.enter.self="openEdit(item.id)"
             >
                 <span v-if="minutes < SHORT_MINUTES" class="sr-only"
                     >{{ item.title }}{{ spokenFlags }}{{ spokenFirmness }},
@@ -142,6 +148,7 @@ const spokenFirmness = computed(() =>
                             secondaryText(item.firmness),
                         ]"
                         data-test="location"
+                        @click.stop
                     >
                         <MapPin class="size-3 shrink-0" aria-hidden="true" />
                         <span class="truncate">{{ item.location.name }}</span>

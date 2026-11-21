@@ -27,7 +27,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->where('date', '[0-9]{4}-[0-9]{2}(-[0-9]{2})?')
         ->name('calendar-items.month');
 
-    Route::resource('calendar-items', CalendarItemController::class)->only(['index', 'create', 'store']);
+    Route::resource('calendar-items', CalendarItemController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update'])
+        ->middlewareFor(['edit', 'update'], 'can:update,calendar_item');
 
     Route::get('locations/search', LocationSearchController::class)
         ->middleware('throttle:60,1')

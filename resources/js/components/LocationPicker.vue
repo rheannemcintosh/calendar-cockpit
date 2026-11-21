@@ -21,10 +21,11 @@ import type { LocationMatch } from '@/types';
 // or none. The chosen place's name, address, latitude and longitude are
 // submitted through hidden inputs named location_name, location_address,
 // location_latitude and location_longitude, which are empty when none is
-// chosen.
-defineProps<{
+// chosen. It starts with none unless a `location` is given.
+const props = defineProps<{
     id: string;
     invalid?: boolean;
+    location?: Omit<LocationMatch, 'id'> | null;
 }>();
 
 // Searching starts once this many characters are typed, and waits until
@@ -32,7 +33,9 @@ defineProps<{
 const MIN_QUERY_LENGTH = 3;
 const DEBOUNCE_MS = 300;
 
-const chosen = ref<LocationMatch>();
+const chosen = ref<LocationMatch | undefined>(
+    props.location ? { id: 'current', ...props.location } : undefined,
+);
 const searchTerm = ref('');
 const matches = ref<LocationMatch[]>([]);
 const searching = ref(false);

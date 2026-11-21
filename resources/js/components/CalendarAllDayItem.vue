@@ -7,6 +7,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useEditCalendarItem } from '@/composables/useEditCalendarItem';
 import { categoryColours, DAY_TINT } from '@/lib/calendarTimeline';
 import { firmnessFill, titleText } from '@/lib/firmness';
 import type { FirmnessOption, TimelineItem, TimeTypeOption } from '@/types';
@@ -35,6 +36,9 @@ const spokenFirmness = computed(() =>
         ? ''
         : `, ${props.firmness.label.toLowerCase()}`,
 );
+
+// Clicking the calendar item, or pressing Enter on it, opens its edit page.
+const { openEdit } = useEditCalendarItem();
 </script>
 
 <template>
@@ -43,12 +47,14 @@ const spokenFirmness = computed(() =>
             <li
                 tabindex="0"
                 :class="[
-                    'focus-visible:ring-ring flex min-w-0 items-center rounded-md border border-l-4 border-black/10 px-2 py-0.5 text-xs leading-4 outline-none focus-visible:ring-2 dark:border-white/20',
+                    'focus-visible:ring-ring flex min-w-0 cursor-pointer items-center rounded-md border border-l-4 border-black/10 px-2 py-0.5 text-xs leading-4 outline-none focus-visible:ring-2 dark:border-white/20',
                     !item.category && 'bg-muted border-l-muted-foreground/40',
                 ]"
                 :style="colours"
                 :data-firmness="item.firmness"
                 data-test="all-day-item"
+                @click="openEdit(item.id)"
+                @keydown.enter.self="openEdit(item.id)"
             >
                 <span
                     :class="['truncate font-medium', titleText(item.firmness)]"

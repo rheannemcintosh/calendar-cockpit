@@ -2,6 +2,7 @@
 
 import type { FirmnessValue } from './firmness';
 import type { ItemFlag } from './flags';
+import type { LocationMatch } from './locations';
 import type { TimeTypeValue } from './time-types';
 import type { Timestamps } from './timestamps';
 
@@ -90,3 +91,28 @@ export type MonthDay = {
     inMonth: boolean;
     items: MonthItem[];
 };
+
+// A calendar item as it is now, filling in the edit calendar item form.
+export type EditableCalendarItem = {
+    id: number;
+    title: string;
+    allDay: boolean;
+    // As YYYY-MM-DD. The end date is the last day it is on.
+    date: string;
+    endDate: string;
+    // As HH:MM, or null when it is all day.
+    startTime: string | null;
+    endTime: string | null;
+    // Null when it is uncategorised.
+    subCategoryId: number | null;
+    timeType: TimeTypeValue;
+    // Whether its time type was chosen rather than its sub-category's default.
+    timeTypeOverridden: boolean;
+    firmness: FirmnessValue;
+    flagIds: number[];
+    // Null when it has no location.
+    location: Omit<LocationMatch, 'id'> | null;
+};
+
+// The calendar views a calendar item can be edited from, and returned to.
+export type CalendarView = 'list' | 'day' | 'week' | 'month';
