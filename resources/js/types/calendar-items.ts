@@ -119,6 +119,7 @@ export type EditableCalendarItem = {
 export type CalendarView = 'list' | 'day' | 'week' | 'month';
 
 // A change made to a calendar item, or it being created, from
-// App\Support\CalendarItemHistory::of(). A sub-category shows its name.
+// App\Support\CalendarItemHistory::of(). A sub-category shows its name, and
+// changes from its category or sub-category say so in their source.
 export type CalendarItemHistoryChange = HistoryChange;
 export type CalendarItemHistoryEntry = HistoryEntry;

@@ -76,9 +76,11 @@ class Category extends Model
     public function delete(): ?bool
     {
         return DB::transaction(function (): ?bool {
-            CalendarItem::query()
-                ->whereIn('sub_category_id', $this->subCategories()->select('id'))
-                ->update(['sub_category_id' => null]);
+            CalendarItem::uncategorise(
+                CalendarItem::query()->whereIn('sub_category_id', $this->subCategories()->select('id')),
+                'category',
+                $this->name,
+            );
 
             return parent::delete();
         });

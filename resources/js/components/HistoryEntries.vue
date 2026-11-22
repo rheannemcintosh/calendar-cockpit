@@ -2,6 +2,26 @@
 import { ArrowRight } from '@lucide/vue';
 import type { HistoryEntry } from '@/types';
 
+const SOURCE_NAMES = { category: 'category', sub_category: 'sub-category' };
+
+// What the entry says happened, e.g. "Changed" or, when its sub-category
+// was deleted, "Uncategorised because its sub-category Gym was deleted".
+function title(entry: HistoryEntry): string {
+    if (entry.event === 'created') {
+        return 'Created';
+    }
+
+    if (!entry.source) {
+        return 'Changed';
+    }
+
+    const source = SOURCE_NAMES[entry.source.type];
+
+    return entry.source.action === 'deleted'
+        ? `Uncategorised because its ${source} ${entry.source.name} was deleted`
+        : `Its ${source} ${entry.source.name} was changed`;
+}
+
 const props = withDefaults(
     defineProps<{
         // Newest first, ending with when it was created.
@@ -20,6 +40,7 @@ const props = withDefaults(
             :key="entry.key"
             class="relative"
             :data-event="entry.event"
+            :data-source="entry.source?.type"
             data-test="history-entry"
         >
             <span
@@ -27,7 +48,7 @@ const props = withDefaults(
                 aria-hidden="true"
             />
             <p class="text-sm font-medium">
-                {{ entry.event === 'created' ? 'Created' : 'Changed' }}
+                {{ title(entry) }}
                 <span class="text-muted-foreground font-normal">
                     ·
                     <time :datetime="entry.datetime" class="tabular-nums">{{

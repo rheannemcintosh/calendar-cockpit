@@ -73,7 +73,7 @@ class SubCategory extends Model
     public function delete(): ?bool
     {
         return DB::transaction(function (): ?bool {
-            $this->calendarItems()->update(['sub_category_id' => null]);
+            CalendarItem::uncategorise(CalendarItem::query()->whereBelongsTo($this), 'sub_category', $this->name);
 
             return parent::delete();
         });

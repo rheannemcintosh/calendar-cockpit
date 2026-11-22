@@ -186,3 +186,154 @@ test('a calendar item\'s history goes back to the calendar view it was opened fr
             ->where('view', 'week')
             ->where('backUrl', route('calendar-items.week', '2026-11-23')));
 });
+
+/**
+ * A calendar item in the user's Dentist sub-category, in their Health category,
+ * both made before the calendar item.
+ *
+ * @return array{0: Category, 1: SubCategory, 2: CalendarItem}
+ */
+function categorisedHistoryItem(User $user): array
+{
+    $category = Category::factory()->for($user)->create(['name' => 'Health', 'colour' => '#16A34A']);
+    $subCategory = SubCategory::factory()->for($category)->create(['emoji' => '🦷', 'name' => 'Dentist']);
+
+    return [$category, $subCategory, historyItem($user, ['sub_category_id' => $subCategory->id])];
+}
+
+test('renaming a calendar item\'s sub-category shows on its history as coming from the sub-category', function () {
+    [, $subCategory, $calendarItem] = categorisedHistoryItem($this->user);
+
+    $this->travelTo('2026-11-21 11:00:00');
+    $subCategory->update(['name' => 'Dental']);
+
+    $this->get(route('calendar-items.history', $calendarItem))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('entries', 2)
+            ->where('entries.0.event', 'updated')
+            ->where('entries.0.at', '21 Nov 2026, 11:00')
+            ->where('entries.0.source', ['type' => 'sub_category', 'action' => 'updated', 'name' => 'Dental'])
+            ->where('entries.0.changes', [
+                ['field' => 'name', 'label' => 'Name', 'old' => 'Dentist', 'new' => 'Dental'],
+            ])
+            ->where('entries.1.event', 'created')
+            ->where('entries.1.source', null));
+});
+
+test('changing how a category or sub-category looks, or a sub-category\'s default time type, leaves its calendar items\' history as it was', function () {
+    [$category, $subCategory, $calendarItem] = categorisedHistoryItem($this->user);
+
+    $subCategory->update(['emoji' => '😁']);
+    $subCategory->update(['default_time_type' => TimeType::Window]);
+    $category->update(['colour' => '#2563EB']);
+
+    $this->get(route('calendar-items.history', $calendarItem))
+        ->assertInertia(fn (Assert $page) => $page->has('entries', 1));
+});
+
+test('renaming a calendar item\'s category shows on its history as coming from the category', function () {
+    [$category, , $calendarItem] = categorisedHistoryItem($this->user);
+
+    $this->travelTo('2026-11-21 11:00:00');
+    $category->update(['name' => 'Wellbeing', 'colour' => '#2563EB']);
+
+    $this->get(route('calendar-items.history', $calendarItem))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('entries', 2)
+            ->where('entries.0.at', '21 Nov 2026, 11:00')
+            ->where('entries.0.source', ['type' => 'category', 'action' => 'updated', 'name' => 'Wellbeing'])
+            ->where('entries.0.changes', [
+                ['field' => 'name', 'label' => 'Name', 'old' => 'Health', 'new' => 'Wellbeing'],
+            ]));
+});
+
+test('moving a calendar item\'s sub-category to another category shows on its history, and so do changes to the new category', function () {
+    [$health, $subCategory, $calendarItem] = categorisedHistoryItem($this->user);
+    $appointments = Category::factory()->for($this->user)->create(['name' => 'Appointments']);
+
+    // The app has no way to move a sub-category yet, but it is logged when one moves.
+    $subCategory->forceFill(['category_id' => $appointments->id])->save();
+    $health->update(['name' => 'Wellbeing']);
+    $appointments->update(['name' => 'Bookings']);
+
+    $this->get(route('calendar-items.history', $calendarItem))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('entries', 3)
+            ->where('entries.0.source', ['type' => 'category', 'action' => 'updated', 'name' => 'Bookings'])
+            ->where('entries.0.changes', [
+                ['field' => 'name', 'label' => 'Name', 'old' => 'Appointments', 'new' => 'Bookings'],
+            ])
+            ->where('entries.1.source', ['type' => 'sub_category', 'action' => 'updated', 'name' => 'Dentist'])
+            ->where('entries.1.changes', [
+                ['field' => 'category_id', 'label' => 'Category', 'old' => 'Wellbeing', 'new' => 'Bookings'],
+            ])
+            ->where('entries.2.event', 'created'));
+});
+
+test('deleting a calendar item\'s sub-category shows on its history that it became uncategorised because of it', function () {
+    [, $subCategory, $calendarItem] = categorisedHistoryItem($this->user);
+
+    $this->travelTo('2026-11-21 11:00:00');
+    $this->delete(route('sub-categories.destroy', $subCategory))->assertRedirect();
+
+    expect($calendarItem->fresh()->sub_category_id)->toBeNull();
+
+    $this->get(route('calendar-items.history', $calendarItem))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('entries', 2)
+            ->where('entries.0.at', '21 Nov 2026, 11:00')
+            ->where('entries.0.source', ['type' => 'sub_category', 'action' => 'deleted', 'name' => 'Dentist'])
+            ->where('entries.0.changes', [
+                ['field' => 'sub_category_id', 'label' => 'Sub-category', 'old' => 'Dentist', 'new' => null],
+            ]));
+});
+
+test('deleting a calendar item\'s category shows on its history that it became uncategorised because of it', function () {
+    [$category, , $calendarItem] = categorisedHistoryItem($this->user);
+    $other = historyItem($this->user, ['sub_category_id' => SubCategory::factory()->for($category)->create(['name' => 'Optician'])->id]);
+
+    $this->delete(route('categories.destroy', $category))->assertRedirect();
+
+    expect($calendarItem->fresh()->sub_category_id)->toBeNull()
+        ->and($other->fresh()->sub_category_id)->toBeNull();
+
+    $this->get(route('calendar-items.history', $calendarItem))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('entries', 2)
+            ->where('entries.0.source', ['type' => 'category', 'action' => 'deleted', 'name' => 'Health'])
+            ->where('entries.0.changes', [
+                ['field' => 'sub_category_id', 'label' => 'Sub-category', 'old' => 'Dentist', 'new' => null],
+            ]));
+
+    $this->get(route('calendar-items.history', $other))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('entries.0.changes.0.old', 'Optician'));
+
+    expect(Activity::query()->whereMorphedTo('subject', $calendarItem)->latest('id')->first()->causer_id)->toEqual($this->user->id);
+});
+
+test('changes made to a category or sub-category before or after a calendar item was in it don\'t show on its history', function () {
+    [$category, $subCategory] = categorisedHistoryItem($this->user);
+    $calendarItem = historyItem($this->user);
+
+    $subCategory->update(['name' => 'Dental']);
+    $category->update(['name' => 'Wellbeing']);
+
+    $calendarItem->update(['sub_category_id' => $subCategory->id]);
+    $category->update(['name' => 'Self-care']);
+
+    $calendarItem->update(['sub_category_id' => null]);
+    $subCategory->update(['name' => 'Teeth']);
+    $category->update(['name' => 'Health']);
+
+    $this->get(route('calendar-items.history', $calendarItem))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('entries', 4)
+            ->where('entries.0.source', null)
+            ->where('entries.1.source', ['type' => 'category', 'action' => 'updated', 'name' => 'Self-care'])
+            ->where('entries.1.changes', [
+                ['field' => 'name', 'label' => 'Name', 'old' => 'Wellbeing', 'new' => 'Self-care'],
+            ])
+            ->where('entries.2.source', null)
+            ->where('entries.3.event', 'created'));
+});
