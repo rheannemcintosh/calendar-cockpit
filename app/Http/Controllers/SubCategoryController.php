@@ -6,6 +6,7 @@ use App\Enums\TimeType;
 use App\Http\Requests\StoreSubCategoryRequest;
 use App\Http\Requests\UpdateSubCategoryRequest;
 use App\Models\SubCategory;
+use App\Support\SubCategoryHistory;
 use App\Support\Timestamps;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -68,6 +69,18 @@ class SubCategoryController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Sub-category updated.')]);
 
         return to_route('categories.index');
+    }
+
+    /**
+     * Show each change made to the sub-category, newest first, with when it
+     * was made in the user's timezone.
+     */
+    public function history(Request $request, SubCategory $subCategory): Response
+    {
+        return Inertia::render('sub-categories/History', [
+            'subCategory' => $subCategory->only(['id', 'emoji', 'name']),
+            'entries' => SubCategoryHistory::of($subCategory, $request->user()->localTimezone()),
+        ]);
     }
 
     /**

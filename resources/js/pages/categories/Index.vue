@@ -324,6 +324,26 @@ function closeDeleteDialog(open: boolean): void {
                                         >
                                             <Link
                                                 :href="
+                                                    subCategories.history(
+                                                        subCategory.id,
+                                                    )
+                                                "
+                                                :aria-label="`History of ${subCategory.name}`"
+                                                data-test="sub-category-history-link"
+                                            >
+                                                <History />
+                                                <span class="hidden sm:inline">
+                                                    History
+                                                </span>
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            as-child
+                                        >
+                                            <Link
+                                                :href="
                                                     subCategories.edit(
                                                         subCategory.id,
                                                     )
