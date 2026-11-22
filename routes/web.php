@@ -27,6 +27,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->where('date', '[0-9]{4}-[0-9]{2}(-[0-9]{2})?')
         ->name('calendar-items.month');
 
+    Route::get('calendar-items/{calendar_item}/history', [CalendarItemController::class, 'history'])
+        ->middleware('can:view,calendar_item')
+        ->name('calendar-items.history');
+
     Route::resource('calendar-items', CalendarItemController::class)
         ->only(['index', 'create', 'store', 'edit', 'update'])
         ->middlewareFor(['edit', 'update'], 'can:update,calendar_item');

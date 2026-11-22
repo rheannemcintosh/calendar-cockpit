@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Flag;
 use App\Models\SubCategory;
 use App\Support\CalendarItemDay;
+use App\Support\CalendarItemHistory;
 use App\Support\CalendarItemMonth;
 use App\Support\CalendarItemTimeline;
 use App\Support\CalendarItemWeek;
@@ -250,6 +251,28 @@ class CalendarItemController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Calendar item updated.')]);
 
         return redirect($request->view()->url($calendarItem->starts_at, $request->user()));
+    }
+
+    /**
+     * Show each change made to the calendar item, newest first, with when it
+     * was made in the user's timezone, and the calendar view it was opened
+     * from, which going back returns to.
+     */
+    public function history(Request $request, CalendarItem $calendarItem): Response
+    {
+        $request->validate(['view' => ['nullable', Rule::enum(CalendarView::class)]]);
+
+        $view = $request->enum('view', CalendarView::class) ?? CalendarView::List;
+
+        return Inertia::render('calendar-items/History', [
+            'calendarItem' => [
+                'id' => $calendarItem->id,
+                'title' => $calendarItem->title,
+            ],
+            'entries' => CalendarItemHistory::of($calendarItem, $request->user()->localTimezone()),
+            'view' => $view->value,
+            'backUrl' => $view->url($calendarItem->starts_at, $request->user()),
+        ]);
     }
 
     /**
