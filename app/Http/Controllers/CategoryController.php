@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
 use App\Models\SubCategory;
+use App\Support\CategoryHistory;
 use App\Support\Timestamps;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
@@ -83,6 +84,18 @@ class CategoryController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category updated.')]);
 
         return to_route('categories.index');
+    }
+
+    /**
+     * Show each change made to the category, newest first, with when it was
+     * made in the user's timezone.
+     */
+    public function history(Request $request, Category $category): Response
+    {
+        return Inertia::render('categories/History', [
+            'category' => $category->only(['id', 'name']),
+            'entries' => CategoryHistory::of($category, $request->user()->localTimezone()),
+        ]);
     }
 
     /**

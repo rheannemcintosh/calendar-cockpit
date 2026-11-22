@@ -9,6 +9,15 @@ use Illuminate\Auth\Access\Response;
 class CategoryPolicy
 {
     /**
+     * Only the user who owns a category can see its history. Anyone else gets
+     * a not found page, so they cannot tell it exists.
+     */
+    public function view(User $user, Category $category): Response
+    {
+        return $this->update($user, $category);
+    }
+
+    /**
      * Only the user who owns a category can change it. Anyone else gets a not
      * found page, so they cannot tell it exists.
      */

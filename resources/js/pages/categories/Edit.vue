@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
+import { ArrowLeft, History } from '@lucide/vue';
 import { ref } from 'vue';
 import CategoryController from '@/actions/App/Http/Controllers/CategoryController';
 import CategoryFormFields from '@/components/CategoryFormFields.vue';
 import CreatedUpdated from '@/components/CreatedUpdated.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
-import { index } from '@/routes/categories';
+import { history, index } from '@/routes/categories';
 import type { CategoryOption, Timestamps } from '@/types';
 
 defineOptions({
@@ -51,10 +51,21 @@ const colour = ref(props.category.colour);
             Back to categories
         </Link>
 
-        <Heading
-            title="Edit category"
-            description="Change its name or colour. Calendar items in it show the change too"
-        />
+        <div class="flex items-start justify-between gap-4">
+            <Heading
+                title="Edit category"
+                description="Change its name or colour. Calendar items in it show the change too"
+            />
+            <Button variant="outline" as-child>
+                <Link
+                    :href="history(props.category.id)"
+                    data-test="category-history-link"
+                >
+                    <History />
+                    History
+                </Link>
+            </Button>
+        </div>
 
         <p class="text-muted-foreground -mt-6 mb-8 text-sm">
             <CreatedUpdated :timestamps="props.timestamps" />
