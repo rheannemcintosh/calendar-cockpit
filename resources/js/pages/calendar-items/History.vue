@@ -68,6 +68,7 @@ const props = defineProps<{
             </Button>
         </div>
 
-        <HistoryEntries :entries="props.entries" />
+        <!-- A change from its category can change the colour. -->
+        <HistoryEntries :entries="props.entries" :colour-fields="['colour']" />
     </div>
 </template>
