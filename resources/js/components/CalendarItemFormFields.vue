@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { TriangleAlert } from '@lucide/vue';
+import { TriangleAlert, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import ChoicePicker from '@/components/ChoicePicker.vue';
 import DatePicker from '@/components/DatePicker.vue';
@@ -12,6 +12,7 @@ import TimePicker from '@/components/TimePicker.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useSubCategorySuggestion } from '@/composables/useSubCategorySuggestion';
 import categories from '@/routes/categories';
 import type {
     CategoryListItem,
@@ -41,6 +42,7 @@ const props = defineProps<{
     item?: EditableCalendarItem;
 }>();
 
+const title = ref(props.item?.title ?? '');
 const allDay = ref(props.item?.allDay ?? false);
 const startDate = ref<string | undefined>(props.item?.date);
 const endDate = ref<string | undefined>(props.item?.endDate);
@@ -71,6 +73,42 @@ const chosenSubCategory = computed(() =>
         .flatMap((category) => category.subCategories)
         .find((subCategory) => subCategory.id === subCategoryId.value),
 );
+
+const {
+    loading: suggestingSubCategory,
+    hint: subCategoryHint,
+    acceptHint: acceptSubCategoryHint,
+    dismissHint: dismissSubCategoryHint,
+} = useSubCategorySuggestion(title, subCategoryId);
+
+const hintedSubCategory = computed(() => {
+    for (const category of props.categories) {
+        const subCategory = category.subCategories.find(
+            (subCategory) => subCategory.id === subCategoryHint.value,
+        );
+
+        if (subCategory) {
+            return { category, subCategory };
+        }
+    }
+
+    return undefined;
+});
+
+// The hint's buttons go away once used, so focus returns to the sub-category.
+function focusSubCategory(): void {
+    document.getElementById('sub_category_id')?.focus();
+}
+
+function acceptHintedSubCategory(): void {
+    acceptSubCategoryHint();
+    focusSubCategory();
+}
+
+function dismissHintedSubCategory(): void {
+    dismissSubCategoryHint();
+    focusSubCategory();
+}
 
 // Choosing a sub-category starts the time type from its default, unless the
 // time type was chosen while editing.
@@ -121,8 +159,8 @@ const locationError = computed(
         <Label for="title">Title</Label>
         <Input
             id="title"
+            v-model="title"
             name="title"
-            :default-value="item?.title"
             maxlength="255"
             placeholder="What is happening?"
             :aria-invalid="errors.title ? true : undefined"
@@ -203,7 +241,51 @@ const locationError = computed(
                 name="sub_category_id"
                 :categories="props.categories"
                 :invalid="!!errors.sub_category_id"
+                :loading="suggestingSubCategory"
             />
+            <div
+                v-if="hintedSubCategory"
+                class="bg-muted/50 flex w-fit max-w-full items-center rounded-md border text-sm"
+                data-test="sub-category-suggestion-hint"
+                @keydown.esc.prevent.stop="dismissHintedSubCategory"
+            >
+                <button
+                    type="button"
+                    class="hover:bg-accent focus-visible:ring-ring/50 flex h-8 min-w-0 cursor-pointer items-center gap-2 rounded-l-md px-2 outline-none focus-visible:ring-[3px]"
+                    data-test="accept-sub-category-suggestion"
+                    @click="acceptHintedSubCategory"
+                >
+                    <span
+                        class="size-3 shrink-0 rounded-full border border-black/10 dark:border-white/20"
+                        :style="{
+                            backgroundColor: hintedSubCategory.category.colour,
+                        }"
+                        aria-hidden="true"
+                    />
+                    <span class="truncate">
+                        Put it in {{ hintedSubCategory.subCategory.emoji }}
+                        {{ hintedSubCategory.category.name }} ·
+                        {{ hintedSubCategory.subCategory.name }} instead?
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    aria-label="Dismiss suggested sub-category"
+                    title="Dismiss"
+                    class="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring/50 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-r-md outline-none focus-visible:ring-[3px]"
+                    data-test="dismiss-sub-category-suggestion"
+                    @click="dismissHintedSubCategory"
+                >
+                    <X class="size-4" />
+                </button>
+            </div>
+            <p role="status" class="sr-only">
+                {{
+                    hintedSubCategory
+                        ? `Suggested category: ${hintedSubCategory.category.name} · ${hintedSubCategory.subCategory.name}. Put it there instead, or press Escape to dismiss it.`
+                        : ''
+                }}
+            </p>
             <InputError :message="errors.sub_category_id" />
         </template>
         <p

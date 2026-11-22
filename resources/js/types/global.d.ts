@@ -23,6 +23,7 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             emojiSuggestionsEnabled: boolean;
             categorySuggestionsEnabled: boolean;
+            subCategorySuggestionsEnabled: boolean;
             [key: string]: unknown;
         };
     }
