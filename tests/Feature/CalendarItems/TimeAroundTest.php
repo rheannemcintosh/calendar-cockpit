@@ -185,6 +185,26 @@ test('calendar items whose time before or after overlaps share the width side by
             ->where('items.2.columns', 1));
 });
 
+test('a long time before reaching back over an earlier calendar item shares the width with it', function () {
+    $user = User::factory()->create();
+    CalendarItem::factory()->for($user)->between('2026-10-20 09:00', '2026-10-20 10:00')->create(['title' => 'Dentist']);
+    CalendarItem::factory()->for($user)->between('2026-10-20 10:30', '2026-10-20 11:00')->create(['title' => 'Coffee']);
+    CalendarItem::factory()->for($user)->between('2026-10-20 12:00', '2026-10-20 13:00')->withTimeAround(240)->create(['title' => 'Train']);
+
+    $this->actingAs($user)
+        ->get(route('calendar-items.day'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('items.0.title', 'Dentist')
+            ->where('items.0.column', 1)
+            ->where('items.0.columns', 2)
+            ->where('items.1.title', 'Coffee')
+            ->where('items.1.column', 1)
+            ->where('items.1.columns', 2)
+            ->where('items.2.title', 'Train')
+            ->where('items.2.column', 0)
+            ->where('items.2.columns', 2));
+});
+
 test('time before that starts on the day before shows on that day, cut off at its edge', function () {
     $user = User::factory()->create();
     CalendarItem::factory()->for($user)->between('2026-10-21 00:15', '2026-10-21 01:00')->withTimeAround(30)->create(['title' => 'Early flight']);

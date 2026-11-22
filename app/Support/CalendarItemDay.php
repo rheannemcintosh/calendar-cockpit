@@ -100,7 +100,9 @@ class CalendarItemDay
 
     /**
      * The column each calendar item goes in and how many columns its group of
-     * overlapping calendar items has, from their start and end minutes.
+     * overlapping calendar items has, from their start and end minutes, in the
+     * order they are given. They are placed in start order, which the time
+     * before them can make different from the order they are given.
      *
      * @param  list<array{int, int}>  $minutes
      * @return list<array{int, int}>
@@ -113,7 +115,12 @@ class CalendarItemDay
         $columnEnds = [];
         $groupEnd = 0;
 
-        foreach ($minutes as [$start, $end]) {
+        $starts = array_column($minutes, 0);
+        asort($starts);
+
+        foreach (array_keys($starts) as $index) {
+            [$start, $end] = $minutes[$index];
+
             if ($column !== [] && $start >= $groupEnd) {
                 $groupColumns[] = 0;
                 $columnEnds = [];
@@ -130,15 +137,17 @@ class CalendarItemDay
             $groupEnd = max($groupEnd, $end);
             $current = count($groupColumns) - 1;
             $groupColumns[$current] = max($groupColumns[$current], $free + 1);
-            $column[] = $free;
-            $group[] = $current;
+            $column[$index] = $free;
+            $group[$index] = $current;
         }
 
-        return array_map(
-            fn (int $free, int $current): array => [$free, $groupColumns[$current]],
-            $column,
-            $group,
-        );
+        $columns = [];
+
+        foreach (array_keys($minutes) as $index) {
+            $columns[] = [$column[$index], $groupColumns[$group[$index]]];
+        }
+
+        return $columns;
     }
 
     /**
