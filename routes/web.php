@@ -59,6 +59,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:60,1')
         ->name('sub-categories.category-suggestion');
 
+    Route::get('sub-categories/{sub_category}/history', [SubCategoryController::class, 'history'])
+        ->middleware('can:view,sub_category')
+        ->name('sub-categories.history');
+
     Route::resource('sub-categories', SubCategoryController::class)
         ->only(['create', 'store', 'edit', 'update', 'destroy'])
         ->middlewareFor(['edit', 'update'], 'can:update,sub_category')

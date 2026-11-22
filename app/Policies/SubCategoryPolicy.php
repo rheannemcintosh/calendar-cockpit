@@ -9,6 +9,15 @@ use Illuminate\Auth\Access\Response;
 class SubCategoryPolicy
 {
     /**
+     * Only the user who owns a sub-category's category can see its history.
+     * Anyone else gets a not found page, so they cannot tell it exists.
+     */
+    public function view(User $user, SubCategory $subCategory): Response
+    {
+        return $this->update($user, $subCategory);
+    }
+
+    /**
      * Only the user who owns a sub-category's category can change it. Anyone
      * else gets a not found page, so they cannot tell it exists.
      */

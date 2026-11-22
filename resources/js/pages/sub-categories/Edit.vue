@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
+import { ArrowLeft, History } from '@lucide/vue';
 import { ref } from 'vue';
 import SubCategoryController from '@/actions/App/Http/Controllers/SubCategoryController';
 import EmojiPicker from '@/components/EmojiPicker.vue';
@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useEmojiSuggestion } from '@/composables/useEmojiSuggestion';
 import categories from '@/routes/categories';
+import { history } from '@/routes/sub-categories';
 import type {
     CategoryOption,
     EditableSubCategory,
@@ -73,10 +74,21 @@ const {
             Back to categories
         </Link>
 
-        <Heading
-            title="Edit sub-category"
-            description="Change its name, emoji or default time type. Calendar items in it show a new emoji or name too"
-        />
+        <div class="flex items-start justify-between gap-4">
+            <Heading
+                title="Edit sub-category"
+                description="Change its name, emoji or default time type. Calendar items in it show a new emoji or name too"
+            />
+            <Button variant="outline" as-child>
+                <Link
+                    :href="history(props.subCategory.id)"
+                    data-test="sub-category-history-link"
+                >
+                    <History />
+                    History
+                </Link>
+            </Button>
+        </div>
 
         <p class="text-muted-foreground -mt-6 mb-8 text-sm">
             <CreatedUpdated :timestamps="props.timestamps" />
