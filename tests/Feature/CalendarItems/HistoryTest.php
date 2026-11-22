@@ -205,7 +205,7 @@ test('renaming a calendar item\'s sub-category shows on its history as coming fr
     [, $subCategory, $calendarItem] = categorisedHistoryItem($this->user);
 
     $this->travelTo('2026-11-21 11:00:00');
-    $subCategory->update(['name' => 'Dental', 'emoji' => '😁']);
+    $subCategory->update(['name' => 'Dental']);
 
     $this->get(route('calendar-items.history', $calendarItem))
         ->assertInertia(fn (Assert $page) => $page
@@ -215,41 +215,34 @@ test('renaming a calendar item\'s sub-category shows on its history as coming fr
             ->where('entries.0.source', ['type' => 'sub_category', 'action' => 'updated', 'name' => 'Dental'])
             ->where('entries.0.changes', [
                 ['field' => 'name', 'label' => 'Name', 'old' => 'Dentist', 'new' => 'Dental'],
-                ['field' => 'emoji', 'label' => 'Emoji', 'old' => '🦷', 'new' => '😁'],
             ])
             ->where('entries.1.event', 'created')
             ->where('entries.1.source', null));
 });
 
-test('changing only a sub-category\'s default time type leaves its calendar items\' history as it was', function () {
-    [, $subCategory, $calendarItem] = categorisedHistoryItem($this->user);
+test('changing how a category or sub-category looks, or a sub-category\'s default time type, leaves its calendar items\' history as it was', function () {
+    [$category, $subCategory, $calendarItem] = categorisedHistoryItem($this->user);
 
+    $subCategory->update(['emoji' => '😁']);
     $subCategory->update(['default_time_type' => TimeType::Window]);
+    $category->update(['colour' => '#2563EB']);
 
     $this->get(route('calendar-items.history', $calendarItem))
         ->assertInertia(fn (Assert $page) => $page->has('entries', 1));
 });
 
-test('renaming or recolouring a calendar item\'s category shows on its history as coming from the category', function () {
+test('renaming a calendar item\'s category shows on its history as coming from the category', function () {
     [$category, , $calendarItem] = categorisedHistoryItem($this->user);
 
     $this->travelTo('2026-11-21 11:00:00');
-    $category->update(['name' => 'Wellbeing']);
-
-    $this->travelTo('2026-11-21 12:00:00');
-    $category->update(['colour' => '#2563EB']);
+    $category->update(['name' => 'Wellbeing', 'colour' => '#2563EB']);
 
     $this->get(route('calendar-items.history', $calendarItem))
         ->assertInertia(fn (Assert $page) => $page
-            ->has('entries', 3)
-            ->where('entries.0.at', '21 Nov 2026, 12:00')
+            ->has('entries', 2)
+            ->where('entries.0.at', '21 Nov 2026, 11:00')
             ->where('entries.0.source', ['type' => 'category', 'action' => 'updated', 'name' => 'Wellbeing'])
             ->where('entries.0.changes', [
-                ['field' => 'colour', 'label' => 'Colour', 'old' => '#16A34A', 'new' => '#2563EB'],
-            ])
-            ->where('entries.1.at', '21 Nov 2026, 11:00')
-            ->where('entries.1.source', ['type' => 'category', 'action' => 'updated', 'name' => 'Wellbeing'])
-            ->where('entries.1.changes', [
                 ['field' => 'name', 'label' => 'Name', 'old' => 'Health', 'new' => 'Wellbeing'],
             ]));
 });
@@ -327,18 +320,20 @@ test('changes made to a category or sub-category before or after a calendar item
     $category->update(['name' => 'Wellbeing']);
 
     $calendarItem->update(['sub_category_id' => $subCategory->id]);
-    $category->update(['colour' => '#2563EB']);
+    $category->update(['name' => 'Self-care']);
 
     $calendarItem->update(['sub_category_id' => null]);
     $subCategory->update(['name' => 'Teeth']);
-    $category->update(['name' => 'Self-care']);
+    $category->update(['name' => 'Health']);
 
     $this->get(route('calendar-items.history', $calendarItem))
         ->assertInertia(fn (Assert $page) => $page
             ->has('entries', 4)
             ->where('entries.0.source', null)
-            ->where('entries.1.source', ['type' => 'category', 'action' => 'updated', 'name' => 'Wellbeing'])
-            ->where('entries.1.changes.0.field', 'colour')
+            ->where('entries.1.source', ['type' => 'category', 'action' => 'updated', 'name' => 'Self-care'])
+            ->where('entries.1.changes', [
+                ['field' => 'name', 'label' => 'Name', 'old' => 'Wellbeing', 'new' => 'Self-care'],
+            ])
             ->where('entries.2.source', null)
             ->where('entries.3.event', 'created'));
 });

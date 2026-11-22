@@ -41,17 +41,16 @@ final class CalendarItemHistory
 
     /**
      * The fields of a sub-category or category shown when a change to it
-     * changed the calendar item, with the names the app uses for them.
+     * changed what the calendar item is filed under, with the names the app
+     * uses for them. How they look, such as their emoji or colour, is left out.
      */
     private const SUB_CATEGORY_LABELS = [
         'category_id' => 'Category',
         'name' => 'Name',
-        'emoji' => 'Emoji',
     ];
 
     private const CATEGORY_LABELS = [
         'name' => 'Name',
-        'colour' => 'Colour',
     ];
 
     private const LOCATION_FIELDS = ['location_name', 'location_address', 'location_latitude', 'location_longitude'];
@@ -63,9 +62,10 @@ final class CalendarItemHistory
      * "21 Nov 2026, 14:05". A calendar item made before changes were logged
      * still ends with when it was created.
      *
-     * Changes to its sub-category, and to that sub-category's category, show
-     * too, but only those made while the calendar item was in them, as does
-     * it becoming uncategorised because one of them was deleted.
+     * Renaming its sub-category or that sub-category's category, or moving
+     * the sub-category to another category, shows too, but only while the
+     * calendar item was in them, as does it becoming uncategorised because
+     * one of them was deleted.
      *
      * @return list<HistoryEntry>
      */
@@ -286,7 +286,7 @@ final class CalendarItemHistory
                     }
                 }
 
-                // A change to only the default time type leaves the calendar item as it was.
+                // A change to only its emoji or default time type leaves what the calendar item is filed under as it was.
                 if ($changes !== []) {
                     $entries[$activity->id] = self::entry(
                         'activity-'.$activity->id,
