@@ -42,6 +42,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('categories/starter', StarterCategoryController::class)
         ->name('categories.starter');
 
+    Route::get('categories/{category}/history', [CategoryController::class, 'history'])
+        ->middleware('can:view,category')
+        ->name('categories.history');
+
     Route::resource('categories', CategoryController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->middlewareFor(['edit', 'update'], 'can:update,category')

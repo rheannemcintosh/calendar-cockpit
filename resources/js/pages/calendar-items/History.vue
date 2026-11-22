@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowRight, Pencil } from '@lucide/vue';
+import { ArrowLeft, Pencil } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
+import HistoryEntries from '@/components/HistoryEntries.vue';
 import { Button } from '@/components/ui/button';
 import { edit, index } from '@/routes/calendar-items';
 import type { CalendarItemHistoryEntry, CalendarView } from '@/types';
@@ -67,74 +68,6 @@ const props = defineProps<{
             </Button>
         </div>
 
-        <ol class="relative space-y-6 border-l pl-6" data-test="history">
-            <li
-                v-for="entry in props.entries"
-                :key="entry.key"
-                class="relative"
-                :data-event="entry.event"
-                data-test="history-entry"
-            >
-                <span
-                    class="bg-background ring-border absolute top-1.5 -left-[1.875rem] size-3 rounded-full ring-2"
-                    aria-hidden="true"
-                />
-                <p class="text-sm font-medium">
-                    {{ entry.event === 'created' ? 'Created' : 'Changed' }}
-                    <span class="text-muted-foreground font-normal">
-                        ·
-                        <time :datetime="entry.datetime" class="tabular-nums">{{
-                            entry.at
-                        }}</time>
-                    </span>
-                </p>
-
-                <dl
-                    v-if="entry.changes.length"
-                    class="mt-2 divide-y rounded-lg border text-sm"
-                >
-                    <div
-                        v-for="change in entry.changes"
-                        :key="change.field"
-                        class="flex flex-col gap-1 px-3 py-2 sm:flex-row sm:gap-4"
-                        :data-field="change.field"
-                        data-test="history-change"
-                    >
-                        <dt class="text-muted-foreground shrink-0 sm:w-44">
-                            {{ change.label }}
-                        </dt>
-                        <dd
-                            class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"
-                        >
-                            <span
-                                :class="[
-                                    'break-words',
-                                    change.old === null
-                                        ? 'text-muted-foreground italic'
-                                        : 'line-through decoration-1',
-                                ]"
-                                data-test="old-value"
-                                ><span class="sr-only">From </span
-                                >{{ change.old ?? 'None' }}</span
-                            >
-                            <ArrowRight
-                                class="text-muted-foreground size-3.5 shrink-0"
-                                aria-hidden="true"
-                            />
-                            <span
-                                :class="[
-                                    'font-medium break-words',
-                                    change.new === null &&
-                                        'text-muted-foreground font-normal italic',
-                                ]"
-                                data-test="new-value"
-                                ><span class="sr-only">to </span
-                                >{{ change.new ?? 'None' }}</span
-                            >
-                        </dd>
-                    </div>
-                </dl>
-            </li>
-        </ol>
+        <HistoryEntries :entries="props.entries" />
     </div>
 </template>
