@@ -3,6 +3,7 @@ export * from './calendar-items';
 export * from './categories';
 export * from './firmness';
 export * from './flags';
+export * from './history';
 export * from './locations';
 export * from './navigation';
 export * from './time-types';

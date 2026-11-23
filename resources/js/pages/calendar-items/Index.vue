@@ -43,7 +43,7 @@ const props = defineProps<{
     firmnesses: FirmnessOption[];
 }>();
 
-const { editUrl } = useEditCalendarItem();
+const { editUrl, historyUrl } = useEditCalendarItem();
 
 const timeTypes = Object.fromEntries(
     props.timeTypes.map((timeType) => [timeType.value, timeType]),
@@ -410,21 +410,34 @@ const appear =
                                     />
                                 </a>
                             </span>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                as-child
-                                class="absolute top-2 right-2 shrink-0 sm:static sm:ml-auto sm:self-center"
+                            <span
+                                class="absolute top-2 right-2 flex shrink-0 flex-col sm:static sm:ml-auto sm:flex-row sm:self-center"
                             >
-                                <Link
-                                    :href="editUrl(item.id)"
-                                    :aria-label="`Edit ${item.title}`"
-                                    data-test="edit-calendar-item-link"
-                                >
-                                    <Pencil />
-                                    <span class="hidden sm:inline">Edit</span>
-                                </Link>
-                            </Button>
+                                <Button variant="ghost" size="sm" as-child>
+                                    <Link
+                                        :href="historyUrl(item.id)"
+                                        :aria-label="`History of ${item.title}`"
+                                        data-test="calendar-item-history-link"
+                                    >
+                                        <History />
+                                        <span class="hidden sm:inline"
+                                            >History</span
+                                        >
+                                    </Link>
+                                </Button>
+                                <Button variant="ghost" size="sm" as-child>
+                                    <Link
+                                        :href="editUrl(item.id)"
+                                        :aria-label="`Edit ${item.title}`"
+                                        data-test="edit-calendar-item-link"
+                                    >
+                                        <Pencil />
+                                        <span class="hidden sm:inline"
+                                            >Edit</span
+                                        >
+                                    </Link>
+                                </Button>
+                            </span>
                         </li>
                     </ul>
                 </div>

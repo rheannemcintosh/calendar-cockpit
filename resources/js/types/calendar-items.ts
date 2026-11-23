@@ -2,6 +2,7 @@
 
 import type { FirmnessValue } from './firmness';
 import type { ItemFlag } from './flags';
+import type { HistoryChange, HistoryEntry } from './history';
 import type { LocationMatch } from './locations';
 import type { TimeTypeValue } from './time-types';
 import type { Timestamps } from './timestamps';
@@ -128,3 +129,9 @@ export type EditableCalendarItem = {
 
 // The calendar views a calendar item can be edited from, and returned to.
 export type CalendarView = 'list' | 'day' | 'week' | 'month';
+
+// A change made to a calendar item, or it being created, from
+// App\Support\CalendarItemHistory::of(). A sub-category shows its name, and
+// changes from its category or sub-category say so in their source.
+export type CalendarItemHistoryChange = HistoryChange;
+export type CalendarItemHistoryEntry = HistoryEntry;

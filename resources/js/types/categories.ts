@@ -6,6 +6,7 @@ export type CategoryOption = {
     colour: string;
 };
 
+import type { HistoryEntry } from './history';
 import type { TimeTypeValue } from './time-types';
 
 // A sub-category as listed under its category on the categories page.
@@ -44,3 +45,12 @@ export type ManagedCategory = CategoryOption & {
     calendarItemsCount: number;
     subCategories: ManagedSubCategory[];
 };
+
+// A change made to a category, or it being created, from
+// App\Support\CategoryHistory::of(). A colour is its hex code.
+export type CategoryHistoryEntry = HistoryEntry;
+
+// A change made to a sub-category, or it being created, from
+// App\Support\SubCategoryHistory::of(). A category shows its name, even once
+// it has been deleted, and a default time type its label.
+export type SubCategoryHistoryEntry = HistoryEntry;

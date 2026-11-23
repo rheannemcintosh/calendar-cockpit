@@ -7,6 +7,7 @@ use App\Enums\TimeType;
 use Carbon\CarbonImmutable;
 use Database\Factories\CalendarItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -85,6 +86,34 @@ class CalendarItem extends Model
     public function endsWithTimeAfter(): CarbonImmutable
     {
         return $this->ends_at->addMinutes($this->minutes_after);
+    }
+
+    /**
+     * Leave the given calendar items uncategorised because their category or
+     * sub-category is being deleted. One bulk query skips the activity log, so
+     * each calendar item first logs its own change, saying what was deleted.
+     *
+     * @param  Builder<self>  $query
+     * @param  'category'|'sub_category'  $type
+     */
+    public static function uncategorise(Builder $query, string $type, string $name): void
+    {
+        $query->clone()->with('subCategory:id,name')->lazyById()->each(function (self $calendarItem) use ($type, $name): void {
+            activity('calendar_item')
+                ->performedOn($calendarItem)
+                ->event('updated')
+                ->withChanges([
+                    'attributes' => ['sub_category_id' => null],
+                    'old' => ['sub_category_id' => $calendarItem->sub_category_id],
+                ])
+                ->withProperties([
+                    'deleted' => ['type' => $type, 'name' => $name],
+                    'sub_category_name' => $calendarItem->subCategory?->name,
+                ])
+                ->log('updated');
+        });
+
+        $query->update(['sub_category_id' => null]);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Http\Controllers\FlagController;
 use App\Http\Controllers\LocationSearchController;
 use App\Http\Controllers\StarterCategoryController;
 use App\Http\Controllers\SubCategoryController;
+use App\Http\Controllers\SubCategorySuggestionController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -27,6 +28,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->where('date', '[0-9]{4}-[0-9]{2}(-[0-9]{2})?')
         ->name('calendar-items.month');
 
+    Route::get('calendar-items/{calendar_item}/history', [CalendarItemController::class, 'history'])
+        ->middleware('can:view,calendar_item')
+        ->name('calendar-items.history');
+
+    Route::get('calendar-items/sub-category-suggestion', SubCategorySuggestionController::class)
+        ->middleware('throttle:60,1')
+        ->name('calendar-items.sub-category-suggestion');
+
     Route::resource('calendar-items', CalendarItemController::class)
         ->only(['index', 'create', 'store', 'edit', 'update'])
         ->middlewareFor(['edit', 'update'], 'can:update,calendar_item');
@@ -37,6 +46,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('categories/starter', StarterCategoryController::class)
         ->name('categories.starter');
+
+    Route::get('categories/{category}/history', [CategoryController::class, 'history'])
+        ->middleware('can:view,category')
+        ->name('categories.history');
 
     Route::resource('categories', CategoryController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
@@ -50,6 +63,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('sub-categories/category-suggestion', CategorySuggestionController::class)
         ->middleware('throttle:60,1')
         ->name('sub-categories.category-suggestion');
+
+    Route::get('sub-categories/{sub_category}/history', [SubCategoryController::class, 'history'])
+        ->middleware('can:view,sub_category')
+        ->name('sub-categories.history');
 
     Route::resource('sub-categories', SubCategoryController::class)
         ->only(['create', 'store', 'edit', 'update', 'destroy'])

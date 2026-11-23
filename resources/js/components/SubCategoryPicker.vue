@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, ChevronDown } from '@lucide/vue';
+import { Check, ChevronDown, LoaderCircle } from '@lucide/vue';
 import {
     ComboboxAnchor,
     ComboboxContent,
@@ -29,6 +29,8 @@ const props = defineProps<{
     // The user's categories that have sub-categories, in alphabetical order.
     categories: CategoryListItem[];
     invalid?: boolean;
+    // Whether a sub-category is being suggested, shown subtly in the field.
+    loading?: boolean;
 }>();
 
 // The value of the "None" option and the model's default, since a
@@ -68,6 +70,8 @@ function display(): string {
 
         <ComboboxAnchor
             :aria-invalid="invalid || undefined"
+            :aria-busy="loading || undefined"
+            :data-loading="loading || undefined"
             :class="
                 cn(
                     'border-input dark:bg-input/30 flex h-9 w-full min-w-0 items-center gap-2 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] md:text-sm',
@@ -78,10 +82,19 @@ function display(): string {
         >
             <span
                 v-if="chosen"
-                class="size-3 shrink-0 rounded-full border border-black/10 dark:border-white/20"
+                :class="[
+                    'size-3 shrink-0 rounded-full border border-black/10 dark:border-white/20',
+                    { 'animate-pulse': loading },
+                ]"
                 :style="{ backgroundColor: chosen.category.colour }"
                 aria-hidden="true"
                 data-test="sub-category-picker-swatch"
+            />
+            <LoaderCircle
+                v-else-if="loading"
+                class="text-muted-foreground size-3 shrink-0 animate-spin"
+                aria-hidden="true"
+                data-test="sub-category-suggestion-loading"
             />
             <ComboboxInput
                 :id="id"

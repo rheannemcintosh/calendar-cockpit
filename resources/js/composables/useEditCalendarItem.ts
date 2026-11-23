@@ -1,6 +1,6 @@
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { edit } from '@/routes/calendar-items';
+import { edit, history } from '@/routes/calendar-items';
 import type { CalendarView } from '@/types';
 
 const VIEWS: Record<string, CalendarView> = {
@@ -10,7 +10,7 @@ const VIEWS: Record<string, CalendarView> = {
     'calendar-items/Month': 'month',
 };
 
-// Open a calendar item's edit page, remembering the calendar view it was
+// Open a calendar item's edit or history page, remembering the calendar view it was
 // opened from so that saving or cancelling returns to it.
 export function useEditCalendarItem() {
     const page = usePage();
@@ -20,9 +20,13 @@ export function useEditCalendarItem() {
         return edit(id, { query: { view: view.value } });
     }
 
+    function historyUrl(id: number) {
+        return history(id, { query: { view: view.value } });
+    }
+
     function openEdit(id: number): void {
         router.visit(editUrl(id));
     }
 
-    return { editUrl, openEdit };
+    return { editUrl, historyUrl, openEdit };
 }

@@ -2,6 +2,7 @@
 import { Form, Head, Link } from '@inertiajs/vue3';
 import {
     ChevronRight,
+    History,
     Pencil,
     Plus,
     Sparkles,
@@ -25,7 +26,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { create, destroy, edit, index, starter } from '@/routes/categories';
+import {
+    create,
+    destroy,
+    edit,
+    history,
+    index,
+    starter,
+} from '@/routes/categories';
 import subCategories from '@/routes/sub-categories';
 import type { ManagedCategory, ManagedSubCategory } from '@/types';
 
@@ -197,6 +205,21 @@ function closeDeleteDialog(open: boolean): void {
                             class="shrink-0"
                         >
                             <Link
+                                :href="history(category.id)"
+                                :aria-label="`History of ${category.name}`"
+                                data-test="category-history-link"
+                            >
+                                <History />
+                                <span class="hidden sm:inline">History</span>
+                            </Link>
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            as-child
+                            class="shrink-0"
+                        >
+                            <Link
                                 :href="edit(category.id)"
                                 :aria-label="`Edit ${category.name}`"
                                 data-test="edit-category-link"
@@ -294,6 +317,26 @@ function closeDeleteDialog(open: boolean): void {
                                     <td
                                         class="px-2 py-1 text-right whitespace-nowrap"
                                     >
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            as-child
+                                        >
+                                            <Link
+                                                :href="
+                                                    subCategories.history(
+                                                        subCategory.id,
+                                                    )
+                                                "
+                                                :aria-label="`History of ${subCategory.name}`"
+                                                data-test="sub-category-history-link"
+                                            >
+                                                <History />
+                                                <span class="hidden sm:inline">
+                                                    History
+                                                </span>
+                                            </Link>
+                                        </Button>
                                         <Button
                                             variant="ghost"
                                             size="sm"

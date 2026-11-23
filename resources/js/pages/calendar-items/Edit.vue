@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
+import { History } from '@lucide/vue';
 import CalendarItemController from '@/actions/App/Http/Controllers/CalendarItemController';
 import CalendarItemFormFields from '@/components/CalendarItemFormFields.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
-import { index } from '@/routes/calendar-items';
+import { history, index } from '@/routes/calendar-items';
 import type {
     CalendarView,
     CategoryListItem,
@@ -51,10 +52,25 @@ const props = defineProps<{
     <Head title="Edit calendar item" />
 
     <div class="mx-auto w-full max-w-3xl p-4">
-        <Heading
-            title="Edit calendar item"
-            description="Change any of its details. Nothing is changed until you save"
-        />
+        <div class="flex items-start justify-between gap-4">
+            <Heading
+                title="Edit calendar item"
+                description="Change any of its details. Nothing is changed until you save"
+            />
+            <Button variant="outline" as-child>
+                <Link
+                    :href="
+                        history(props.calendarItem.id, {
+                            query: { view: props.view },
+                        })
+                    "
+                    data-test="calendar-item-history-link"
+                >
+                    <History />
+                    History
+                </Link>
+            </Button>
+        </div>
 
         <Form
             v-bind="CalendarItemController.update.form(props.calendarItem.id)"
