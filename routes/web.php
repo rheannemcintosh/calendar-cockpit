@@ -8,6 +8,7 @@ use App\Http\Controllers\FlagController;
 use App\Http\Controllers\LocationSearchController;
 use App\Http\Controllers\StarterCategoryController;
 use App\Http\Controllers\SubCategoryController;
+use App\Http\Controllers\SubCategorySuggestionController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -30,6 +31,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('calendar-items/{calendar_item}/history', [CalendarItemController::class, 'history'])
         ->middleware('can:view,calendar_item')
         ->name('calendar-items.history');
+
+    Route::get('calendar-items/sub-category-suggestion', SubCategorySuggestionController::class)
+        ->middleware('throttle:60,1')
+        ->name('calendar-items.sub-category-suggestion');
 
     Route::resource('calendar-items', CalendarItemController::class)
         ->only(['index', 'create', 'store', 'edit', 'update'])

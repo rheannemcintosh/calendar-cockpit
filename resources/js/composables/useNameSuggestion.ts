@@ -26,7 +26,7 @@ export type UseNameSuggestionReturn = {
     ask: () => Promise<void>;
 };
 
-// Ask for a suggestion for a sub-category's name once the user stops typing
+// Ask for a suggestion for a name, or title, once the user stops typing
 // it. Typing again cancels a request still on its way, so a slow earlier
 // answer never replaces a newer one.
 export function useNameSuggestion<TResponse>(

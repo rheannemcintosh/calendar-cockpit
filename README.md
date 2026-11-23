@@ -87,7 +87,7 @@ Attach a real place to an item by searching for it by name or address, powered b
 
 ### Let Jev Fill in the Details
 
-When you name a sub-category, [Jev](https://typesafe.ai/) from TypeSafe AI suggests an emoji for it and which of your categories it belongs in. It only speaks up when it's confident, and everything works without it.
+When you name a sub-category, [Jev](https://typesafe.ai/) from TypeSafe AI suggests an emoji for it and which of your categories it belongs in. When you give a calendar item a title, it chooses the sub-category it fits. It only speaks up when it's confident, and everything works without it.
 
 ### Coming Next
 
@@ -200,10 +200,10 @@ The app is available at `http://localhost:8000`. Register an account at `/regist
 
 ### Optional Services
 
-| Variable              | Description                                                                                                                 |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `MAPBOX_ACCESS_TOKEN` | Turns on location search. Create a token in your [Mapbox account](https://account.mapbox.com/access-tokens/).               |
-| `TYPESAFE_API_KEY`    | Turns on Jev's emoji and category suggestions. Create a key in the [TypeSafe AI console](https://console.typesafe.ai/keys). |
+| Variable              | Description                                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `MAPBOX_ACCESS_TOKEN` | Turns on location search. Create a token in your [Mapbox account](https://account.mapbox.com/access-tokens/).                             |
+| `TYPESAFE_API_KEY`    | Turns on Jev's emoji, category and sub-category suggestions. Create a key in the [TypeSafe AI console](https://console.typesafe.ai/keys). |
 
 ### Running the Tests
 
