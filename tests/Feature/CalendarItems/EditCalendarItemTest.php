@@ -43,6 +43,8 @@ test('the edit form is filled in with every one of the calendar item\'s current 
     [$prePaid, , $important] = $user->flags()->orderBy('id')->get()->all();
     $calendarItem = CalendarItem::factory()->for($user)->for($subCategory)->between('2026-10-21 09:00', '2026-10-21 10:30')->create([
         'title' => 'Dentist',
+        'minutes_before' => 20,
+        'minutes_after' => 15,
         'time_type' => TimeType::Block,
         'time_type_overridden' => true,
         'firmness' => Firmness::Idea,
@@ -66,6 +68,8 @@ test('the edit form is filled in with every one of the calendar item\'s current 
                 'endDate' => '2026-10-21',
                 'startTime' => '09:00',
                 'endTime' => '10:30',
+                'minutesBefore' => 20,
+                'minutesAfter' => 15,
                 'subCategoryId' => $subCategory->id,
                 'timeType' => 'block',
                 'timeTypeOverridden' => true,

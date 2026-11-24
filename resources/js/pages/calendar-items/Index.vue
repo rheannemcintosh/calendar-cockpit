@@ -16,6 +16,7 @@ import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useEditCalendarItem } from '@/composables/useEditCalendarItem';
+import { duration } from '@/lib/calendarTimeline';
 import { firmnessFill, secondaryText, titleText } from '@/lib/firmness';
 import { create, day as dayView, index } from '@/routes/calendar-items';
 import type { FirmnessOption, TimelineYear, TimeTypeOption } from '@/types';
@@ -300,6 +301,22 @@ const appear =
                                     :time="item.time"
                                     :time-type="timeTypes[item.timeType]"
                                 />
+                                <!-- Time before and after, apart from the item's own times. -->
+                                <span
+                                    v-if="item.timeBefore || item.timeAfter"
+                                    class="mt-1 block text-xs"
+                                    data-test="time-around"
+                                    >{{
+                                        [
+                                            item.timeBefore &&
+                                                `+${duration(item.timeBefore.minutes)} before`,
+                                            item.timeAfter &&
+                                                `+${duration(item.timeAfter.minutes)} after`,
+                                        ]
+                                            .filter(Boolean)
+                                            .join(' · ')
+                                    }}</span
+                                >
                             </span>
                             <span class="flex min-w-0 flex-col gap-0.5">
                                 <span

@@ -52,6 +52,17 @@ class CalendarItemFactory extends Factory
         ]);
     }
 
+    /**
+     * With the given minutes of time before and after it.
+     */
+    public function withTimeAround(int $before, int $after = 0): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'minutes_before' => $before,
+            'minutes_after' => $after,
+        ]);
+    }
+
     public function window(): static
     {
         return $this->state(fn (array $attributes) => ['time_type' => TimeType::Window]);

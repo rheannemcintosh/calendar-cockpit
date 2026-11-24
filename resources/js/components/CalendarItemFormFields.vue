@@ -54,6 +54,41 @@ watch(startDate, (start, previous) => {
         endDate.value = start;
     }
 });
+
+// Time before and after, in minutes, is optional. Left empty, there is none.
+// It is checked here as it is typed, the same way the server checks it, and
+// a problem is shown where the server's would be.
+const MAX_EXTRA_MINUTES = 720;
+const minutesBefore = ref<string | number>(props.item?.minutesBefore || '');
+const minutesAfter = ref<string | number>(props.item?.minutesAfter || '');
+
+function extraMinutesError(
+    minutes: string | number,
+    which: 'before' | 'after',
+): string | undefined {
+    const value = String(minutes).trim();
+
+    if (
+        value === '' ||
+        (/^\d+$/.test(value) && Number(value) <= MAX_EXTRA_MINUTES)
+    ) {
+        return undefined;
+    }
+
+    return `Please enter the time ${which} in whole minutes, up to 12 hours.`;
+}
+
+const minutesBeforeError = computed(
+    () =>
+        props.errors.minutes_before ??
+        extraMinutesError(minutesBefore.value, 'before'),
+);
+const minutesAfterError = computed(
+    () =>
+        props.errors.minutes_after ??
+        extraMinutesError(minutesAfter.value, 'after'),
+);
+
 const subCategoryId = ref(props.item?.subCategoryId ?? 0);
 const timeType = ref<TimeTypeValue>(props.item?.timeType ?? 'exact');
 const firmness = ref<FirmnessValue>(props.item?.firmness ?? 'confirmed');
@@ -229,6 +264,54 @@ const locationError = computed(
                 :invalid="!!errors.end_time"
             />
             <InputError :message="errors.end_time" />
+        </div>
+    </div>
+
+    <!-- Time around the calendar item, such as for getting there or running
+    over. It doesn't change the item's own times. -->
+    <div
+        v-show="!allDay"
+        class="grid gap-4 sm:grid-cols-2"
+        data-test="time-around"
+    >
+        <div class="grid content-start gap-2">
+            <Label for="minutes_before">
+                Time before
+                <span class="text-muted-foreground font-normal">
+                    (minutes, optional)
+                </span>
+            </Label>
+            <Input
+                id="minutes_before"
+                v-model="minutesBefore"
+                name="minutes_before"
+                type="number"
+                inputmode="numeric"
+                step="any"
+                placeholder="E.g. 20 to get there"
+                :aria-invalid="minutesBeforeError ? true : undefined"
+            />
+            <InputError :message="minutesBeforeError" />
+        </div>
+
+        <div class="grid content-start gap-2">
+            <Label for="minutes_after">
+                Time after
+                <span class="text-muted-foreground font-normal">
+                    (minutes, optional)
+                </span>
+            </Label>
+            <Input
+                id="minutes_after"
+                v-model="minutesAfter"
+                name="minutes_after"
+                type="number"
+                inputmode="numeric"
+                step="any"
+                placeholder="E.g. 15 if it runs over"
+                :aria-invalid="minutesAfterError ? true : undefined"
+            />
+            <InputError :message="minutesAfterError" />
         </div>
     </div>
 

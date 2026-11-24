@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Clock, MapPin } from '@lucide/vue';
 import CreatedUpdated from '@/components/CreatedUpdated.vue';
+import { duration as minutesLabel } from '@/lib/calendarTimeline';
 import { flagIcons } from '@/lib/flags';
 import type { FirmnessOption, TimelineItem, TimeTypeOption } from '@/types';
 
@@ -28,6 +29,21 @@ defineProps<{
         <Clock class="size-3 shrink-0" aria-hidden="true" />
         {{ item.timeType === 'approximate' ? '~' : '' }}{{ item.time
         }}<template v-if="duration && !item.allDay"> · {{ duration }}</template>
+    </span>
+    <!-- Time before and after is apart from the calendar item's own times. -->
+    <span
+        v-if="item.timeBefore || item.timeAfter"
+        class="flex flex-col opacity-80"
+        data-test="time-around"
+    >
+        <span v-if="item.timeBefore" data-test="time-before"
+            >+ {{ minutesLabel(item.timeBefore.minutes) }} before, from
+            {{ item.timeBefore.from }}</span
+        >
+        <span v-if="item.timeAfter" data-test="time-after"
+            >+ {{ minutesLabel(item.timeAfter.minutes) }} after, until
+            {{ item.timeAfter.until }}</span
+        >
     </span>
     <span v-if="!item.allDay && item.timeType !== 'exact'" class="opacity-80">
         {{ timeType.label }}: {{ timeType.hint }}

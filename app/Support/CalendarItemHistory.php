@@ -32,6 +32,8 @@ final class CalendarItemHistory
         'starts_at' => 'Starts',
         'ends_at' => 'Ends',
         'all_day' => 'All day',
+        'minutes_before' => 'Time before',
+        'minutes_after' => 'Time after',
         'sub_category_id' => 'Sub-category',
         'time_type' => 'Time type',
         'time_type_overridden' => 'Time type chosen by you',
@@ -524,10 +526,31 @@ final class CalendarItemHistory
                 ? CarbonImmutable::parse(self::string($value))->subDay()->format('j M Y')
                 : CarbonImmutable::parse(self::string($value))->format('j M Y, H:i'),
             'all_day', 'time_type_overridden' => $value ? __('Yes') : __('No'),
+            'minutes_before', 'minutes_after' => self::minutes((int) self::string($value)),
             'sub_category_id' => $subCategoryNames[(int) self::string($value)] ?? __('A deleted sub-category'),
             'time_type' => TimeType::tryFrom(self::string($value))?->label() ?? self::string($value),
             'firmness' => Firmness::tryFrom(self::string($value))?->label() ?? self::string($value),
             default => self::string($value),
+        };
+    }
+
+    /**
+     * Time before or after as the app shows it, e.g. "30 min", "1 hr" or
+     * "2 hr 30 min", or "None" when there is none.
+     */
+    private static function minutes(int $minutes): string
+    {
+        if ($minutes === 0) {
+            return __('None');
+        }
+
+        $hours = intdiv($minutes, 60);
+        $minutes %= 60;
+
+        return match (true) {
+            $hours === 0 => "{$minutes} min",
+            $minutes === 0 => "{$hours} hr",
+            default => "{$hours} hr {$minutes} min",
         };
     }
 

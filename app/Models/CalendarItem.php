@@ -26,6 +26,8 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property bool $time_type_overridden
  * @property Firmness $firmness
  * @property bool $all_day
+ * @property int $minutes_before
+ * @property int $minutes_after
  * @property string|null $location_name
  * @property string|null $location_address
  * @property float|null $location_latitude
@@ -33,9 +35,14 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['title', 'starts_at', 'ends_at', 'sub_category_id', 'time_type', 'time_type_overridden', 'firmness', 'all_day', 'location_name', 'location_address', 'location_latitude', 'location_longitude'])]
+#[Fillable(['title', 'starts_at', 'ends_at', 'sub_category_id', 'time_type', 'time_type_overridden', 'firmness', 'all_day', 'minutes_before', 'minutes_after', 'location_name', 'location_address', 'location_latitude', 'location_longitude'])]
 class CalendarItem extends Model
 {
+    /**
+     * The most time, in minutes, that can be added before or after a calendar item.
+     */
+    public const MAX_EXTRA_MINUTES = 720;
+
     /** @use HasFactory<CalendarItemFactory> */
     use HasFactory;
 
@@ -49,6 +56,8 @@ class CalendarItem extends Model
         'time_type_overridden' => false,
         'firmness' => Firmness::Confirmed->value,
         'all_day' => false,
+        'minutes_before' => 0,
+        'minutes_after' => 0,
     ];
 
     /**
@@ -58,9 +67,25 @@ class CalendarItem extends Model
     {
         return LogOptions::defaults()
             ->useLogName('calendar_item')
-            ->logOnly(['title', 'starts_at', 'ends_at', 'all_day', 'sub_category_id', 'time_type', 'time_type_overridden', 'firmness', 'location_name', 'location_address', 'location_latitude', 'location_longitude'])
+            ->logOnly(['title', 'starts_at', 'ends_at', 'all_day', 'minutes_before', 'minutes_after', 'sub_category_id', 'time_type', 'time_type_overridden', 'firmness', 'location_name', 'location_address', 'location_latitude', 'location_longitude'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
+    }
+
+    /**
+     * When the calendar item's time starts, with the time added before it.
+     */
+    public function startsWithTimeBefore(): CarbonImmutable
+    {
+        return $this->starts_at->subMinutes($this->minutes_before);
+    }
+
+    /**
+     * When the calendar item's time ends, with the time added after it.
+     */
+    public function endsWithTimeAfter(): CarbonImmutable
+    {
+        return $this->ends_at->addMinutes($this->minutes_after);
     }
 
     /**
@@ -131,6 +156,8 @@ class CalendarItem extends Model
             'time_type_overridden' => 'boolean',
             'firmness' => Firmness::class,
             'all_day' => 'boolean',
+            'minutes_before' => 'integer',
+            'minutes_after' => 'integer',
             'location_latitude' => 'float',
             'location_longitude' => 'float',
         ];

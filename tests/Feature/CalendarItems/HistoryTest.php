@@ -127,6 +127,44 @@ test('an all-day calendar item\'s dates show without times, ending on its last d
             ]));
 });
 
+test('changed time before and after show in hours and minutes, or none', function () {
+    $calendarItem = historyItem($this->user);
+
+    $calendarItem->update(['minutes_before' => 30, 'minutes_after' => 150]);
+    $calendarItem->update(['minutes_before' => 60, 'minutes_after' => 0]);
+
+    $this->get(route('calendar-items.history', $calendarItem))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('entries.0.changes', [
+                ['field' => 'minutes_before', 'label' => 'Time before', 'old' => '30 min', 'new' => '1 hr'],
+                ['field' => 'minutes_after', 'label' => 'Time after', 'old' => '2 hr 30 min', 'new' => 'None'],
+            ])
+            ->where('entries.1.changes', [
+                ['field' => 'minutes_before', 'label' => 'Time before', 'old' => 'None', 'new' => '30 min'],
+                ['field' => 'minutes_after', 'label' => 'Time after', 'old' => 'None', 'new' => '2 hr 30 min'],
+            ]));
+});
+
+test('making a calendar item all day shows on its history that its time before and after were removed', function () {
+    $calendarItem = historyItem($this->user, ['minutes_before' => 45, 'minutes_after' => 15]);
+
+    $this->put(route('calendar-items.update', $calendarItem), [
+        'title' => 'Dentist',
+        'all_day' => '1',
+        'date' => '2026-11-23',
+        'end_date' => '2026-11-23',
+        'time_type' => 'exact',
+        'firmness' => 'confirmed',
+    ])->assertSessionHasNoErrors();
+
+    $this->get(route('calendar-items.history', $calendarItem))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('entries.0.changes', fn ($changes) => collect($changes)->whereIn('field', ['minutes_before', 'minutes_after'])->values()->all() === [
+                ['field' => 'minutes_before', 'label' => 'Time before', 'old' => '45 min', 'new' => 'None'],
+                ['field' => 'minutes_after', 'label' => 'Time after', 'old' => '15 min', 'new' => 'None'],
+            ]));
+});
+
 test('a changed location shows as one field with its name and address', function () {
     $calendarItem = historyItem($this->user);
 

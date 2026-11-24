@@ -20,7 +20,8 @@ import { firmnessFill, secondaryText, titleText } from '@/lib/firmness';
 import type { DayItem, FirmnessOption, TimeTypeOption } from '@/types';
 
 // A calendar item as a block on a day's timeline, placed to the minute, with
-// its details in a hover.
+// its details in a hover. Time before and after it is a lighter band joined
+// to it above and below, with a dotted edge, so it doesn't look like the item.
 const props = defineProps<{
     item: DayItem;
     timeType: TimeTypeOption;
@@ -39,16 +40,49 @@ const minutes = computed(() => props.item.endMinute - props.item.startMinute);
 
 const itemDuration = computed(() => duration(minutes.value));
 
+// How much of the time before and after is on this day.
+const minutesBefore = computed(
+    () => props.item.startMinute - props.item.beforeMinute,
+);
+const minutesAfter = computed(
+    () => props.item.afterMinute - props.item.endMinute,
+);
+
+// From this height a band has room to say how long it is.
+const BAND_LABEL_MINUTES = 8;
+
 const placement = computed(() => {
     const width = 100 / props.item.columns;
 
     return {
-        top: `${props.item.startMinute * PIXELS_PER_MINUTE}px`,
-        height: `${minutes.value * PIXELS_PER_MINUTE}px`,
+        top: `${props.item.beforeMinute * PIXELS_PER_MINUTE}px`,
+        height: `${(props.item.afterMinute - props.item.beforeMinute) * PIXELS_PER_MINUTE}px`,
         left: `${props.item.column * width}%`,
         width: `calc(${width}% - 2px)`,
     };
 });
+
+// A fainter tint of the category's colour, or grey when uncategorised.
+const bandColours = computed(() => {
+    const colour = props.item.category?.colour ?? 'var(--muted-foreground)';
+    const tint = props.item.category ? DAY_TINT / 2.5 : DAY_TINT / 4;
+
+    return {
+        backgroundColor: `color-mix(in srgb, ${colour} ${tint}%, var(--background))`,
+        borderColor: `color-mix(in srgb, ${colour} 45%, transparent)`,
+    };
+});
+
+const spokenTimeAround = computed(() =>
+    [
+        props.item.timeBefore &&
+            `, ${duration(props.item.timeBefore.minutes)} before`,
+        props.item.timeAfter &&
+            `, ${duration(props.item.timeAfter.minutes)} after`,
+    ]
+        .filter(Boolean)
+        .join(''),
+);
 
 // How firm the calendar item is changes only the tint.
 const colours = computed(() => ({
@@ -80,83 +114,141 @@ const { openEdit } = useEditCalendarItem();
         <TooltipTrigger as-child>
             <li
                 tabindex="0"
-                :class="[
-                    'focus-visible:ring-ring absolute flex cursor-pointer overflow-hidden rounded-md border border-l-4 px-2 text-xs leading-4 outline-none focus-visible:ring-2',
-                    !item.category && 'bg-muted border-l-muted-foreground/40',
-                    item.timeType === 'block'
-                        ? 'border-foreground/40 border-dashed'
-                        : 'border-black/10 dark:border-white/20',
-                    minutes >= STACKED_MINUTES
-                        ? 'flex-col gap-0.5 py-1'
-                        : 'items-start gap-1.5',
-                ]"
-                :style="{ ...placement, ...colours }"
+                class="focus-visible:ring-ring absolute flex cursor-pointer flex-col rounded-md outline-none focus-visible:ring-2"
+                :style="placement"
                 :data-time-type="item.timeType"
                 :data-firmness="item.firmness"
                 data-test="day-item"
                 @click="openEdit(item.id)"
                 @keydown.enter.self="openEdit(item.id)"
             >
-                <span v-if="minutes < SHORT_MINUTES" class="sr-only"
-                    >{{ item.title }}{{ spokenFlags }}{{ spokenFirmness }},
-                    {{ item.time }}</span
+                <div
+                    v-if="minutesBefore > 0"
+                    class="text-muted-foreground flex shrink-0 items-start overflow-hidden rounded-t-md border border-b-0 border-l-4 border-dotted px-2 text-[0.625rem] leading-3"
+                    :style="{
+                        ...bandColours,
+                        height: `${minutesBefore * PIXELS_PER_MINUTE}px`,
+                    }"
+                    aria-hidden="true"
+                    data-test="time-before"
                 >
-                <template v-else>
                     <span
-                        :class="[
-                            'truncate font-medium',
-                            titleText(item.firmness),
-                        ]"
+                        v-if="
+                            item.timeBefore &&
+                            minutesBefore >= BAND_LABEL_MINUTES
+                        "
+                        class="truncate pt-0.5"
+                        >{{ duration(item.timeBefore.minutes) }} before</span
                     >
+                </div>
+                <div
+                    :class="[
+                        'flex shrink-0 overflow-hidden rounded-md border border-l-4 px-2 text-xs leading-4',
+                        !item.category &&
+                            'bg-muted border-l-muted-foreground/40',
+                        item.timeType === 'block'
+                            ? 'border-foreground/40 border-dashed'
+                            : 'border-black/10 dark:border-white/20',
+                        minutes >= STACKED_MINUTES
+                            ? 'flex-col gap-0.5 py-1'
+                            : 'items-start gap-1.5',
+                        minutesBefore > 0 && 'rounded-t-none',
+                        minutesAfter > 0 && 'rounded-b-none',
+                        minutes === 0 && 'border-0',
+                    ]"
+                    :style="{
+                        ...colours,
+                        height: `${minutes * PIXELS_PER_MINUTE}px`,
+                    }"
+                    data-test="day-item-block"
+                >
+                    <span v-if="minutes < SHORT_MINUTES" class="sr-only"
+                        >{{ item.title }}{{ spokenFlags }}{{ spokenFirmness }},
+                        {{ item.time }}{{ spokenTimeAround }}</span
+                    >
+                    <template v-else>
                         <span
-                            v-if="item.subCategory"
-                            class="mr-1"
-                            aria-hidden="true"
-                            >{{ item.subCategory.emoji }}</span
-                        >{{ item.title
-                        }}<FlagIcons
-                            :flags="item.flags"
-                            class="ml-1 align-[-0.125em]"
-                        /><span v-if="spokenFirmness" class="sr-only">{{
-                            spokenFirmness
-                        }}</span>
-                    </span>
-                    <span
-                        :class="[
-                            'flex shrink-0 items-center gap-1 tabular-nums',
-                            secondaryText(item.firmness),
-                        ]"
-                    >
-                        <Clock
-                            v-if="minutes >= STACKED_MINUTES"
-                            class="size-3 shrink-0"
-                            aria-hidden="true"
-                        />
-                        <CalendarItemTime
-                            :time="item.time"
-                            :time-type="timeType"
-                            inline
-                        />
-                    </span>
-                    <a
-                        v-if="item.location && minutes >= LOCATION_MINUTES"
-                        :href="item.location.mapsUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        :class="[
-                            'hover:text-foreground flex max-w-full items-center gap-1 self-start underline-offset-4 hover:underline',
-                            secondaryText(item.firmness),
-                        ]"
-                        data-test="location"
-                        @click.stop
-                    >
-                        <MapPin class="size-3 shrink-0" aria-hidden="true" />
-                        <span class="truncate">{{ item.location.name }}</span>
-                        <span class="sr-only"
-                            >(opens in maps in a new tab)</span
+                            :class="[
+                                'truncate font-medium',
+                                titleText(item.firmness),
+                            ]"
                         >
-                    </a>
-                </template>
+                            <span
+                                v-if="item.subCategory"
+                                class="mr-1"
+                                aria-hidden="true"
+                                >{{ item.subCategory.emoji }}</span
+                            >{{ item.title
+                            }}<FlagIcons
+                                :flags="item.flags"
+                                class="ml-1 align-[-0.125em]"
+                            /><span v-if="spokenFirmness" class="sr-only">{{
+                                spokenFirmness
+                            }}</span>
+                        </span>
+                        <span
+                            :class="[
+                                'flex shrink-0 items-center gap-1 tabular-nums',
+                                secondaryText(item.firmness),
+                            ]"
+                        >
+                            <Clock
+                                v-if="minutes >= STACKED_MINUTES"
+                                class="size-3 shrink-0"
+                                aria-hidden="true"
+                            />
+                            <CalendarItemTime
+                                :time="item.time"
+                                :time-type="timeType"
+                                inline
+                            />
+                        </span>
+                        <a
+                            v-if="item.location && minutes >= LOCATION_MINUTES"
+                            :href="item.location.mapsUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            :class="[
+                                'hover:text-foreground flex max-w-full items-center gap-1 self-start underline-offset-4 hover:underline',
+                                secondaryText(item.firmness),
+                            ]"
+                            data-test="location"
+                            @click.stop
+                        >
+                            <MapPin
+                                class="size-3 shrink-0"
+                                aria-hidden="true"
+                            />
+                            <span class="truncate">{{
+                                item.location.name
+                            }}</span>
+                            <span class="sr-only"
+                                >(opens in maps in a new tab)</span
+                            >
+                        </a>
+                        <span v-if="spokenTimeAround" class="sr-only">{{
+                            spokenTimeAround
+                        }}</span>
+                    </template>
+                </div>
+                <div
+                    v-if="minutesAfter > 0"
+                    class="text-muted-foreground flex shrink-0 items-end overflow-hidden rounded-b-md border border-t-0 border-l-4 border-dotted px-2 text-[0.625rem] leading-3"
+                    :style="{
+                        ...bandColours,
+                        height: `${minutesAfter * PIXELS_PER_MINUTE}px`,
+                    }"
+                    aria-hidden="true"
+                    data-test="time-after"
+                >
+                    <span
+                        v-if="
+                            item.timeAfter && minutesAfter >= BAND_LABEL_MINUTES
+                        "
+                        class="truncate pb-0.5"
+                        >{{ duration(item.timeAfter.minutes) }} after</span
+                    >
+                </div>
             </li>
         </TooltipTrigger>
         <TooltipContent
