@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { CalendarDays, Flag, LayoutGrid, Tags } from '@lucide/vue';
+import { CalendarDays, ChartColumn, Flag, LayoutGrid, Tags } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -17,6 +17,7 @@ import { dashboard } from '@/routes';
 import calendarItems from '@/routes/calendar-items';
 import categories from '@/routes/categories';
 import flags from '@/routes/flags';
+import insights from '@/routes/insights';
 import subCategories from '@/routes/sub-categories';
 import type { NavItem } from '@/types';
 
@@ -74,6 +75,11 @@ const mainNavItems: NavItem[] = [
                 href: flags.create(),
             },
         ],
+    },
+    {
+        title: 'Insights',
+        href: insights.index(),
+        icon: ChartColumn,
     },
 ];
 </script>

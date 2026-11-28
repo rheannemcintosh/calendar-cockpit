@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CategorySuggestionController;
 use App\Http\Controllers\EmojiSuggestionController;
 use App\Http\Controllers\FlagController;
+use App\Http\Controllers\InsightsController;
 use App\Http\Controllers\LocationSearchController;
 use App\Http\Controllers\StarterCategoryController;
 use App\Http\Controllers\SubCategoryController;
@@ -77,6 +78,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->middlewareFor(['edit', 'update'], 'can:update,flag')
         ->middlewareFor('destroy', 'can:delete,flag');
+
+    Route::get('insights', [InsightsController::class, 'index'])->name('insights.index');
 });
 
 require __DIR__.'/settings.php';
